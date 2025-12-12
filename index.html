@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="https://fav.farm/🎣" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="description" content="A mobile-first competitive fishing game on Farcaster & Base. Cast your line, catch rare fish, and compete in tournaments." />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Farcaster Mini App Meta Tag -->
+    <meta property="fc:miniapp" content='{"version":"1","imageUrl":"https://seacaster.app/og-1200x800.png","button":{"title":"🎣 Cast Line","action":{"type":"launch_frame","name":"SeaCaster","url":"https://seacaster.app"}}}' />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="SeaCaster Tournament" />
+    <meta property="og:description" content="Join the daily fishing tournament on Base! Win USDC prizes." />
+    <meta property="og:image" content="https://seacaster.app/og-1200x800.png" />
+    <meta property="og:type" content="website" />
+
+    <title>SeaCaster</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+      /* Mobile-only optimizations */
+      body {
+        overscroll-behavior: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "react-dom": "https://esm.sh/react-dom@18.3.1",
+    "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+    "zustand": "https://esm.sh/zustand@4.5.2",
+    "zustand/middleware": "https://esm.sh/zustand@4.5.2/middleware",
+    "lucide-react": "https://esm.sh/lucide-react@0.363.0?external=react,react-dom",
+    "recharts": "https://esm.sh/recharts@2.12.3?external=react,react-dom",
+    "framer-motion": "https://esm.sh/framer-motion@11.0.24?external=react,react-dom",
+    "canvas-confetti": "https://esm.sh/canvas-confetti@1.9.2",
+    "viem": "https://esm.sh/viem@2.21.0",
+    "wagmi": "https://esm.sh/wagmi@2.12.0?external=react,react-dom",
+    "wagmi/chains": "https://esm.sh/wagmi@2.12.0/chains",
+    "wagmi/connectors": "https://esm.sh/wagmi@2.12.0/connectors",
+    "@tanstack/react-query": "https://esm.sh/@tanstack/react-query@5.51.0?external=react,react-dom",
+    "@farcaster/frame-sdk": "https://esm.sh/@farcaster/frame-sdk@0.0.21",
+    "socket.io-client": "https://esm.sh/socket.io-client@4.7.5"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-ocean-900 text-white h-screen w-screen overflow-hidden">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

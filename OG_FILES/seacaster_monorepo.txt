@@ -1,0 +1,907 @@
+## 🚀 SEACASTER MONOREPO - COMPLETE PROJECT STRUCTURE
+
+# ROOT: package.json
+{
+  "name": "seacaster",
+  "version": "1.0.0",
+  "description": "Production-grade Farcaster Mini App - Fishing game with USDC tournaments on Base",
+  "private": true,
+  "workspaces": [
+    "apps/frontend",
+    "apps/backend",
+    "packages/contracts",
+    "packages/ui",
+    "packages/config"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "deploy:frontend": "cd apps/frontend && vercel deploy --prod",
+    "deploy:backend": "cd apps/backend && railway up",
+    "deploy:contracts": "cd packages/contracts && hardhat run scripts/deploy.ts --network base",
+    "format": "turbo run format"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "turbo": "^1.10.0",
+    "typescript": "^5.0.0"
+  }
+}
+
+---
+
+# ROOT: turbo.json
+{
+  "extends": ["//"],
+  "globalDependencies": ["**/.env.local"],
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "lint": {
+      "outputs": []
+    }
+  }
+}
+
+---
+
+# ROOT: docker-compose.yml
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: seacaster
+      POSTGRES_PASSWORD: dev_password_123
+      POSTGRES_DB: seacaster_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+
+---
+
+# APPS/FRONTEND: package.json
+{
+  "name": "@seacaster/frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "lint": "eslint src --ext ts,tsx",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.4.1",
+    "socket.io-client": "^4.7.0",
+    "@farcaster/miniapp-sdk": "^0.3.0",
+    "@coinbase/onchainkit": "^0.24.0",
+    "wagmi": "^2.0.0",
+    "viem": "^2.0.0",
+    "fabric": "^5.3.0",
+    "axios": "^1.6.0",
+    "tailwindcss": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0",
+    "@vitejs/plugin-react": "^4.2.0"
+  }
+}
+
+---
+
+# APPS/FRONTEND: src/main.tsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+import { Providers } from './providers/index.ts'
+
+async function initializeFarcaster() {
+  try {
+    const { sdk } = await import('@farcaster/miniapp-sdk')
+    await sdk.actions.ready()
+    console.log('✅ Farcaster SDK ready')
+  } catch (error) {
+    console.error('⚠️ Farcaster SDK init failed:', error)
+  }
+}
+
+initializeFarcaster()
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <Providers>
+      <App />
+    </Providers>
+  </React.StrictMode>,
+)
+
+---
+
+# APPS/FRONTEND: src/App.tsx
+import { useEffect } from 'react'
+import { useUserStore } from './stores/userStore'
+import { FishingGame } from './components/FishingGame'
+import { MainNav } from './components/MainNav'
+import { TournamentLobby } from './components/TournamentLobby'
+import { useGameStore } from './stores/gameStore'
+
+export default function App() {
+  const { initUser } = useUserStore()
+  const { screen } = useGameStore()
+
+  useEffect(() => {
+    initUser()
+  }, [initUser])
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900 w-full">
+      {/* Viewport: 390x844px portrait mobile only */}
+      <div className="w-full max-w-[428px] mx-auto bg-slate-950 shadow-2xl">
+        
+        {/* Header: 80px */}
+        <MainNav />
+
+        {/* Main Content: responsive */}
+        <div className="relative overflow-hidden">
+          {screen === 'fishing' && <FishingGame />}
+          {screen === 'tournaments' && <TournamentLobby />}
+          {screen === 'profile' && <ProfileScreen />}
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
+function ProfileScreen() {
+  return <div className="p-4 text-white">Profile Coming Soon</div>
+}
+
+---
+
+# APPS/FRONTEND: src/stores/userStore.ts
+import { create } from 'zustand'
+import { devtools } from 'zustand/middleware'
+
+interface UserState {
+  fid: number | null
+  username: string | null
+  pfp: string | null
+  level: number
+  xp: number
+  casts: number
+  bait: number
+  seasonPassActive: boolean
+  initUser: () => Promise<void>
+  addXP: (amount: number) => void
+  setSeasonPass: (active: boolean) => void
+}
+
+export const useUserStore = create<UserState>()(
+  devtools((set) => ({
+    fid: null,
+    username: null,
+    pfp: null,
+    level: 1,
+    xp: 0,
+    casts: 3,
+    bait: 15,
+    seasonPassActive: false,
+
+    initUser: async () => {
+      try {
+        const { sdk } = await import('@farcaster/miniapp-sdk')
+        const user = await sdk.context.user
+        set({ 
+          fid: user?.fid || null,
+          username: user?.username || null,
+          pfp: user?.pfpUrl || null,
+        })
+      } catch (error) {
+        console.error('Failed to init user:', error)
+      }
+    },
+
+    addXP: (amount: number) => {
+      set((state) => {
+        let newXp = state.xp + amount
+        let newLevel = state.level
+        const xpPerLevel = Math.floor(100 * Math.pow(1.4, newLevel - 1))
+        
+        while (newXp >= xpPerLevel && newLevel < 100) {
+          newXp -= xpPerLevel
+          newLevel += 1
+        }
+        
+        return { xp: newXp, level: newLevel }
+      })
+    },
+
+    setSeasonPass: (active: boolean) => set({ seasonPassActive: active }),
+  }))
+)
+
+---
+
+# APPS/FRONTEND: src/stores/gameStore.ts
+import { create } from 'zustand'
+
+type Screen = 'fishing' | 'tournaments' | 'profile' | 'marketplace'
+
+interface FishRarity {
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic'
+  xp: number
+  color: string
+  timingWindow: number
+}
+
+interface GameState {
+  screen: Screen
+  currentCatch: FishRarity | null
+  fishingPhase: 'cast' | 'wait' | 'catch' | 'reward'
+  bobberShaking: boolean
+  
+  setScreen: (screen: Screen) => void
+  setFishingPhase: (phase: GameState['fishingPhase']) => void
+  setCatch: (fish: FishRarity | null) => void
+  setBobberShaking: (shaking: boolean) => void
+}
+
+export const useGameStore = create<GameState>((set) => ({
+  screen: 'fishing',
+  currentCatch: null,
+  fishingPhase: 'cast',
+  bobberShaking: false,
+
+  setScreen: (screen) => set({ screen }),
+  setFishingPhase: (phase) => set({ fishingPhase: phase }),
+  setCatch: (fish) => set({ currentCatch: fish }),
+  setBobberShaking: (shaking) => set({ bobberShaking: shaking }),
+}))
+
+---
+
+# APPS/FRONTEND: src/components/FishingGame.tsx
+import { useEffect, useRef } from 'react'
+import { Canvas } from 'fabric'
+import { useGameStore } from '../stores/gameStore'
+import { useUserStore } from '../stores/userStore'
+import { startFishingLoop } from '../lib/fishing'
+
+export function FishingGame() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fabricRef = useRef<Canvas | null>(null)
+  const { setFishingPhase, currentCatch } = useGameStore()
+  const { level, xp, casts } = useUserStore()
+
+  useEffect(() => {
+    if (!canvasRef.current) return
+
+    // Initialize Fabric.js canvas
+    const canvas = new Canvas(canvasRef.current, {
+      width: 390,
+      height: 500,
+      backgroundColor: '#082f4b',
+      renderOnAddRemove: true,
+    })
+    fabricRef.current = canvas
+
+    // Draw ocean scene
+    drawOceanScene(canvas)
+
+    // Setup touch controls
+    setupTouchControls(canvas)
+
+    return () => {
+      canvas.dispose()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (fabricRef.current) {
+      startFishingLoop(fabricRef.current, setFishingPhase)
+    }
+  }, [setFishingPhase])
+
+  return (
+    <div className="flex flex-col items-center gap-4 p-4 bg-slate-950">
+      {/* Canvas: 390x500px */}
+      <canvas
+        ref={canvasRef}
+        className="w-full border-2 border-blue-600 rounded"
+        style={{ touchAction: 'manipulation' }}
+      />
+
+      {/* Stats Bar: 60px */}
+      <div className="w-full bg-slate-900 border border-blue-700 rounded p-3 text-white text-sm">
+        <div className="flex justify-between">
+          <span>L{level} • {xp}XP</span>
+          <span>Casts: {casts}/15 • Bait: 15</span>
+        </div>
+      </div>
+
+      {/* Action Indicator */}
+      <div className="text-center text-blue-400 text-lg font-bold">
+        ↑ SWIPE UP TO CAST ↑
+      </div>
+
+      {/* Fish Modal */}
+      {currentCatch && <FishCatchModal fish={currentCatch} />}
+    </div>
+  )
+}
+
+function drawOceanScene(canvas: Canvas) {
+  // Water gradient background
+  const waterGrad = new (canvas as any).Gradient({
+    type: 'linear',
+    coords: { x1: 0, y1: 0, x2: 0, y2: 500 },
+    colorStops: {
+      0: '#082f4b',
+      0.5: '#0a5a7f',
+      1: '#051f2e',
+    },
+  })
+
+  // Fish shadows (placeholder)
+  for (let i = 0; i < 3; i++) {
+    const shadow = new (canvas as any).Ellipse({
+      left: 50 + i * 100,
+      top: 150 + i * 50,
+      rx: 30,
+      ry: 15,
+      fill: 'rgba(255,255,255,0.1)',
+      evented: false,
+    })
+    canvas.add(shadow)
+  }
+
+  // Bobber (will animate)
+  const bobber = new (canvas as any).Circle({
+    left: 195,
+    top: 400,
+    radius: 8,
+    fill: '#ff6b35',
+    stroke: '#ff8c42',
+    strokeWidth: 2,
+    objectCaching: false,
+    name: 'bobber',
+  })
+  canvas.add(bobber)
+}
+
+function setupTouchControls(canvas: Canvas) {
+  let touchStartY = 0
+
+  document.addEventListener('touchstart', (e) => {
+    touchStartY = e.touches[0].clientY
+  })
+
+  document.addEventListener('touchend', (e) => {
+    const touchEndY = e.changedTouches[0].clientY
+    if (touchStartY - touchEndY > 50) {
+      // Swipe up detected
+      hapticFeedback(50)
+      console.log('Cast triggered!')
+    }
+  })
+}
+
+function hapticFeedback(duration: number) {
+  if (navigator.vibrate) {
+    navigator.vibrate(duration)
+  }
+}
+
+function FishCatchModal({ fish }: { fish: any }) {
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center">
+      <div className={`bg-${fish.color}-900 border-2 border-${fish.color}-400 p-6 rounded-lg text-center text-white max-w-sm`}>
+        <h2 className="text-2xl font-bold mb-2">🎣 Caught!</h2>
+        <p className="text-lg capitalize mb-2">{fish.rarity}</p>
+        <p className="text-yellow-300 text-xl mb-4">+{fish.xp} XP</p>
+        <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
+          Share to Warpcast
+        </button>
+      </div>
+    </div>
+  )
+}
+
+---
+
+# APPS/FRONTEND: src/lib/fishing.ts
+export type FishRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic'
+
+const FISH_RARITIES: Record<FishRarity, { chance: number; xp: number; timingWindow: number; color: string }> = {
+  common: { chance: 0.60, xp: 10, timingWindow: 2.0, color: 'gray' },
+  uncommon: { chance: 0.25, xp: 25, timingWindow: 1.5, color: 'green' },
+  rare: { chance: 0.10, xp: 50, timingWindow: 1.0, color: 'blue' },
+  epic: { chance: 0.04, xp: 100, timingWindow: 0.75, color: 'purple' },
+  legendary: { chance: 0.009, xp: 250, timingWindow: 0.5, color: 'yellow' },
+  mythic: { chance: 0.001, xp: 500, timingWindow: 0.5, color: 'rainbow' },
+}
+
+export function generateFishRarity(): FishRarity {
+  const rand = Math.random()
+  let cumulative = 0
+
+  for (const [rarity, { chance }] of Object.entries(FISH_RARITIES)) {
+    cumulative += chance
+    if (rand <= cumulative) return rarity as FishRarity
+  }
+
+  return 'common'
+}
+
+export function startFishingLoop(canvas: any, setPhase: (phase: string) => void) {
+  // Phase 1: Cast (3s)
+  setPhase('cast')
+  animateCast(canvas, 3000)
+
+  setTimeout(() => {
+    // Phase 2: Wait (5-15s)
+    setPhase('wait')
+    const waitTime = 5000 + Math.random() * 10000
+    animateWait(canvas, waitTime)
+
+    setTimeout(() => {
+      // Phase 3: Catch (1-2s window)
+      setPhase('catch')
+      const rarity = generateFishRarity()
+      const window = FISH_RARITIES[rarity].timingWindow * 1000
+
+      setTimeout(() => {
+        // Phase 4: Reward
+        setPhase('reward')
+      }, window)
+    }, waitTime)
+  }, 3000)
+}
+
+function animateCast(canvas: any, duration: number) {
+  const bobber = canvas.getObjects().find((obj: any) => obj.name === 'bobber')
+  if (!bobber) return
+
+  canvas.animate({ opacity: 1 }, { duration, onChange: canvas.renderAll.bind(canvas) })
+}
+
+function animateWait(canvas: any, duration: number) {
+  const bobber = canvas.getObjects().find((obj: any) => obj.name === 'bobber')
+  if (!bobber) return
+
+  // Gentle bobbing animation
+  let time = 0
+  const interval = setInterval(() => {
+    time += 50
+    bobber.set({ top: 400 + Math.sin(time / 500) * 5 })
+    canvas.renderAll()
+    if (time > duration) clearInterval(interval)
+  }, 50)
+}
+
+---
+
+# APPS/FRONTEND: src/components/MainNav.tsx
+import { useGameStore } from '../stores/gameStore'
+import { useUserStore } from '../stores/userStore'
+
+export function MainNav() {
+  const { setScreen, screen } = useGameStore()
+  const { level, casts } = useUserStore()
+
+  return (
+    <div className="h-20 bg-gradient-to-r from-slate-900 to-blue-900 border-b border-blue-700 px-4 py-3 flex items-center justify-between">
+      <div className="flex gap-3">
+        <button
+          onClick={() => setScreen('fishing')}
+          className={`p-2 rounded ${screen === 'fishing' ? 'bg-blue-600' : 'bg-slate-700'} text-xl`}
+        >
+          🎣
+        </button>
+        <button
+          onClick={() => setScreen('tournaments')}
+          className={`p-2 rounded ${screen === 'tournaments' ? 'bg-blue-600' : 'bg-slate-700'} text-xl`}
+        >
+          🏆
+        </button>
+      </div>
+
+      <div className="text-white text-sm font-mono">
+        <div>L{level} • {casts}/15 casts</div>
+      </div>
+
+      <button className="p-2 rounded bg-slate-700 text-xl">⚙️</button>
+    </div>
+  )
+}
+
+---
+
+# APPS/FRONTEND: src/components/TournamentLobby.tsx
+export function TournamentLobby() {
+  const tournaments = [
+    { id: 1, name: 'Daily', entry: '$0.50', players: '60/60', prize: '$27' },
+    { id: 2, name: 'Weekly', entry: '$2.00', players: '75/75', prize: '$135' },
+    { id: 3, name: 'Boss', entry: '$7.99', players: '31/31', prize: '$198' },
+    { id: 4, name: 'Champ', entry: '$50.00', players: '200/200', prize: '$8K' },
+  ]
+
+  return (
+    <div className="p-4 space-y-3">
+      <h2 className="text-xl font-bold text-white mb-4">🏆 Tournaments</h2>
+      {tournaments.map((t) => (
+        <div key={t.id} className="bg-slate-900 border border-blue-600 rounded p-4 text-white">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="font-bold">{t.name}</h3>
+              <p className="text-xs text-blue-400">Entry: {t.entry}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm">{t.players}</p>
+              <p className="text-yellow-400 font-bold">{t.prize}</p>
+            </div>
+          </div>
+          <button className="w-full mt-3 bg-blue-600 hover:bg-blue-700 py-2 rounded text-sm font-bold">
+            ENTER
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+---
+
+# APPS/BACKEND: package.json
+{
+  "name": "@seacaster/backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --loader ts-node/esm src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "apollo-server-express": "^4.10.0",
+    "@apollo/client": "^3.8.0",
+    "socket.io": "^4.7.0",
+    "prisma": "^5.0.0",
+    "@prisma/client": "^5.0.0",
+    "jsonwebtoken": "^9.1.0",
+    "zod": "^3.22.0",
+    "axios": "^1.6.0",
+    "ethers": "^6.9.0",
+    "redis": "^4.6.0",
+    "dotenv": "^16.3.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "ts-node": "^10.9.0",
+    "vitest": "^1.0.0"
+  }
+}
+
+---
+
+# APPS/BACKEND: src/server.ts
+import express from 'express'
+import { createServer } from 'http'
+import { Server as SocketIOServer } from 'socket.io'
+import { ApolloServer } from 'apollo-server-express'
+import typeDefs from './graphql/schema'
+import resolvers from './graphql/resolvers'
+import { authenticateToken } from './middleware/auth'
+import { PrismaClient } from '@prisma/client'
+
+const app = express()
+const httpServer = createServer(app)
+const io = new SocketIOServer(httpServer, {
+  cors: { origin: process.env.FRONTEND_URL || 'http://localhost:5173' },
+})
+
+const prisma = new PrismaClient()
+
+// Middleware
+app.use(express.json())
+app.use(authenticateToken)
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+// GraphQL
+const apolloServer = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: { prisma, io },
+})
+
+await apolloServer.start()
+apolloServer.applyMiddleware({ app })
+
+// Socket.IO Events
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id)
+
+  socket.on('join-tournament', (tournamentId) => {
+    socket.join(`tournament:${tournamentId}`)
+  })
+
+  socket.on('update-leaderboard', (data) => {
+    io.to(`tournament:${data.tournamentId}`).emit('leaderboard-update', data)
+  })
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id)
+  })
+})
+
+const PORT = process.env.PORT || 3000
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`)
+})
+
+---
+
+# APPS/BACKEND: src/graphql/schema.ts
+const typeDefs = `
+  type User {
+    id: String!
+    fid: Int!
+    username: String!
+    level: Int!
+    xp: Int!
+    casts: Int!
+    bait: Int!
+    seasonPassActive: Boolean!
+    createdAt: String!
+  }
+
+  type Fish {
+    id: String!
+    userId: String!
+    rarity: String!
+    xp: Int!
+    weight: Float!
+    species: String!
+    caughtAt: String!
+  }
+
+  type Tournament {
+    id: String!
+    name: String!
+    entryFee: Float!
+    prizePool: Float!
+    status: String!
+    players: [User!]!
+    leaderboard: [LeaderboardEntry!]!
+  }
+
+  type LeaderboardEntry {
+    userId: String!
+    username: String!
+    score: Int!
+    rank: Int!
+  }
+
+  type Query {
+    user(fid: Int!): User
+    userCatches(userId: String!): [Fish!]!
+    tournaments: [Tournament!]!
+    tournament(id: String!): Tournament
+    leaderboard(tournamentId: String!): [LeaderboardEntry!]!
+  }
+
+  type Mutation {
+    recordCatch(userId: String!, rarity: String!, xp: Int!): Fish!
+    enterTournament(userId: String!, tournamentId: String!): Tournament!
+    purchaseSeasonPass(userId: String!): User!
+  }
+`
+
+export default typeDefs
+
+---
+
+# PACKAGES/CONTRACTS: package.json
+{
+  "name": "@seacaster/contracts",
+  "version": "1.0.0",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.ts --network base",
+    "test": "hardhat test",
+    "verify": "hardhat etherscan-verify"
+  },
+  "dependencies": {
+    "hardhat": "^2.20.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "ethers": "^6.9.0"
+  }
+}
+
+---
+
+# PACKAGES/CONTRACTS: contracts/TournamentPool.sol
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract TournamentPool is Ownable {
+    IERC20 public usdc;
+    mapping(bytes32 => TournamentData) public tournaments;
+    mapping(bytes32 => uint256) public houseCuts;
+
+    struct TournamentData {
+        uint256 totalPrize;
+        uint256 houseCut;
+        address[] winners;
+        uint256[] prizes;
+        bool settled;
+    }
+
+    event TournamentEntered(bytes32 indexed tId, address indexed player);
+    event TournamentSettled(bytes32 indexed tId, uint256 prizePool);
+
+    constructor(address _usdc) {
+        usdc = IERC20(_usdc);
+    }
+
+    function enterTournament(bytes32 tournamentId, uint256 entryFee) external {
+        require(usdc.transferFrom(msg.sender, address(this), entryFee), "Transfer failed");
+        emit TournamentEntered(tournamentId, msg.sender);
+    }
+
+    function settleTournament(
+        bytes32 tournamentId,
+        address[] calldata winners,
+        uint256[] calldata prizes,
+        uint256 split
+    ) external onlyOwner {
+        TournamentData storage t = tournaments[tournamentId];
+        require(!t.settled, "Already settled");
+
+        uint256 totalPrize = 0;
+        for (uint i = 0; i < prizes.length; i++) {
+            totalPrize += prizes[i];
+            usdc.transfer(winners[i], prizes[i]);
+        }
+
+        t.settled = true;
+        t.prizes = prizes;
+        t.winners = winners;
+
+        emit TournamentSettled(tournamentId, totalPrize);
+    }
+
+    function withdrawHouseCut(bytes32 tournamentId) external onlyOwner {
+        uint256 amount = houseCuts[tournamentId];
+        require(amount > 0, "No cut available");
+        houseCuts[tournamentId] = 0;
+        usdc.transfer(owner(), amount);
+    }
+}
+
+---
+
+# PRISMA: schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String   @id @default(cuid())
+  fid                 Int      @unique
+  username            String
+  level               Int      @default(1)
+  xp                  Int      @default(0)
+  casts               Int      @default(3)
+  bait                Int      @default(15)
+  seasonPassActive    Boolean  @default(false)
+  seasonPassExpires   DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  catches             Catch[]
+  tournaments         TournamentEntry[]
+  inventory           InventoryItem[]
+  marketplaceListings MarketplaceListing[]
+}
+
+model Catch {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  rarity    String
+  xp        Int
+  species   String
+  weight    Float
+  caughtAt  DateTime @default(now())
+}
+
+model TournamentEntry {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  tournamentId   String
+  tournament     Tournament @relation(fields: [tournamentId], references: [id])
+  score          Int      @default(0)
+  rank           Int?
+  createdAt      DateTime @default(now())
+}
+
+model Tournament {
+  id          String   @id @default(cuid())
+  name        String
+  entryFee    Float
+  prizePool   Float
+  status      String   @default("active")
+  players     TournamentEntry[]
+  createdAt   DateTime @default(now())
+}
+
+model InventoryItem {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  itemType String
+  quantity Int
+}
+
+model MarketplaceListing {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  itemType String
+  price   Float
+  active  Boolean @default(true)
+  createdAt DateTime @default(now())
+}

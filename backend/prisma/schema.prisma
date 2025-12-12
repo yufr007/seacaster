@@ -1,0 +1,255 @@
+// SeaCaster Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// User Profile (FID-based identity)
+model User {
+  fid                 Int       @id
+  username            String
+  walletAddress       String?
+  pfpUrl              String?
+  xp                  Int       @default(0)
+  level               Int       @default(1)
+  coins               Int       @default(100)
+  premium             Boolean   @default(false)
+  premiumExpiresAt    DateTime?
+  streak              Int       @default(1)
+  highestStreak       Int       @default(1)
+  lastLogin           DateTime  @default(now())
+  castsRemaining      Int       @default(15)
+  maxCasts            Int       @default(15)
+  lastCastRefill      DateTime  @default(now())
+  pendingChests       Int       @default(0)
+  notificationsEnabled Boolean  @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  catches             Catch[]
+  tournamentEntries   TournamentEntry[]
+  marketplaceListings MarketplaceListing[]
+  purchaseHistory     MarketplacePurchase[]
+  inventory           Inventory?
+
+  @@index([username])
+  @@index([walletAddress])
+  @@index([lastLogin])
+}
+
+// User Inventory (Baits, Rods, Items)
+model Inventory {
+  id            String   @id @default(cuid())
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [fid], onDelete: Cascade)
+
+  // JSON structure: { "worm": 999, "shrimp": 5, "lure": 2, ... }
+  baits         Json     @default("{\"worm\": 999}")
+
+  // Array of rod IDs: ["bamboo", "fiberglass", "carbon", "gold"]
+  rods          Json     @default("[\"bamboo\"]")
+
+  // Premium rod parts: { "handle": true, "body": false, ... }
+  premiumParts  Json     @default("{}")
+
+  // Current selections
+  activeBaitId  String   @default("worm")
+  activeRodId   String   @default("bamboo")
+
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Fish Catch Log
+model Catch {
+  id            String   @id @default(cuid())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [fid], onDelete: Cascade)
+
+  fishId        String
+  fishName      String
+  rarity        String
+  weight        Float
+  xpGained      Int
+  coinsGained   Int
+
+  baitUsed      String
+  reactionTime  Float    // Milliseconds
+
+  tournamentId  String?
+  tournament    Tournament? @relation(fields: [tournamentId], references: [id])
+
+  timestamp     DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([tournamentId])
+  @@index([rarity])
+}
+
+// Tournament Instance
+model Tournament {
+  id                String   @id @default(cuid())
+  type              TournamentType
+  title             String
+
+  prizePool         Decimal  @db.Decimal(10, 2)
+  entryFee          Decimal  @db.Decimal(10, 2)
+  houseCutPercent   Decimal  @db.Decimal(5, 2) @default(10.00)
+
+  maxParticipants   Int      @default(60)
+  currentParticipants Int    @default(0)
+
+  status            TournamentStatus @default(OPEN)
+
+  startTime         DateTime
+  endTime           DateTime
+
+  // Smart contract reference
+  contractTournamentId Int?
+
+  createdAt         DateTime @default(now())
+  settledAt         DateTime?
+
+  // Relations
+  entries           TournamentEntry[]
+  catches           Catch[]
+
+  @@index([type, status])
+  @@index([endTime])
+  @@index([status])
+}
+
+enum TournamentType {
+  Daily
+  Weekly
+  Boss
+  Championship
+}
+
+enum TournamentStatus {
+  OPEN
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+// Tournament Entry (Leaderboard)
+model TournamentEntry {
+  id            String     @id @default(cuid())
+  tournamentId  String
+  tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  userId        Int
+  user          User       @relation(fields: [userId], references: [fid], onDelete: Cascade)
+
+  score         Float      @default(0) // Total weight or points
+  rank          Int        @default(0)
+  payout        Decimal?   @db.Decimal(10, 2)
+
+  entryMethod   EntryMethod // TICKET or USDC
+  ticketId      Int?       // If entered via ticket
+
+  joinedAt      DateTime   @default(now())
+
+  @@unique([tournamentId, userId], name: "tournamentId_userId")
+  @@index([tournamentId, score])
+  @@index([userId])
+}
+
+enum EntryMethod {
+  TICKET
+  USDC
+}
+
+// Marketplace Listing
+model MarketplaceListing {
+  id            String   @id @default(cuid())
+  sellerId      Int
+  seller        User     @relation(fields: [sellerId], references: [fid], onDelete: Cascade)
+
+  itemType      ItemType
+  itemId        String
+  quantity      Int      @default(1)
+
+  priceCoins    Int
+
+  status        ListingStatus @default(ACTIVE)
+
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime // 7 days from creation
+
+  // Relations
+  purchase      MarketplacePurchase?
+
+  @@index([status, itemType])
+  @@index([sellerId])
+  @@index([expiresAt])
+}
+
+enum ItemType {
+  BAIT
+  ROD
+  TICKET
+  LOOT
+  FISH
+}
+
+enum ListingStatus {
+  ACTIVE
+  SOLD
+  CANCELLED
+  EXPIRED
+}
+
+// Marketplace Purchase History
+model MarketplacePurchase {
+  id            String   @id @default(cuid())
+  listingId     String   @unique
+  listing       MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  buyerId       Int
+  buyer         User     @relation(fields: [buyerId], references: [fid], onDelete: Cascade)
+
+  pricePaid     Int
+  marketplaceFee Int     // 10% of price
+
+  purchasedAt   DateTime @default(now())
+
+  @@index([buyerId])
+  @@index([purchasedAt])
+}
+
+// Audit Log for Critical Actions
+model AuditLog {
+  id            String   @id @default(cuid())
+  userId        Int?
+  action        String   // "SEASON_PASS_PURCHASE", "TOURNAMENT_ENTRY", "PRIZE_CLAIM", etc.
+  details       Json     // Flexible JSON for context
+  ipAddress     String?
+  userAgent     String?
+  txHash        String?  // Blockchain transaction hash if applicable
+  timestamp     DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([action])
+  @@index([txHash])
+}
+
+// Rate Limit Tracking
+model RateLimitEntry {
+  id            String   @id @default(cuid())
+  userId        Int
+  action        String   // "CAST", "API_CALL", etc.
+  count         Int      @default(1)
+  windowStart   DateTime @default(now())
+
+  @@unique([userId, action, windowStart])
+  @@index([userId, action])
+}

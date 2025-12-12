@@ -1,0 +1,174 @@
+import React, { Suspense, useState, useRef, useEffect } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { useGameStore } from '../store/gameStore';
+import { GamePhase } from '../types';
+import { PerformanceMonitor, QualityLevel } from '../utils/performanceMonitor';
+
+// Three.js components
+import { Ocean } from './three/Ocean';
+import { Sky } from './three/Sky';
+import { Pier } from './three/Pier';
+import { FishingRod } from './three/FishingRod';
+import { FishSchool } from './three/FishSchool';
+import { PrestigeShip } from './three/PrestigeShip';
+
+/**
+ * Three.js 3D Fishing Scene
+ * Mobile-optimized with 30fps target and adaptive quality
+ * Replaces 2D Framer Motion with full WebGL 3D rendering
+ */
+const ThreeFishingScene: React.FC = () => {
+  const { phase, castLine, attemptCatch, userStats, finishCatchAnimation } = useGameStore();
+  const touchStartY = useRef<number | null>(null);
+  const [quality, setQuality] = useState<QualityLevel>('high');
+  const perfMonitor = useRef(new PerformanceMonitor());
+  const [pixelRatio, setPixelRatio] = useState<number>(1);
+
+  // Monitor performance and adjust quality
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newQuality = perfMonitor.current.getQualityLevel();
+      const newPixelRatio = perfMonitor.current.getPixelRatio();
+
+      if (newQuality !== quality) {
+        console.log(`[Performance] Quality adjusted: ${quality} → ${newQuality}`);
+        setQuality(newQuality);
+      }
+
+      if (Math.abs(newPixelRatio - pixelRatio) > 0.1) {
+        setPixelRatio(newPixelRatio);
+      }
+    }, 2000); // Check every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [quality, pixelRatio]);
+
+  // Touch controls for casting
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (phase === GamePhase.IDLE) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (phase === GamePhase.IDLE && touchStartY.current !== null) {
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaY = touchEndY - touchStartY.current;
+
+      // Swipe up to cast
+      if (deltaY < -50) {
+        castLine();
+        if (navigator.vibrate) {
+          navigator.vibrate([20, 10, 50]);
+        }
+      }
+      touchStartY.current = null;
+    }
+  };
+
+  const handleTap = () => {
+    if (phase === GamePhase.HOOKED) {
+      attemptCatch();
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 30, 80]);
+      }
+    }
+  };
+
+  // Auto-finish prestige animation
+  useEffect(() => {
+    if (phase === GamePhase.ANIMATING_CATCH) {
+      const timer = setTimeout(() => {
+        finishCatchAnimation();
+      }, 3000); // 3 second animation
+      return () => clearTimeout(timer);
+    }
+  }, [phase, finishCatchAnimation]);
+
+  return (
+    <div
+      className="relative w-full h-full overflow-hidden select-none bg-gradient-to-b from-sky-300 to-sky-600"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onClick={handleTap}
+    >
+      {/* FPS Counter (Development) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="absolute top-2 left-2 z-50 bg-black/70 text-white px-2 py-1 rounded text-xs font-mono">
+          FPS: {perfMonitor.current.getFPS()} | Quality: {quality.toUpperCase()}
+        </div>
+      )}
+
+      {/* Three.js Canvas */}
+      <Canvas
+        camera={{
+          position: [0, 5, 12],
+          fov: 50,
+          near: 0.1,
+          far: 1000,
+        }}
+        dpr={pixelRatio} // Adaptive pixel ratio
+        performance={{ min: 0.5 }} // Allow degradation
+        gl={{
+          powerPreference: 'low-power', // Battery optimization
+          antialias: quality === 'high', // Disable AA on low quality
+          alpha: false,
+        }}
+        shadows={quality !== 'low'} // Disable shadows on low quality
+        onCreated={({ gl }) => {
+          // Enable physically correct lighting
+          gl.physicallyCorrectLights = true;
+        }}
+      >
+        <Suspense fallback={null}>
+          {/* Scene components */}
+          <Sky />
+          <Ocean phase={phase} />
+          <Pier />
+          <FishingRod phase={phase} />
+          <FishSchool phase={phase} quality={quality} />
+
+          {/* Prestige animation (L50+ Premium Only) */}
+          {phase === GamePhase.ANIMATING_CATCH && userStats.level >= 50 && userStats.premium && <PrestigeShip />}
+
+          {/* Performance monitoring */}
+          <PerformanceTracker monitor={perfMonitor.current} />
+        </Suspense>
+      </Canvas>
+
+      {/* UI Overlays (identical to 2D version) */}
+      {phase === GamePhase.IDLE && (
+        <div className="absolute bottom-32 left-0 right-0 flex justify-center pointer-events-none animate-bounce">
+          <div className="bg-white/90 px-6 py-3 rounded-full shadow-lg">
+            <p className="text-ocean-900 font-bold">Swipe up to cast! 🎣</p>
+          </div>
+        </div>
+      )}
+
+      {phase === GamePhase.HOOKED && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+          <div className="bg-red-500 text-white text-4xl font-bold px-8 py-4 rounded-full shadow-2xl animate-pulse">
+            TAP TO CATCH!
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Performance Tracker Component
+ * Updates performance monitor every frame
+ */
+const PerformanceTracker: React.FC<{ monitor: PerformanceMonitor }> = ({ monitor }) => {
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      monitor.update();
+    }, 16); // ~60fps check
+    return () => clearInterval(interval);
+  }, [monitor]);
+
+  return null;
+};
+
+export default ThreeFishingScene;

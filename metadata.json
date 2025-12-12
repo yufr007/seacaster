@@ -1,0 +1,9 @@
+{
+  "name": "SeaCaster",
+  "description": "A mobile-first competitive fishing game on Farcaster & Base. Cast your line, catch rare fish, and compete in tournaments.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

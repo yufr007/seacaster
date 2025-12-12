@@ -1,0 +1,27 @@
+# Ignore node modules and build artifacts
+node_modules/
+artifacts/
+cache/
+typechain-types/
+
+# Environment variables (NEVER COMMIT)
+.env
+
+# Build outputs
+*.tsbuildinfo
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Deployment outputs
+deployments/*.json
+!deployments/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db

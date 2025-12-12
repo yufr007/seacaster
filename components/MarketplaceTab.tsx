@@ -6,7 +6,7 @@ import { useUIStore } from '../store/uiStore';
 import { BAITS } from '../constants';
 import { useSound } from '../hooks/useSound';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { SEASON_PASS_ABI, CONTRACT_ADDRESSES } from '../contracts/abis';
+import { SEASON_PASS_ABI, CONTRACT_ADDRESSES } from '@/contracts/abis';
 import { parseEther } from 'viem';
 import AdOverlay from './AdOverlay';
 import { Haptics, triggerHaptic } from '../utils/haptics';

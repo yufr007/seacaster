@@ -1,5 +1,5 @@
 import { useWriteContract, useWaitForTransactionReceipt, useAccount, usePublicClient } from 'wagmi';
-import { SEASON_PASS_ABI, TOURNAMENT_POOL_ABI, ERC20_ABI, CONTRACT_ADDRESSES } from '../contracts/abis';
+import { SEASON_PASS_ABI, TOURNAMENT_POOL_ABI, ERC20_ABI, CONTRACT_ADDRESSES } from '@/contracts/abis';
 import { parseUnits } from 'viem';
 
 export const useContracts = () => {

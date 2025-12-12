@@ -1,0 +1,97 @@
+.agent/rules/seacaster.md[36m:[mDatabase: [1;31mSupabase[m (MVP, for profiles, bait/inventory, XP/level logs, non-onchain session data). Architect for easy migration to Cloud SQL/Firestore at scale.
+.agent/workflows/audit-fix-roadmap.md[36m:[m  console.log('✅ Using [1;31mSupabase[m for database');
+.agent/workflows/audit-fix-roadmap.md[36m:[m**Why:** You're using [1;31mSupabase[m-js (REST), not Prisma. Prisma tries to connect to port 5432 (causes connection issues).
+.agent/workflows/audit-fix-roadmap.md[36m:[m### **🟠 Issue #6: Add Missing [1;31mSupabase[m Env Vars**
+.agent/workflows/audit-fix-roadmap.md[36m:[m# [1;31mSupabase[m Configuration
+.agent/workflows/audit-fix-roadmap.md[36m:[m[1;31mSUPABASE[m_URL="https://vabaqkpslqyeipbssbin.[1;31msupabase[m.co"
+.agent/workflows/audit-fix-roadmap.md[36m:[m[1;31mSUPABASE[m_SERVICE_ROLE_KEY="your-service-role-key-here"
+.agent/workflows/audit-fix-roadmap.md[36m:[m6. Add [1;31mSupabase[m env vars                        ✓ 2 min
+.agent/workflows/audit-fix-roadmap.md[36m:[m- Verify [1;31mSupabase[m connection
+.agent/workflows/audit-fix-roadmap.md[36m:[m- [ ] All routes use [1;31mSupabase[m (not Prisma)
+.agent/workflows/audit-summary.md[36m:[m- [1;31mSupabase[m migration is solid
+.agent/workflows/audit-summary.md[36m:[m5. **Prisma still in backend** - connection conflicts with [1;31mSupabase[m
+.agent/workflows/audit-summary.md[36m:[mIssue #6: Add [1;31mSupabase[m env vars             2 min   ✓
+.agent/workflows/audit-summary.md[36m:[m- ✅ Backend properly uses [1;31mSupabase[m
+.agent/workflows/seaccaster-prompt.md[36m:[m### Database ([1;31mSupabase[m PostgreSQL)
+.env.doppler.example[36m:[m# Neynar-managed or [1;31mSupabase[m PostgreSQL
+CLAUDE.md[36m:[m- **Database**: [1;31mSupabase[m PostgreSQL + Upstash Redis (leaderboards, rate limits)
+DEPLOYMENT_GUIDE.md[36m:[m## 1. [1;31mSupabase[m Setup (Immediate Action Required)
+DEPLOYMENT_GUIDE.md[36m:[mYour project is configured to use **[1;31mSupabase[m REST API** via `backend/src/[1;31msupabase[m.ts` to bypass direct SQL connection issues.
+DEPLOYMENT_GUIDE.md[36m:[m1. Get your **Service Role Key** from [1;31mSupabase[m Dashboard > Project Settings > API.
+DEPLOYMENT_GUIDE.md[36m:[m[1;31mSUPABASE[m_URL="https://vabaqkpslqyeipbssbin.[1;31msupabase[m.co"
+DEPLOYMENT_GUIDE.md[36m:[m[1;31mSUPABASE[m_SERVICE_ROLE_KEY="eyJhRg..." # <--- Paste Key Here
+DEPLOYMENT_GUIDE.md[36m:[mRun the migration manually in the [1;31mSupabase[m SQL Editor:
+DEPLOYMENT_GUIDE.md[36m:[m- **Dashboard:** [SQL Editor](https://[1;31msupabase[m.com/dashboard/project/vabaqkpslqyeipbssbin/sql/new)
+DEPLOYMENT_GUIDE.md[36m:[m3. **Env Vars:** Add all variables from `backend/.env` (especially `[1;31mSUPABASE[m_SERVICE_ROLE_KEY`).
+DEPLOYMENT_GUIDE.md[36m:[m   - `VITE_[1;31mSUPABASE[m_URL`: `https://vabaqkpslqyeipbssbin.[1;31msupabase[m.co`
+DEPLOYMENT_GUIDE.md[36m:[m- **Game:** Verify 3D assets load and score submits to [1;31mSupabase[m.
+OG_FILES/seacaster_deployment.sh[36m:[m- **Database**: [1;31mSupabase[m dashboard
+backend/.env.example[36m:[m# [1;31mSupabase[m (REST API - Recommended)
+backend/.env.example[36m:[m[1;31mSUPABASE[m_URL="https://your-project.[1;31msupabase[m.co"
+backend/.env.example[36m:[m[1;31mSUPABASE[m_SERVICE_ROLE_KEY="your-service-role-key"
+backend/README.md[36m:[m- PostgreSQL 14+ (or [1;31mSupabase[m)
+backend/migrations.sql[36m:[m-- SeaCaster Initial Schema Migration (Run in [1;31mSupabase[m SQL Editor)
+backend/package-lock.json[36m:[m        "@[1;31msupabase[m/[1;31msupabase[m-js": "^2.87.1",
+backend/package-lock.json[36m:[m    "node_modules/@[1;31msupabase[m/auth-js": {
+backend/package-lock.json[36m:[m      "resolved": "https://registry.npmjs.org/@[1;31msupabase[m/auth-js/-/auth-js-2.87.1.tgz",
+backend/package-lock.json[36m:[m    "node_modules/@[1;31msupabase[m/functions-js": {
+backend/package-lock.json[36m:[m      "resolved": "https://registry.npmjs.org/@[1;31msupabase[m/functions-js/-/functions-js-2.87.1.tgz",
+backend/package-lock.json[36m:[m    "node_modules/@[1;31msupabase[m/postgrest-js": {
+backend/package-lock.json[36m:[m      "resolved": "https://registry.npmjs.org/@[1;31msupabase[m/postgrest-js/-/postgrest-js-2.87.1.tgz",
+backend/package-lock.json[36m:[m    "node_modules/@[1;31msupabase[m/realtime-js": {
+backend/package-lock.json[36m:[m      "resolved": "https://registry.npmjs.org/@[1;31msupabase[m/realtime-js/-/realtime-js-2.87.1.tgz",
+backend/package-lock.json[36m:[m    "node_modules/@[1;31msupabase[m/realtime-js/node_modules/ws": {
+backend/package-lock.json[36m:[m    "node_modules/@[1;31msupabase[m/storage-js": {
+backend/package-lock.json[36m:[m      "resolved": "https://registry.npmjs.org/@[1;31msupabase[m/storage-js/-/storage-js-2.87.1.tgz",
+backend/package-lock.json[36m:[m    "node_modules/@[1;31msupabase[m/[1;31msupabase[m-js": {
+backend/package-lock.json[36m:[m      "resolved": "https://registry.npmjs.org/@[1;31msupabase[m/[1;31msupabase[m-js/-/[1;31msupabase[m-js-2.87.1.tgz",
+backend/package-lock.json[36m:[m        "@[1;31msupabase[m/auth-js": "2.87.1",
+backend/package-lock.json[36m:[m        "@[1;31msupabase[m/functions-js": "2.87.1",
+backend/package-lock.json[36m:[m        "@[1;31msupabase[m/postgrest-js": "2.87.1",
+backend/package-lock.json[36m:[m        "@[1;31msupabase[m/realtime-js": "2.87.1",
+backend/package-lock.json[36m:[m        "@[1;31msupabase[m/storage-js": "2.87.1"
+backend/package.json[36m:[m    "@[1;31msupabase[m/[1;31msupabase[m-js": "^2.87.1",
+backend/scripts/probe-db.ts[36m:[m    const host = `db.${projectRef}.[1;31msupabase[m.co`; // Direct
+backend/scripts/probe-db.ts[36m:[m    const poolerHost = `${region}.pooler.[1;31msupabase[m.com`; // Pooler
+backend/scripts/probe-db.ts[36m:[m    const directUrl = `postgresql://postgres:${password}@db.${projectRef}.[1;31msupabase[m.co:5432/postgres`;
+backend/scripts/test-supabase-rest.ts[36m:[mimport { createClient } from '@[1;31msupabase[m/[1;31msupabase[m-js'
+backend/scripts/test-supabase-rest.ts[36m:[mconst [1;31msupabase[mUrl = 'https://vabaqkpslqyeipbssbin.[1;31msupabase[m.co';
+backend/scripts/test-supabase-rest.ts[36m:[mconst [1;31msupabase[mKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYmFxa3BzbHF5ZWlwYnNzYmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNzY3NDUsImV4cCI6MjA4MDg1Mjc0NX0.oECLZLSlknr4fFpYCIemGkU4LGmh7es4-2oPlE2uJ_4';
+backend/scripts/test-supabase-rest.ts[36m:[mconst [1;31msupabase[m = createClient([1;31msupabase[mUrl, [1;31msupabase[mKey);
+backend/scripts/test-supabase-rest.ts[36m:[m    console.log(`Checking project status at ${[1;31msupabase[mUrl}...`);
+backend/scripts/test-supabase-rest.ts[36m:[m    const { data, error, status } = await [1;31msupabase[m.from('User').select('*').limit(1);
+backend/src/routes/game.ts[36m:[mimport { [1;31msupabase[m } from '../[1;31msupabase[m';
+backend/src/routes/game.ts[36m:[m  const { data: user, error: userError } = await [1;31msupabase[m
+backend/src/routes/game.ts[36m:[m    const { error: invError } = await [1;31msupabase[m
+backend/src/routes/game.ts[36m:[m  const { error: catchError } = await [1;31msupabase[m
+backend/src/routes/game.ts[36m:[m  const { data: currentUser, error: fetchError } = await [1;31msupabase[m
+backend/src/routes/game.ts[36m:[m    const { error: userError } = await [1;31msupabase[m
+backend/src/routes/game.ts[36m:[m      [1;31msupabase[m.from('User').select('*').eq('fid', fid).single(),
+backend/src/routes/game.ts[36m:[m      [1;31msupabase[m.from('Inventory').select('*').eq('userId', fid).single(),
+backend/src/routes/scores.ts[36m:[mimport { [1;31msupabase[m } from '../[1;31msupabase[m';
+backend/src/routes/scores.ts[36m:[m        const { error } = await [1;31msupabase[m
+backend/src/routes/scores.ts[36m:[m            console.error('[1;31mSupabase[m insert error:', error);
+backend/src/routes/scores.ts[36m:[m        const { data, error } = await [1;31msupabase[m
+backend/src/routes/scores.ts[36m:[m            console.error('[1;31mSupabase[m select error:', error);
+backend/src/routes/webhook.ts[36m:[mimport { [1;31msupabase[m } from '../[1;31msupabase[m';
+backend/src/routes/webhook.ts[36m:[m  const { data: user, error } = await [1;31msupabase[m
+backend/src/routes/webhook.ts[36m:[m  await [1;31msupabase[m.from('AuditLog').insert({
+backend/src/routes/webhook.ts[36m:[m  console.log(`[Growth] User ${fid} added app ([1;31mSupabase[m REST)`);
+backend/src/routes/webhook.ts[36m:[m  await [1;31msupabase[m.from('AuditLog').insert({
+backend/src/server.ts[36m:[m  console.log('[Database] Using [1;31mSupabase[m REST API');
+backend/src/server.ts[36m:[m        console.warn(`[Database] Prisma connection failed: ${e.message}. Using [1;31mSupabase[m REST.`);
+backend/src/supabase.ts[36m:[mimport { createClient } from '@[1;31msupabase[m/[1;31msupabase[m-js';
+backend/src/supabase.ts[36m:[mconst [1;31msupabase[mUrl = process.env.[1;31mSUPABASE[m_URL || process.env.DATABASE_URL?.split('@')[1]?.split(':')[0] ? `https://${process.env.DATABASE_URL?.match(/postgres\.[^:]+/)?.[0]?.split('.')[1]}.[1;31msupabase[m.co` : '';
+backend/src/supabase.ts[36m:[mconst [1;31msupabase[mServiceKey = process.env.[1;31mSUPABASE[m_SERVICE_ROLE_KEY || '';
+backend/src/supabase.ts[36m:[mif (![1;31msupabase[mUrl || ![1;31msupabase[mServiceKey) {
+backend/src/supabase.ts[36m:[m    console.warn('[[1;31mSupabase[m] Missing [1;31mSUPABASE[m_URL or [1;31mSUPABASE[m_SERVICE_ROLE_KEY. REST DB features will fail.');
+backend/src/supabase.ts[36m:[mexport const [1;31msupabase[m = createClient([1;31msupabase[mUrl || 'https://placeholder.[1;31msupabase[m.co', [1;31msupabase[mServiceKey || 'placeholder');
+prompt.md[36m:[m### Database ([1;31mSupabase[m PostgreSQL)
+seacaster_database_final_decision.md[36m:[m# 🎣 DATABASE CHOICE: [1;31mSUPABASE[m (NOT DOCKER, NOT NEON)
+seacaster_database_final_decision.md[36m:[m## **Why [1;31mSupabase[m?**
+seacaster_database_final_decision.md[36m:[m## **[1;31mSUPABASE[m SETUP (5 MINUTES)**
+seacaster_database_final_decision.md[36m:[mhttps://[1;31msupabase[m.com/dashboard
+seacaster_database_final_decision.md[36m:[mDATABASE_URL="postgresql://postgres.YOUR-REF:PASSWORD@YOUR-REGION.pooler.[1;31msupabase[m.com:6543/postgres"
+seacaster_database_final_decision.md[36m:[m## **WHY [1;31mSUPABASE[m BEATS NEON FOR SEACASTER**
+seacaster_database_final_decision.md[36m:[m| Feature | [1;31mSupabase[m | Neon |
+seacaster_database_final_decision.md[36m:[mUse [1;31mSupabase[m (perfect for everything)

@@ -8,6 +8,8 @@ import ProfileModal from './components/ProfileModal';
 import ToastContainer from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Home, Trophy, ShoppingBag } from 'lucide-react';
+
+import { MenuScreen } from './components/MenuScreen';
 import { farcaster } from './services/farcaster';
 import { useGameStore } from './store/gameStore';
 import { useUIStore } from './store/uiStore';
@@ -19,8 +21,9 @@ import { useWakeLock } from './hooks/useWakeLock';
 
 import { WalletConnect } from './components/WalletConnect';
 
+
 const SeaCasterApp: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'fish' | 'compete' | 'shop'>('fish');
+  const [screen, setScreen] = useState<'menu' | 'game' | 'shop'>('menu');
   const [isReady, setIsReady] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const { userStats, regenerateCasts, checkDailyLogin, syncPremiumStatus } = useGameStore();
@@ -31,7 +34,7 @@ const SeaCasterApp: React.FC = () => {
   const { checkSeasonPass } = useContracts();
 
   // PWA Features: Keep screen on during fishing
-  useWakeLock(activeTab === 'fish');
+  useWakeLock(screen === 'game');
 
   // Verify Season Pass on wallet connect
   useEffect(() => {
@@ -45,12 +48,15 @@ const SeaCasterApp: React.FC = () => {
     }
   }, [isConnected, address, checkSeasonPass, userStats.premium, syncPremiumStatus, addToast]);
 
+
+
   // Lock orientation to portrait (mobile PWA)
   useEffect(() => {
     const lockOrientation = async () => {
-      if (screen.orientation && screen.orientation.lock) {
+      const screenAny = window.screen as any;
+      if (screenAny.orientation && screenAny.orientation.lock) {
         try {
-          await screen.orientation.lock('portrait');
+          await screenAny.orientation.lock('portrait');
           console.log('[Orientation] Locked to portrait');
         } catch (err) {
           console.warn('[Orientation] Lock failed (may require fullscreen):', err);
@@ -93,9 +99,10 @@ const SeaCasterApp: React.FC = () => {
     return () => clearInterval(interval);
   }, [regenerateCasts, checkDailyLogin, addToast]);
 
-  const handleTabChange = (tab: 'fish' | 'compete' | 'shop') => {
+  // Haptic feedback wrapper
+  const handleScreenChange = (newScreen: 'menu' | 'game' | 'shop') => {
     triggerHaptic(Haptics.soft);
-    setActiveTab(tab);
+    setScreen(newScreen);
   };
 
   const handleOpenProfile = () => {
@@ -115,9 +122,10 @@ const SeaCasterApp: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full w-full max-w-md mx-auto relative bg-ocean-900 shadow-2xl overflow-hidden font-sans">
-      <div className="absolute top-16 right-4 z-50">
+      <div className="absolute top-4 right-4 z-50">
         <WalletConnect />
       </div>
+
       {/* Landscape orientation warning */}
       <div className="landscape-warning">
         <div className="text-6xl mb-4">📱</div>
@@ -128,46 +136,38 @@ const SeaCasterApp: React.FC = () => {
       <ToastContainer />
 
       {/* Main Content Area */}
-      <div className="flex-1 relative overflow-hidden bg-ocean-900">
-        {activeTab === 'fish' && (
+      <div className="flex-1 relative overflow-hidden bg-ocean-900 h-full">
+        {screen === 'menu' && (
+          <MenuScreen
+            onCompete={() => handleScreenChange('game')}
+            onShop={() => handleScreenChange('shop')}
+            onConnect={() => console.log('Connect wallet clicked')}
+            xp={userStats.xp}
+            coins={userStats.coins}
+          />
+        )}
+
+        {screen === 'game' && (
           <>
             <GameHUD onOpenProfile={handleOpenProfile} />
-            <FishingScene />
+            <FishingScene onBack={() => handleScreenChange('menu')} />
             <FishModal />
           </>
         )}
-        {activeTab === 'compete' && <TournamentBoard onBack={() => handleTabChange('fish')} />}
-        {activeTab === 'shop' && <MarketplaceTab onBack={() => handleTabChange('fish')} />}
+
+        {/* Keeping TournamentBoard accessible via Compete flow if needed, or integrating into Menu later.
+            For now, 'Compete' button on Menu goes to 'game' (Fishing) per user request, 
+            Usage of TournamentBoard might be inside GameHUD or separate. 
+            The workflow logic said "onCompete={() => setScreen('game')}", so sticking to that.
+        */}
+
+        {screen === 'shop' && (
+          <MarketplaceTab onBack={() => handleScreenChange('menu')} />
+        )}
       </div>
 
       {/* Modal Layer */}
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
-
-      {/* Bottom Navigation */}
-      <div className="h-24 bg-ocean-900/95 backdrop-blur-md border-t border-ocean-700 flex justify-around items-start pt-3 px-4 z-50 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
-        <button
-          onClick={() => handleTabChange('compete')}
-          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all w-20 ${activeTab === 'compete' ? 'text-yellow-400 scale-105' : 'text-ocean-400 hover:text-ocean-200'}`}
-        >
-          <Trophy size={26} strokeWidth={activeTab === 'compete' ? 3 : 2} className="transition-transform active:scale-90" />
-          <span className="text-[10px] font-bold tracking-wide">Compete</span>
-        </button>
-
-        <button
-          onClick={() => handleTabChange('fish')}
-          className={`flex flex-col items-center justify-center -mt-10 w-20 h-20 rounded-full border-[6px] border-ocean-900 shadow-2xl transition-all ${activeTab === 'fish' ? 'bg-gradient-to-b from-sky-400 to-sky-600 text-white scale-110 ring-4 ring-sky-500/20 shadow-[0_0_20px_rgba(56,189,248,0.4)]' : 'bg-ocean-700 text-ocean-300'}`}
-        >
-          <Home size={32} fill={activeTab === 'fish' ? 'currentColor' : 'none'} className="drop-shadow-md" />
-        </button>
-
-        <button
-          onClick={() => handleTabChange('shop')}
-          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all w-20 ${activeTab === 'shop' ? 'text-green-400 scale-105' : 'text-ocean-400 hover:text-ocean-200'}`}
-        >
-          <ShoppingBag size={26} strokeWidth={activeTab === 'shop' ? 3 : 2} className="transition-transform active:scale-90" />
-          <span className="text-[10px] font-bold tracking-wide">Shop</span>
-        </button>
-      </div>
 
     </div>
   );

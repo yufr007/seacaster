@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useRef, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { useGameStore } from '../store/gameStore';
 import { GamePhase } from '../types';
 import { PerformanceMonitor, QualityLevel } from '../utils/performanceMonitor';
@@ -13,6 +13,42 @@ import { FishSchool } from './three/FishSchool';
 import { PrestigeShip } from './three/PrestigeShip';
 
 /**
+ * Responsive handler for R3F Canvas
+ * Ensure Three.js canvas resizes correctly on mobile landscape/portrait changes
+ */
+const ResponsiveHandler = () => {
+  const { gl, camera } = useThree();
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      // Explicitly control size and pixel ratio
+      gl.setPixelRatio(window.devicePixelRatio);
+      gl.setSize(width, height);
+
+      // Update camera
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    // Initial setup
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, [gl, camera]);
+
+  return null;
+};
+
+/**
  * Three.js 3D Fishing Scene
  * Mobile-optimized with 30fps target and adaptive quality
  * Replaces 2D Framer Motion with full WebGL 3D rendering
@@ -22,7 +58,8 @@ const ThreeFishingScene: React.FC = () => {
   const touchStartY = useRef<number | null>(null);
   const [quality, setQuality] = useState<QualityLevel>('high');
   const perfMonitor = useRef(new PerformanceMonitor());
-  const [pixelRatio, setPixelRatio] = useState<number>(1);
+  // Initialize with correct DPR
+  const [pixelRatio, setPixelRatio] = useState<number>(typeof window !== 'undefined' ? window.devicePixelRatio : 1);
 
   // Monitor performance and adjust quality
   useEffect(() => {
@@ -35,6 +72,7 @@ const ThreeFishingScene: React.FC = () => {
         setQuality(newQuality);
       }
 
+      // Only update if significantly different to avoid jitter, but allow initial fetch
       if (Math.abs(newPixelRatio - pixelRatio) > 0.1) {
         setPixelRatio(newPixelRatio);
       }
@@ -121,6 +159,7 @@ const ThreeFishingScene: React.FC = () => {
         }}
       >
         <Suspense fallback={null}>
+          <ResponsiveHandler />
           {/* Scene components */}
           <Sky />
           <Ocean phase={phase} />

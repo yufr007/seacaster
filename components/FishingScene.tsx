@@ -9,25 +9,48 @@ import { Haptics, triggerHaptic } from '../utils/haptics';
 // Lazy load 3D scene for performance
 const ThreeFishingScene = lazy(() => import('./ThreeFishingScene'));
 
+
+import { Home } from 'lucide-react';
+
+interface FishingSceneProps {
+  onBack?: () => void;
+}
+
 /**
  * Fishing Scene Wrapper
  * Toggles between 2D (Framer Motion) and 3D (Three.js) based on feature flag
  */
-const FishingScene: React.FC = () => {
+const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
   const { userStats } = useGameStore();
 
   // Feature flag: Enable 3D for all users (can be changed to level-based)
   const use3D = userStats.level >= 1; // Change to >= 50 for L50+ only
 
-  if (use3D) {
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <ThreeFishingScene />
-      </Suspense>
-    );
-  }
+  const SceneComponent = use3D ? (
+    <Suspense fallback={<LoadingFallback />}>
+      <ThreeFishingScene />
+    </Suspense>
+  ) : (
+    <FishingScene2D />
+  );
 
-  return <FishingScene2D />;
+  return (
+    <div className="relative w-full h-full">
+      {SceneComponent}
+
+      {/* Back to Menu Button */}
+      {onBack && (
+        <div className="absolute top-4 left-4 z-50">
+          <button
+            onClick={onBack}
+            className="p-3 bg-ocean-900/50 backdrop-blur-md rounded-full text-white hover:bg-ocean-800 transition-colors border border-white/10 shadow-lg"
+          >
+            <Home size={24} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
 };
 
 /**

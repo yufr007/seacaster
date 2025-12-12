@@ -23,6 +23,16 @@
         "./*"
       ]
     },
+    "include": [
+      "src/**/*",
+      "components/**/*",
+      "hooks/**/*",
+      "store/**/*",
+      "services/**/*",
+      "contracts/**/*",
+      "*.tsx",
+      "*.ts"
+    ],
     "allowImportingTsExtensions": true,
     "noEmit": true
   }

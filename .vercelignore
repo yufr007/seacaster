@@ -1,6 +1,4 @@
-# Ignore backend and contracts in Vercel build
 backend/
-contracts/
 *.md
 .agent/
 .claude/

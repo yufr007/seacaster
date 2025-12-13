@@ -27,6 +27,9 @@ import { initializeSocketIO } from './sockets/tournamentSocket';
 // Import routes
 import webhookRoutes from './routes/webhook';
 import gameRoutes from './routes/game';
+import usersRoutes from './routes/users';
+import tournamentsRoutes from './routes/tournaments';
+import leaderboardRoutes from './routes/leaderboard';
 import { registerScoreRoutes } from './routes/scores';
 
 // Load environment variables
@@ -116,6 +119,9 @@ console.log('[Socket.IO] Real-time server initialized');
 // ===== REST API ROUTES =====
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/game', verifyToken, apiRateLimiter, gameRoutes);
+app.use('/api/users', apiRateLimiter, usersRoutes);
+app.use('/api/tournaments', apiRateLimiter, tournamentsRoutes);
+app.use('/api/leaderboard', apiRateLimiter, leaderboardRoutes);
 registerScoreRoutes(app);
 
 // Health check endpoint

@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.555.0",
     "node.js": "^0.0.1-security",
+    "posthog-js": "^1.306.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-is": "^19.2.1",

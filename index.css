@@ -1,119 +1,627 @@
-@import "tailwindcss";
+/* ============================================
+   SEACASTER - CLASH OF CLANS INSPIRED UI
+   Premium Mobile Game Design System
+   ============================================ */
 
-/* ===== Custom Theme Variables (Tailwind v4 CSS-first approach) ===== */
-@theme {
-  /* Dark mode ocean theme */
-  --color-dark-bg: #0B1120;
-  --color-dark-card: #141B2D;
-  --color-dark-hover: #1A2332;
+:root {
+  /* Core Game Colors - Vibrant & Cartoony */
+  --gold-primary: #FFD700;
+  --gold-light: #FFE55C;
+  --gold-dark: #CC9900;
+  --gold-border: #B8860B;
 
-  /* Ocean palette */
-  --color-ocean-50: #E8F5FF;
-  --color-ocean-100: #D1EBFF;
-  --color-ocean-200: #A3D7FF;
-  --color-ocean-300: #75C3FF;
-  --color-ocean-400: #47AFFF;
-  --color-ocean-500: #1E96FC;
-  --color-ocean-600: #0077E6;
-  --color-ocean-700: #005BB8;
-  --color-ocean-800: #003F8A;
-  --color-ocean-900: #00235C;
+  --blue-ocean: #1E90FF;
+  --blue-deep: #0066CC;
+  --blue-sky: #5CB8FF;
+  --blue-dark: #003366;
 
-  /* Status colors */
-  --color-success-500: #10B981;
-  --color-success-600: #059669;
-  --color-warning-500: #F59E0B;
-  --color-warning-600: #D97706;
-  --color-danger-500: #EF4444;
-  --color-danger-600: #DC2626;
+  --green-bright: #32CD32;
+  --green-dark: #228B22;
+  --green-glow: #90EE90;
 
-  /* Fonts */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'Orbitron', sans-serif;
+  --red-bright: #FF4444;
+  --red-dark: #CC0000;
 
-  /* Custom shadows */
-  --shadow-glow: 0 0 20px rgba(30, 150, 252, 0.3);
-  --shadow-glow-strong: 0 0 40px rgba(30, 150, 252, 0.5);
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --purple-epic: #9B59B6;
+  --purple-dark: #6C3483;
 
-  /* Custom animations */
-  --animate-fade-in: fadeIn 0.5s ease-in;
-  --animate-slide-up: slideUp 0.5s ease-out;
-  --animate-pulse-glow: pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --orange-warm: #FF8C00;
+  --orange-light: #FFA500;
+
+  /* UI Frame Colors */
+  --frame-brown: #5D4E37;
+  --frame-dark: #3D3426;
+  --frame-light: #8B7355;
+  --frame-border: #2D2419;
+
+  /* Background Gradients */
+  --bg-ocean: linear-gradient(180deg, #1E90FF 0%, #0066CC 50%, #003366 100%);
+  --bg-sunset: linear-gradient(180deg, #FF6B35 0%, #FF8C42 50%, #FFB347 100%);
+  --bg-night: linear-gradient(180deg, #2C3E50 0%, #1A252F 100%);
+
+  /* Shadows & Effects */
+  --shadow-heavy: 0 6px 0 rgba(0, 0, 0, 0.4);
+  --shadow-button: 0 4px 0 rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 8px 16px rgba(0, 0, 0, 0.4);
+  --shadow-glow-gold: 0 0 20px rgba(255, 215, 0, 0.5);
+  --shadow-glow-blue: 0 0 20px rgba(30, 144, 255, 0.5);
+
+  /* Typography */
+  --font-game: 'Lilita One', 'Fredoka One', 'Boogaloo', 'Comic Sans MS', cursive;
+  --font-ui: 'Nunito', 'Rubik', -apple-system, sans-serif;
+
+  /* Border Radius */
+  --radius-button: 12px;
+  --radius-card: 16px;
+  --radius-panel: 20px;
 }
 
-/* ===== Keyframes ===== */
-@keyframes fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
-@keyframes slideUp {
-  0% { transform: translateY(20px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(30, 150, 252, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(30, 150, 252, 0.6); }
-}
-
-/* ===== Base Styles ===== */
-@layer base {
-  body {
-    background-color: var(--color-dark-bg);
-    color: white;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-}
-
-/* ===== Landscape Orientation Warning ===== */
-@media screen and (orientation: landscape) {
-  .landscape-warning {
-    display: flex;
-    position: fixed;
-    inset: 0;
-    background: #0B1120;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    flex-direction: column;
-    color: white;
-  }
-}
-
-@media screen and (orientation: portrait) {
-  .landscape-warning {
-    display: none;
-  }
-}
-
-/* ===== Utility Classes ===== */
-.glow {
-  box-shadow: var(--shadow-glow);
-}
-
-.glow-strong {
-  box-shadow: var(--shadow-glow-strong);
-}
-
-
-.card-shadow {
-  box-shadow: var(--shadow-card);
-}
-
-/* Mobile Viewport & Canvas Fixes */
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   overflow: hidden;
   margin: 0;
   padding: 0;
+  font-family: var(--font-ui);
 }
 
 canvas {
   width: 100% !important;
   height: 100% !important;
   display: block;
+}
+
+/* ============================================
+   GAME TYPOGRAPHY - CoC STYLE
+   ============================================ */
+
+.game-title {
+  font-family: var(--font-game);
+  color: var(--gold-primary);
+  text-shadow:
+    2px 2px 0 var(--gold-dark),
+    4px 4px 0 rgba(0, 0, 0, 0.5),
+    0 0 10px rgba(255, 215, 0, 0.3);
+  letter-spacing: 2px;
+}
+
+.game-text {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.game-number {
+  font-family: var(--font-game);
+  font-weight: 800;
+}
+
+/* ============================================
+   BUTTONS - CoC STYLE (3D with bottom shadow)
+   ============================================ */
+
+.btn-game {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 3px solid;
+  border-radius: var(--radius-button);
+  cursor: pointer;
+  transition: all 0.1s ease;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-button);
+}
+
+.btn-game:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+.btn-gold {
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold-primary) 50%, var(--gold-dark) 100%);
+  border-color: var(--gold-border);
+  color: var(--frame-dark);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.btn-gold:active {
+  background: linear-gradient(180deg, var(--gold-primary) 0%, var(--gold-dark) 100%);
+}
+
+.btn-blue {
+  background: linear-gradient(180deg, var(--blue-sky) 0%, var(--blue-ocean) 50%, var(--blue-deep) 100%);
+  border-color: var(--blue-dark);
+  color: white;
+}
+
+.btn-green {
+  background: linear-gradient(180deg, var(--green-glow) 0%, var(--green-bright) 50%, var(--green-dark) 100%);
+  border-color: #1B6B1B;
+  color: white;
+}
+
+.btn-red {
+  background: linear-gradient(180deg, #FF6666 0%, var(--red-bright) 50%, var(--red-dark) 100%);
+  border-color: #990000;
+  color: white;
+}
+
+.btn-purple {
+  background: linear-gradient(180deg, #BB8FCE 0%, var(--purple-epic) 50%, var(--purple-dark) 100%);
+  border-color: #4A235A;
+  color: white;
+}
+
+/* ============================================
+   CARDS - CoC STYLE ITEM CARDS
+   ============================================ */
+
+.game-card {
+  position: relative;
+  background: linear-gradient(180deg, #4A6741 0%, #3D5335 50%, #2E4228 100%);
+  border: 4px solid var(--frame-dark);
+  border-radius: var(--radius-card);
+  padding: 12px;
+  box-shadow:
+    var(--shadow-card),
+    inset 0 2px 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.game-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.game-card-header {
+  background: linear-gradient(180deg, var(--frame-light) 0%, var(--frame-brown) 100%);
+  border: 2px solid var(--frame-border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  text-align: center;
+  margin: -12px -12px 12px -12px;
+}
+
+/* ============================================
+   PANELS - CoC STYLE FRAMES
+   ============================================ */
+
+.game-panel {
+  background: linear-gradient(180deg, #5A7A52 0%, #4A6741 50%, #3D5335 100%);
+  border: 5px solid var(--frame-brown);
+  border-radius: var(--radius-panel);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.1),
+    0 8px 0 var(--frame-dark),
+    0 12px 20px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.game-panel::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  border-radius: calc(var(--radius-panel) - 6px);
+  pointer-events: none;
+}
+
+/* ============================================
+   RESOURCE COUNTERS - CoC BOTTOM BAR STYLE
+   ============================================ */
+
+.resource-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(180deg, #3D3426 0%, #2D2419 100%);
+  border: 3px solid #1D1A0F;
+  border-radius: 25px;
+  padding: 6px 16px 6px 8px;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    0 2px 0 rgba(255, 255, 255, 0.05);
+}
+
+.resource-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.resource-value {
+  font-family: var(--font-game);
+  font-size: 18px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  min-width: 50px;
+  text-align: right;
+}
+
+.resource-add {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(180deg, var(--green-bright) 0%, var(--green-dark) 100%);
+  border: 2px solid #1B5B1B;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 2px 0 #0D3D0D;
+}
+
+/* ============================================
+   TABS - CoC STYLE NAVIGATION TABS
+   ============================================ */
+
+.tab-group {
+  display: flex;
+  gap: 4px;
+  background: var(--frame-dark);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.tab-item {
+  flex: 1;
+  padding: 10px 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 1px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tab-item.inactive {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.tab-item.active {
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold-primary) 100%);
+  color: var(--frame-dark);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 0 var(--gold-dark);
+}
+
+.tab-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  background: var(--red-bright);
+  border: 2px solid white;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* ============================================
+   BADGES & RIBBONS
+   ============================================ */
+
+.ribbon {
+  position: absolute;
+  top: 10px;
+  left: -35px;
+  width: 120px;
+  padding: 6px 0;
+  background: linear-gradient(180deg, #FF6B35 0%, #E74C3C 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  text-align: center;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.badge-level {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(180deg, var(--blue-sky) 0%, var(--blue-ocean) 50%, var(--blue-deep) 100%);
+  border: 4px solid var(--gold-primary);
+  border-radius: 50%;
+  font-family: var(--font-game);
+  font-size: 22px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 4px 0 var(--gold-dark),
+    0 6px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+   PROGRESS BARS - CoC STYLE
+   ============================================ */
+
+.progress-bar-coc {
+  position: relative;
+  height: 24px;
+  background: linear-gradient(180deg, #1A1A1A 0%, #2D2D2D 100%);
+  border: 3px solid #0D0D0D;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+.progress-fill-coc {
+  height: 100%;
+  background: linear-gradient(180deg, var(--green-glow) 0%, var(--green-bright) 50%, var(--green-dark) 100%);
+  border-radius: 8px;
+  position: relative;
+  transition: width 0.5s ease;
+}
+
+.progress-fill-coc::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  right: 4px;
+  height: 6px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, transparent 100%);
+  border-radius: 4px;
+}
+
+.progress-text-coc {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12px;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes bounce-cartoon {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-10px) scale(1.05);
+  }
+}
+
+@keyframes wiggle {
+
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 200%;
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-bounce-cartoon {
+  animation: bounce-cartoon 2s ease-in-out infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.shine-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine-effect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shine 3s ease-in-out infinite;
+}
+
+/* ============================================
+   TOOLTIPS & POPUPS
+   ============================================ */
+
+.tooltip-coc {
+  position: absolute;
+  background: linear-gradient(180deg, #4A4A4A 0%, #2D2D2D 100%);
+  border: 3px solid #1A1A1A;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.tooltip-coc::before {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: #2D2D2D;
+}
+
+/* ============================================
+   MODAL OVERLAY
+   ============================================ */
+
+.modal-overlay-coc {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.modal-content-coc {
+  width: 100%;
+  max-width: 380px;
+  background: linear-gradient(180deg, #5A7A52 0%, #4A6741 50%, #3D5335 100%);
+  border: 6px solid var(--frame-brown);
+  border-radius: 24px;
+  box-shadow:
+    0 10px 0 var(--frame-dark),
+    0 15px 40px rgba(0, 0, 0, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-header-coc {
+  background: linear-gradient(180deg, var(--frame-light) 0%, var(--frame-brown) 100%);
+  border-bottom: 4px solid var(--frame-dark);
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.modal-title-coc {
+  font-family: var(--font-game);
+  font-size: 24px;
+  color: var(--gold-primary);
+  text-shadow:
+    2px 2px 0 var(--gold-dark),
+    0 0 10px rgba(255, 215, 0, 0.3);
+  margin: 0;
+}
+
+.modal-close-coc {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(180deg, var(--red-bright) 0%, var(--red-dark) 100%);
+  border: 3px solid #990000;
+  border-radius: 8px;
+  color: white;
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #660000;
+}
+
+/* ============================================
+   LANDSCAPE PREVENTION
+   ============================================ */
+
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .landscape-warning {
+    display: flex !important;
+  }
+}
+
+.landscape-warning {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg-night);
+  z-index: 9999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  color: white;
+  text-align: center;
+  padding: 20px;
 }

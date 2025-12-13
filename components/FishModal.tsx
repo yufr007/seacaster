@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
 import { GamePhase } from '../types';
 import { RARITY_COLORS, RARITY_BG } from '../constants';
-import { Star, Share2, Check, Sparkles, Trophy, Scale } from 'lucide-react';
+import { Check, Share2, Star, Trophy, Scale } from 'lucide-react';
 
 const FishModal: React.FC = () => {
   const { phase, lastCatch, collectReward, isNewCatch } = useGameStore();
@@ -20,217 +20,279 @@ const FishModal: React.FC = () => {
 
   if (phase !== GamePhase.REWARD || !lastCatch) return null;
 
-  const getRarityGlow = () => {
+  const getRarityGradient = () => {
     switch (lastCatch.rarity) {
-      case 'Mythic': return 'shadow-[0_0_60px_20px_rgba(236,72,153,0.4)]';
-      case 'Legendary': return 'shadow-[0_0_50px_15px_rgba(251,191,36,0.4)]';
-      case 'Epic': return 'shadow-[0_0_40px_12px_rgba(168,85,247,0.4)]';
-      case 'Rare': return 'shadow-[0_0_30px_10px_rgba(59,130,246,0.3)]';
-      default: return 'shadow-2xl';
+      case 'Mythic': return 'from-pink-500 via-purple-500 to-pink-600';
+      case 'Legendary': return 'from-yellow-400 via-amber-500 to-orange-500';
+      case 'Epic': return 'from-purple-400 via-purple-500 to-purple-600';
+      case 'Rare': return 'from-blue-400 via-blue-500 to-blue-600';
+      case 'Uncommon': return 'from-green-400 via-green-500 to-green-600';
+      default: return 'from-gray-400 via-gray-500 to-gray-600';
     }
   };
 
   const getRarityBorder = () => {
     switch (lastCatch.rarity) {
-      case 'Mythic': return 'border-pink-500/60';
-      case 'Legendary': return 'border-yellow-500/60';
-      case 'Epic': return 'border-purple-500/60';
-      case 'Rare': return 'border-blue-500/60';
-      default: return 'border-slate-600/60';
+      case 'Mythic': return '#EC4899';
+      case 'Legendary': return '#F59E0B';
+      case 'Epic': return '#8B5CF6';
+      case 'Rare': return '#3B82F6';
+      case 'Uncommon': return '#10B981';
+      default: return '#6B7280';
     }
   };
 
   return (
     <AnimatePresence>
       <motion.div
-        className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ background: 'rgba(0,0,0,0.9)' }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        {/* Confetti for rare catches */}
+        {/* Confetti */}
         {showConfetti && (
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {[...Array(30)].map((_, i) => (
+            {[...Array(40)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-3 h-3 rounded-sm"
+                className="absolute rounded-sm"
                 initial={{
-                  x: Math.random() * window.innerWidth,
-                  y: -20,
+                  x: '50%',
+                  y: '40%',
                   rotate: 0,
-                  opacity: 1
+                  opacity: 1,
+                  scale: 0
                 }}
                 animate={{
-                  y: window.innerHeight + 20,
+                  x: `${Math.random() * 100}%`,
+                  y: `${100 + Math.random() * 20}%`,
                   rotate: Math.random() * 720,
-                  opacity: [1, 1, 0]
+                  opacity: [1, 1, 0],
+                  scale: [0, 1, 0.5]
                 }}
                 transition={{
-                  duration: 2 + Math.random() * 2,
-                  delay: Math.random() * 0.5,
-                  ease: "easeIn"
+                  duration: 2 + Math.random(),
+                  delay: Math.random() * 0.3,
+                  ease: "easeOut"
                 }}
                 style={{
-                  background: ['#fbbf24', '#f472b6', '#60a5fa', '#34d399', '#a78bfa'][Math.floor(Math.random() * 5)]
+                  width: `${8 + Math.random() * 8}px`,
+                  height: `${8 + Math.random() * 8}px`,
+                  background: ['#FFD700', '#FF6B6B', '#4ECDC4', '#A78BFA', '#F472B6'][Math.floor(Math.random() * 5)]
                 }}
               />
             ))}
           </div>
         )}
 
+        {/* CoC Style Modal */}
         <motion.div
-          className={`w-full max-w-sm bg-gradient-to-b from-slate-800 to-slate-900 border-2 ${getRarityBorder()} rounded-3xl p-6 ${getRarityGlow()} relative overflow-hidden flex flex-col items-center gap-5 text-center`}
-          initial={{ scale: 0.5, y: 50, opacity: 0 }}
+          className="w-full max-w-sm relative"
+          initial={{ scale: 0.5, y: 100, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
-          exit={{ scale: 0.5, y: 50, opacity: 0 }}
+          exit={{ scale: 0.5, y: 100, opacity: 0 }}
           transition={{ type: "spring", bounce: 0.4, duration: 0.6 }}
         >
-
-          {/* Animated background effects */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {/* Gradient shine */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/10"
-              animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-
-            {/* Radial glow from fish */}
-            {isRare && (
-              <motion.div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full"
+          {/* Main Panel */}
+          <div
+            className="relative rounded-3xl overflow-hidden"
+            style={{
+              background: 'linear-gradient(180deg, #5A7A52 0%, #4A6741 50%, #3D5335 100%)',
+              border: `6px solid #5D4E37`,
+              boxShadow: '0 10px 0 #3D3426, 0 15px 40px rgba(0,0,0,0.6)'
+            }}
+          >
+            {/* Header */}
+            <div
+              className="text-center py-4 px-6"
+              style={{
+                background: 'linear-gradient(180deg, #8B7355 0%, #5D4E37 100%)',
+                borderBottom: '4px solid #3D3426'
+              }}
+            >
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Star size={18} className="text-yellow-400 fill-yellow-400" />
+                <h3
+                  className={`text-sm uppercase tracking-[0.2em] font-bold bg-gradient-to-r ${getRarityGradient()} bg-clip-text text-transparent`}
+                >
+                  {lastCatch.rarity} Catch!
+                </h3>
+                <Star size={18} className="text-yellow-400 fill-yellow-400" />
+              </div>
+              <motion.h2
+                className="text-3xl font-black text-white"
                 style={{
-                  background: `radial-gradient(circle, ${lastCatch.rarity === 'Mythic' ? 'rgba(236,72,153,0.2)' :
-                      lastCatch.rarity === 'Legendary' ? 'rgba(251,191,36,0.2)' :
-                        lastCatch.rarity === 'Epic' ? 'rgba(168,85,247,0.2)' :
-                          'rgba(59,130,246,0.2)'
-                    } 0%, transparent 70%)`
+                  fontFamily: "'Lilita One', cursive",
+                  textShadow: '3px 3px 0 rgba(0,0,0,0.4)'
                 }}
-                animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.8, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-            )}
-          </div>
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring" }}
+              >
+                {lastCatch.name}
+              </motion.h2>
+            </div>
 
-          {/* New Catch Badge */}
-          <AnimatePresence>
+            {/* New Badge */}
             {isNewCatch && (
               <motion.div
-                className="absolute top-6 -left-10 rotate-[-35deg] bg-gradient-to-r from-yellow-400 to-amber-500 text-black font-black text-xs py-1.5 px-12 shadow-lg z-20"
-                initial={{ x: -100, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.3, type: "spring" }}
+                className="absolute top-12 -left-8 rotate-[-35deg] py-2 px-12 text-black font-black text-xs z-20"
+                style={{
+                  background: 'linear-gradient(180deg, #FFD700 0%, #FFA500 100%)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
+                }}
+                initial={{ x: -100 }}
+                animate={{ x: 0 }}
+                transition={{ delay: 0.4, type: "spring" }}
               >
                 ✨ NEW!
               </motion.div>
             )}
-          </AnimatePresence>
 
-          {/* Header */}
-          <motion.div
-            className="space-y-1 z-10"
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Sparkles size={16} className={RARITY_COLORS[lastCatch.rarity]?.split(' ')[0] || 'text-slate-400'} />
-              <h3 className={`text-sm uppercase tracking-[0.2em] font-bold ${RARITY_COLORS[lastCatch.rarity]?.split(' ')[0] || 'text-slate-400'}`}>
-                {lastCatch.rarity} Catch
-              </h3>
-              <Sparkles size={16} className={RARITY_COLORS[lastCatch.rarity]?.split(' ')[0] || 'text-slate-400'} />
-            </div>
-            <motion.h2
-              className="text-3xl font-black text-white drop-shadow-lg"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.3, type: "spring", bounce: 0.5 }}
-            >
-              {lastCatch.name}
-            </motion.h2>
-          </motion.div>
+            {/* Content */}
+            <div className="p-5 flex flex-col items-center gap-4">
 
-          {/* Fish Display */}
-          <motion.div
-            className={`relative w-36 h-36 ${RARITY_BG[lastCatch.rarity]} rounded-full flex items-center justify-center text-7xl z-10`}
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.1, type: "spring", bounce: 0.4 }}
-          >
-            {/* Outer ring animation */}
-            <motion.div
-              className="absolute inset-[-8px] rounded-full border-2 border-white/20"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            />
-            <motion.div
-              className="absolute inset-[-16px] rounded-full border border-white/10"
-              animate={{ rotate: -360 }}
-              transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-            />
-
-            {/* Fish emoji with bounce */}
-            <motion.span
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            >
-              {lastCatch.image}
-            </motion.span>
-          </motion.div>
-
-          {/* Stats Grid */}
-          <motion.div
-            className="grid grid-cols-2 gap-4 w-full z-10"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="bg-gradient-to-br from-slate-700/80 to-slate-800/80 p-4 rounded-2xl flex flex-col items-center border border-slate-600/50 backdrop-blur-sm">
-              <Scale size={18} className="text-blue-400 mb-1" />
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Weight</span>
-              <span className="text-2xl font-black text-white">{lastCatch.weight} <span className="text-sm font-medium text-slate-400">lbs</span></span>
-            </div>
-            <div className="bg-gradient-to-br from-slate-700/80 to-slate-800/80 p-4 rounded-2xl flex flex-col items-center border border-slate-600/50 backdrop-blur-sm">
-              <Trophy size={18} className="text-green-400 mb-1" />
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Experience</span>
-              <motion.span
-                className="text-2xl font-black text-green-400"
-                initial={{ scale: 1 }}
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ delay: 0.6, duration: 0.3 }}
+              {/* Fish Display - CoC Card Style */}
+              <motion.div
+                className="relative"
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.15, type: "spring", bounce: 0.4 }}
               >
-                +{lastCatch.xp}
-              </motion.span>
+                {/* Glow Ring */}
+                <motion.div
+                  className="absolute inset-[-12px] rounded-full"
+                  style={{
+                    background: `radial-gradient(circle, ${getRarityBorder()}40 0%, transparent 70%)`
+                  }}
+                  animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+
+                {/* Fish Circle */}
+                <div
+                  className="w-32 h-32 rounded-full flex items-center justify-center relative"
+                  style={{
+                    background: 'linear-gradient(180deg, #3D5335 0%, #2E4228 100%)',
+                    border: `5px solid ${getRarityBorder()}`,
+                    boxShadow: `0 6px 0 ${getRarityBorder()}80, 0 10px 20px rgba(0,0,0,0.4)`
+                  }}
+                >
+                  <motion.span
+                    className="text-6xl"
+                    style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))' }}
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    {lastCatch.image}
+                  </motion.span>
+                </div>
+              </motion.div>
+
+              {/* Stats Row */}
+              <motion.div
+                className="grid grid-cols-2 gap-3 w-full"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.35 }}
+              >
+                {/* Weight */}
+                <div
+                  className="flex flex-col items-center p-3 rounded-xl"
+                  style={{
+                    background: 'linear-gradient(180deg, #3D5335 0%, #2E4228 100%)',
+                    border: '3px solid #1D2A19',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+                  }}
+                >
+                  <Scale size={20} className="text-blue-400 mb-1" />
+                  <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">Weight</span>
+                  <span
+                    className="text-2xl font-black text-white"
+                    style={{ fontFamily: "'Lilita One', cursive" }}
+                  >
+                    {lastCatch.weight} <span className="text-sm font-medium text-gray-400">lbs</span>
+                  </span>
+                </div>
+
+                {/* XP */}
+                <div
+                  className="flex flex-col items-center p-3 rounded-xl"
+                  style={{
+                    background: 'linear-gradient(180deg, #3D5335 0%, #2E4228 100%)',
+                    border: '3px solid #1D2A19',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+                  }}
+                >
+                  <Trophy size={20} className="text-green-400 mb-1" />
+                  <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">Experience</span>
+                  <motion.span
+                    className="text-2xl font-black text-green-400"
+                    style={{ fontFamily: "'Lilita One', cursive" }}
+                    initial={{ scale: 1 }}
+                    animate={{ scale: [1, 1.3, 1] }}
+                    transition={{ delay: 0.5, duration: 0.4 }}
+                  >
+                    +{lastCatch.xp}
+                  </motion.span>
+                </div>
+              </motion.div>
+
+              {/* Action Buttons - CoC Style */}
+              <motion.div
+                className="flex w-full gap-3 mt-2"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.45 }}
+              >
+                {/* Collect Button */}
+                <motion.button
+                  className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl font-black text-lg text-white relative overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(180deg, #58D68D 0%, #27AE60 50%, #1E8449 100%)',
+                    border: '4px solid #145A32',
+                    boxShadow: '0 5px 0 #0B3D20, 0 8px 15px rgba(0,0,0,0.4)',
+                    fontFamily: "'Lilita One', cursive",
+                    textShadow: '2px 2px 0 #145A32'
+                  }}
+                  onClick={collectReward}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98, y: 5, boxShadow: '0 0 0 #0B3D20' }}
+                >
+                  <Check size={24} strokeWidth={3} />
+                  <span>COLLECT</span>
+
+                  {/* Shine effect */}
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                    }}
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '200%' }}
+                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                  />
+                </motion.button>
+
+                {/* Share Button */}
+                <motion.button
+                  className="w-16 flex items-center justify-center rounded-xl"
+                  style={{
+                    background: 'linear-gradient(180deg, #5DADE2 0%, #2E86C1 100%)',
+                    border: '4px solid #1A5276',
+                    boxShadow: '0 5px 0 #0E3A5E, 0 8px 15px rgba(0,0,0,0.4)'
+                  }}
+                  onClick={() => alert("Sharing to Farcaster...")}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95, y: 5 }}
+                >
+                  <Share2 size={24} className="text-white" />
+                </motion.button>
+              </motion.div>
             </div>
-          </motion.div>
-
-          {/* Action Buttons */}
-          <motion.div
-            className="flex w-full gap-3 mt-2 z-10"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            <motion.button
-              className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/50 border border-blue-400/30"
-              onClick={collectReward}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Check size={22} strokeWidth={3} />
-              <span className="text-lg">Collect</span>
-            </motion.button>
-            <motion.button
-              className="w-14 bg-gradient-to-br from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center shadow-lg border border-slate-600/50"
-              onClick={() => alert("Simulating Farcaster cast sharing...")}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Share2 size={22} />
-            </motion.button>
-          </motion.div>
-
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

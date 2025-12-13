@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
 import { useUIStore } from '../store/uiStore';
 import { LEVEL_BASE_XP, LEVEL_EXPONENT, BAITS } from '../constants';
-import { Coins, Zap, MapPin, CircleUser, Gift, Flame, ChevronDown, Sparkles } from 'lucide-react';
+import { Zap, Settings, Gift, Home, ChevronDown } from 'lucide-react';
 import DailyStreak from './DailyStreak';
 import BaitSelector from './BaitSelector';
 
@@ -24,7 +24,6 @@ const GameHUD: React.FC<GameHUDProps> = ({ onOpenProfile }) => {
 
   const handleOpenChest = async () => {
     setIsChestOpening(true);
-    // Add delay for animation
     await new Promise(resolve => setTimeout(resolve, 800));
     const msg = openChest();
     addToast(msg, 'success');
@@ -34,240 +33,306 @@ const GameHUD: React.FC<GameHUDProps> = ({ onOpenProfile }) => {
   return (
     <>
       <div className="absolute top-0 left-0 w-full p-3 z-40 pointer-events-none">
-        <div className="flex justify-between items-start gap-3">
+        <div className="flex justify-between items-start gap-2">
 
-          {/* Top Left: Level & Progress */}
+          {/* Left Side: Level & XP */}
           <motion.div
-            className="flex flex-col gap-2 pointer-events-auto"
+            className="flex items-center gap-2 pointer-events-auto"
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.4 }}
           >
+            {/* Level Badge - CoC Style */}
             <motion.button
               onClick={onOpenProfile}
-              className="flex items-center gap-3 bg-gradient-to-r from-slate-900/90 to-slate-800/90 backdrop-blur-xl p-2.5 rounded-2xl border border-white/10 shadow-2xl"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative"
             >
-              {/* Level Badge */}
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-800 rounded-xl flex items-center justify-center font-black text-white border-2 border-blue-400/50 text-xl shadow-lg shadow-blue-500/30">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center"
+                style={{
+                  background: 'linear-gradient(180deg, #5DADE2 0%, #2E86C1 50%, #1A5276 100%)',
+                  border: '4px solid #F4D03F',
+                  boxShadow: '0 4px 0 #C19A00, 0 6px 10px rgba(0,0,0,0.4)'
+                }}
+              >
+                <span
+                  className="text-2xl font-black text-white"
+                  style={{
+                    fontFamily: "'Lilita One', cursive",
+                    textShadow: '2px 2px 0 #1A5276'
+                  }}
+                >
                   {userStats.level}
-                </div>
-                {userStats.premium && (
-                  <motion.div
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full border-2 border-yellow-300 shadow-lg flex items-center justify-center"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <Sparkles size={10} className="text-white" />
-                  </motion.div>
-                )}
+                </span>
               </div>
 
-              {/* XP Bar */}
-              <div className="flex flex-col w-28">
-                <div className="flex justify-between text-[10px] text-blue-200 font-bold uppercase tracking-wider mb-1">
-                  <span>XP</span>
-                  <span className="text-white">{Math.floor(progressPercent)}%</span>
-                </div>
-                <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700 relative">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500 rounded-full relative"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progressPercent}%` }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                  </motion.div>
-                  {/* Glow effect */}
-                  <div
-                    className="absolute top-0 h-full w-4 bg-gradient-to-r from-transparent via-white/50 to-transparent blur-sm"
-                    style={{ left: `calc(${progressPercent}% - 8px)` }}
-                  />
-                </div>
-              </div>
-
-              <CircleUser size={18} className="text-white/40 hover:text-white/70 transition-colors" />
+              {/* Premium Crown */}
+              {userStats.premium && (
+                <motion.div
+                  className="absolute -top-2 -right-1 text-lg"
+                  animate={{ rotate: [-5, 5, -5] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                >
+                  👑
+                </motion.div>
+              )}
             </motion.button>
 
-            {/* Network Badge */}
-            <motion.div
-              className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-900/60 to-emerald-800/40 backdrop-blur-sm rounded-full border border-emerald-500/30 w-fit"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50" />
-              <span className="text-[10px] font-bold text-emerald-200 uppercase tracking-widest">Base Mainnet</span>
-            </motion.div>
+            {/* XP Bar - CoC Style */}
+            <div className="flex flex-col gap-1">
+              <div
+                className="w-24 h-4 rounded-lg overflow-hidden relative"
+                style={{
+                  background: 'linear-gradient(180deg, #1A1A1A 0%, #2D2D2D 100%)',
+                  border: '2px solid #0D0D0D',
+                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)'
+                }}
+              >
+                <motion.div
+                  className="h-full rounded"
+                  style={{
+                    background: 'linear-gradient(180deg, #82E0AA 0%, #27AE60 50%, #1E8449 100%)',
+                  }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressPercent}%` }}
+                  transition={{ duration: 1 }}
+                />
+                {/* Shine effect */}
+                <div
+                  className="absolute top-0.5 left-1 right-1 h-1.5 rounded"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 100%)',
+                    width: `${Math.max(0, progressPercent - 8)}%`
+                  }}
+                />
+                <span
+                  className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white"
+                  style={{ textShadow: '1px 1px 1px rgba(0,0,0,0.8)' }}
+                >
+                  {Math.floor(progressPercent)}%
+                </span>
+              </div>
+              <span className="text-[9px] font-bold text-white/60 uppercase tracking-wider">XP</span>
+            </div>
           </motion.div>
 
-          {/* Top Right: Currency & Streak */}
+          {/* Right Side: Resources */}
           <motion.div
             className="flex flex-col gap-2 items-end pointer-events-auto"
             initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.4 }}
           >
-            {/* Coins */}
-            <motion.div
-              className="flex items-center gap-2 bg-gradient-to-r from-amber-900/80 to-yellow-900/60 backdrop-blur-xl px-4 py-2.5 rounded-2xl border border-amber-500/30 shadow-lg shadow-amber-500/20"
-              whileHover={{ scale: 1.05 }}
+            {/* Coins - CoC Style Pill */}
+            <div
+              className="flex items-center gap-1 px-2 py-1.5 rounded-full"
+              style={{
+                background: 'linear-gradient(180deg, #3D3D3D 0%, #2A2A2A 100%)',
+                border: '3px solid #1A1A1A',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.4)'
+              }}
             >
-              <motion.div
+              <motion.span
+                className="text-xl"
                 animate={{ rotateY: [0, 360] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))' }}
               >
-                <Coins size={18} className="text-yellow-400 drop-shadow-lg" />
-              </motion.div>
-              <span className="font-bold text-base tracking-wide bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+                🪙
+              </motion.span>
+              <span
+                className="text-base font-black text-white min-w-[50px] text-center"
+                style={{
+                  fontFamily: "'Lilita One', cursive",
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                }}
+              >
                 {userStats.coins.toLocaleString()}
               </span>
-            </motion.div>
+              <button
+                className="w-5 h-5 rounded flex items-center justify-center text-white text-sm font-black"
+                style={{
+                  background: 'linear-gradient(180deg, #58D68D 0%, #27AE60 100%)',
+                  border: '2px solid #1E8449',
+                  boxShadow: '0 2px 0 #145A32',
+                  textShadow: '0 1px 1px rgba(0,0,0,0.3)'
+                }}
+              >
+                +
+              </button>
+            </div>
 
             {/* Streak Button */}
             <motion.button
               onClick={() => setIsStreakOpen(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 px-4 py-2 rounded-xl shadow-lg shadow-orange-500/30 border border-orange-400/30"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+              style={{
+                background: 'linear-gradient(180deg, #F5B041 0%, #E67E22 100%)',
+                border: '3px solid #AF601A',
+                boxShadow: '0 3px 0 #7E4510'
+              }}
               whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.95, y: 3 }}
             >
-              <Flame size={16} className="text-yellow-300 animate-pulse" />
-              <span className="text-xs font-bold text-white uppercase tracking-wide">
-                {userStats.streak} Day{userStats.streak !== 1 ? 's' : ''}
+              <motion.span
+                className="text-lg"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
+              >
+                🔥
+              </motion.span>
+              <span
+                className="text-sm font-black text-white"
+                style={{
+                  fontFamily: "'Lilita One', cursive",
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
+                }}
+              >
+                {userStats.streak}
               </span>
             </motion.button>
 
-            {/* Prestige Chest Button */}
+            {/* Chest Button */}
             <AnimatePresence>
               {userStats.pendingChests > 0 && (
                 <motion.button
                   onClick={handleOpenChest}
                   disabled={isChestOpening}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                  style={{
+                    background: 'linear-gradient(180deg, #BB8FCE 0%, #9B59B6 50%, #6C3483 100%)',
+                    border: '3px solid #4A235A',
+                    boxShadow: '0 4px 0 #2E1A3E, 0 6px 12px rgba(0,0,0,0.4)'
+                  }}
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
-                  className="flex items-center gap-2 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:from-purple-500 hover:to-pink-500 text-white px-4 py-2.5 rounded-xl shadow-lg shadow-purple-500/40 border border-purple-400/30 relative overflow-hidden"
                   whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.95, y: 4 }}
                 >
                   <motion.div
-                    animate={isChestOpening ? { rotate: [0, -10, 10, -10, 0] } : {}}
-                    transition={{ duration: 0.3, repeat: isChestOpening ? Infinity : 0 }}
+                    animate={isChestOpening ? {
+                      rotate: [-10, 10, -10, 10, 0],
+                      scale: [1, 1.1, 1]
+                    } : {}}
+                    transition={{ duration: 0.5, repeat: isChestOpening ? Infinity : 0 }}
                   >
-                    <Gift size={18} />
+                    <Gift size={18} className="text-white" />
                   </motion.div>
-                  <span className="font-bold text-sm">
+                  <span
+                    className="text-xs font-black text-white"
+                    style={{ fontFamily: "'Lilita One', cursive" }}
+                  >
                     {isChestOpening ? 'OPENING...' : `OPEN (${userStats.pendingChests})`}
                   </span>
-
-                  {/* Sparkle effects */}
-                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    {[...Array(3)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className="absolute w-1 h-1 bg-white rounded-full"
-                        animate={{
-                          x: [0, Math.random() * 100 - 50],
-                          y: [0, Math.random() * 50 - 25],
-                          opacity: [0, 1, 0],
-                          scale: [0, 1.5, 0]
-                        }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          delay: i * 0.3,
-                        }}
-                        style={{
-                          left: `${30 + i * 20}%`,
-                          top: '50%'
-                        }}
-                      />
-                    ))}
-                  </div>
                 </motion.button>
               )}
             </AnimatePresence>
           </motion.div>
         </div>
 
-        {/* Bottom Area: Controls (Casts & Bait) */}
+        {/* Bottom Controls */}
         <motion.div
-          className="absolute bottom-24 left-0 w-full px-4 flex justify-between items-end pointer-events-auto"
+          className="absolute bottom-24 left-0 w-full px-3 flex justify-between items-end pointer-events-auto"
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          {/* Casts */}
-          <motion.div
-            className={`flex items-center gap-3 px-4 py-3 rounded-2xl backdrop-blur-xl shadow-xl border transition-all ${userStats.castsRemaining === 0 && !userStats.premium
-                ? 'bg-gradient-to-r from-red-900/90 to-red-800/80 border-red-500/50 animate-pulse'
-                : 'bg-gradient-to-r from-slate-900/90 to-slate-800/80 border-white/10'
-              }`}
-            whileHover={{ scale: 1.02 }}
+          {/* Energy - CoC Style */}
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-xl"
+            style={{
+              background: userStats.castsRemaining === 0 && !userStats.premium
+                ? 'linear-gradient(180deg, #EC7063 0%, #E74C3C 100%)'
+                : 'linear-gradient(180deg, #3D3D3D 0%, #2A2A2A 100%)',
+              border: userStats.castsRemaining === 0 && !userStats.premium
+                ? '3px solid #B03A2E'
+                : '3px solid #1A1A1A',
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3)'
+            }}
           >
             <motion.div
               animate={userStats.premium ? { scale: [1, 1.2, 1] } : {}}
               transition={{ duration: 1.5, repeat: Infinity }}
             >
-              <Zap size={22} className={`${userStats.premium
-                  ? "text-yellow-400 fill-yellow-400 drop-shadow-lg"
-                  : userStats.castsRemaining === 0
-                    ? "text-red-400 fill-red-400"
-                    : "text-cyan-400 fill-cyan-400"
-                }`} />
+              <Zap
+                size={22}
+                className={userStats.premium ? "text-yellow-400 fill-yellow-400" : "text-cyan-400 fill-cyan-400"}
+                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}
+              />
             </motion.div>
             <div className="flex flex-col leading-none">
-              <span className="text-[10px] text-white/50 font-bold uppercase tracking-wider">Energy</span>
-              <span className="font-black text-xl text-white">
+              <span className="text-[10px] text-white/50 font-bold uppercase">Energy</span>
+              <span
+                className="text-xl font-black text-white"
+                style={{ fontFamily: "'Lilita One', cursive" }}
+              >
                 {userStats.premium ? (
-                  <span className="bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">∞</span>
+                  <span className="text-yellow-400">∞</span>
                 ) : (
                   `${userStats.castsRemaining}/${userStats.maxCasts}`
                 )}
               </span>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Active Bait */}
+          {/* Bait Selector - CoC Style */}
           <motion.button
             onClick={() => setIsBaitOpen(true)}
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-white/10 bg-gradient-to-r from-slate-900/90 to-slate-800/80 backdrop-blur-xl shadow-xl group"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl"
+            style={{
+              background: 'linear-gradient(180deg, #4A6741 0%, #3D5335 100%)',
+              border: '3px solid #2E4228',
+              boxShadow: '0 4px 0 #1D2A19, 0 6px 12px rgba(0,0,0,0.4)'
+            }}
             whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: 0.98, y: 4 }}
           >
             <motion.div
-              className="text-3xl drop-shadow-lg"
-              whileHover={{ rotate: [0, -10, 10, 0] }}
-              transition={{ duration: 0.3 }}
+              className="text-2xl"
+              style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}
+              whileHover={{ rotate: [-10, 10, 0] }}
             >
               {activeBait?.icon || '🪱'}
             </motion.div>
             <div className="flex flex-col leading-none text-left">
-              <span className="text-[10px] text-white/50 font-bold uppercase tracking-wider">Bait</span>
-              <span className="font-black text-xl text-white">
+              <span className="text-[10px] text-white/50 font-bold uppercase">Bait</span>
+              <span
+                className="text-xl font-black text-white"
+                style={{ fontFamily: "'Lilita One', cursive" }}
+              >
                 {inventory.baits[inventory.activeBaitId] >= 999 ? "∞" : inventory.baits[inventory.activeBaitId]}
               </span>
             </div>
-            <ChevronDown size={16} className="text-white/40 group-hover:text-white/70 transition-colors" />
+            <ChevronDown size={16} className="text-white/50" />
           </motion.button>
         </motion.div>
+
+        {/* Home Button */}
+        <motion.button
+          className="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-auto"
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: '50%',
+            background: 'linear-gradient(180deg, #5DADE2 0%, #2E86C1 100%)',
+            border: '4px solid #1A5276',
+            boxShadow: '0 4px 0 #0E3A5E, 0 6px 12px rgba(0,0,0,0.4)'
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9, y: 4 }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.3, type: "spring" }}
+        >
+          <Home size={24} className="text-white mx-auto" />
+        </motion.button>
       </div>
 
       <DailyStreak isOpen={isStreakOpen} onClose={() => setIsStreakOpen(false)} />
       <BaitSelector isOpen={isBaitOpen} onClose={() => setIsBaitOpen(false)} />
-
-      {/* Add shimmer animation keyframes */}
-      <style>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        .animate-shimmer {
-          animation: shimmer 2s ease-in-out infinite;
-        }
-      `}</style>
     </>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
-import { Trophy, ShoppingBag, Anchor, Waves, Sparkles, Wallet, Settings, ChevronRight } from 'lucide-react';
+import { Trophy, ShoppingBag, Zap, Settings, ChevronRight, Crown, Star, Users, Gift } from 'lucide-react';
 import './MenuScreen.css';
 
 interface MenuScreenProps {
@@ -20,240 +20,254 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
     coins,
 }) => {
     const { userStats } = useGameStore();
-    const [ripple, setRipple] = useState(false);
+    const [showSeasonPass, setShowSeasonPass] = useState(false);
 
-    // XP calculation with proper leveling formula
+    // XP calculation
     const LEVEL_BASE_XP = 100;
     const LEVEL_EXPONENT = 1.5;
     const nextLevelXp = Math.floor(LEVEL_BASE_XP * Math.pow(LEVEL_EXPONENT, userStats.level));
-    const currentLevelXp = userStats.level > 1 
-        ? Math.floor(LEVEL_BASE_XP * Math.pow(LEVEL_EXPONENT, userStats.level - 1)) 
+    const currentLevelXp = userStats.level > 1
+        ? Math.floor(LEVEL_BASE_XP * Math.pow(LEVEL_EXPONENT, userStats.level - 1))
         : 0;
     const xpProgress = ((xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100;
     const xpPercentage = Math.max(0, Math.min(100, xpProgress));
 
-    // Animated water ripple effect
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setRipple(prev => !prev);
-        }, 3000);
-        return () => clearInterval(interval);
-    }, []);
-
     return (
-        <div className="menu-screen">
-            {/* Animated ocean background */}
-            <div className="ocean-bg">
-                <div className="wave wave1"></div>
-                <div className="wave wave2"></div>
-                <div className="wave wave3"></div>
-                <div className="bubbles">
-                    {[...Array(8)].map((_, i) => (
-                        <div key={i} className="bubble" style={{
-                            left: `${10 + i * 12}%`,
-                            animationDelay: `${i * 0.5}s`,
-                            width: `${8 + Math.random() * 12}px`,
-                            height: `${8 + Math.random() * 12}px`,
-                        }}></div>
-                    ))}
+        <div className="coc-menu">
+            {/* Background with ocean gradient */}
+            <div className="coc-bg">
+                <div className="coc-clouds">
+                    <div className="cloud cloud-1"></div>
+                    <div className="cloud cloud-2"></div>
+                    <div className="cloud cloud-3"></div>
                 </div>
+                <div className="coc-water"></div>
+                <div className="coc-water-shine"></div>
             </div>
 
-            {/* Floating particles */}
-            <div className="particles">
-                {[...Array(12)].map((_, i) => (
-                    <motion.div
-                        key={i}
-                        className="particle"
-                        initial={{ opacity: 0, y: 100 }}
-                        animate={{ 
-                            opacity: [0, 0.6, 0],
-                            y: [-20, -200],
-                            x: Math.sin(i) * 30
-                        }}
-                        transition={{
-                            duration: 4 + Math.random() * 2,
-                            repeat: Infinity,
-                            delay: i * 0.4,
-                            ease: "easeOut"
-                        }}
-                        style={{ left: `${5 + i * 8}%` }}
-                    />
-                ))}
-            </div>
-
-            {/* Header */}
-            <motion.div 
-                className="menu-header"
-                initial={{ y: -50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
+            {/* Top Bar - Resources */}
+            <motion.div
+                className="coc-top-bar"
+                initial={{ y: -60 }}
+                animate={{ y: 0 }}
+                transition={{ type: "spring", bounce: 0.3 }}
             >
-                <div className="xp-section">
-                    <motion.div 
-                        className="level-box"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        <span className="level-number">{userStats.level}</span>
-                        {userStats.premium && <Sparkles className="premium-badge" size={12} />}
-                    </motion.div>
-                    <div className="xp-bar-container">
-                        <div className="xp-bar">
-                            <motion.div 
+                {/* Level Badge */}
+                <div className="coc-level-badge">
+                    <div className="level-shield">
+                        <span className="level-num">{userStats.level}</span>
+                    </div>
+                    <div className="level-xp-bar">
+                        <div className="xp-track">
+                            <motion.div
                                 className="xp-fill"
                                 initial={{ width: 0 }}
                                 animate={{ width: `${xpPercentage}%` }}
                                 transition={{ duration: 1, ease: "easeOut" }}
-                            >
-                                <div className="xp-glow"></div>
-                            </motion.div>
+                            />
                         </div>
-                        <span className="xp-text">
-                            {Math.floor(xpPercentage)}% to Lvl {userStats.level + 1}
-                        </span>
+                        <span className="xp-label">XP</span>
                     </div>
-                    <motion.button 
-                        className="settings-btn"
-                        whileHover={{ rotate: 90 }}
-                        whileTap={{ scale: 0.9 }}
-                    >
-                        <Settings size={18} />
-                    </motion.button>
                 </div>
 
-                <motion.div 
-                    className="coins-section"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                >
-                    <div className="coin-icon-wrapper">
-                        <span className="coin-icon">🪙</span>
+                {/* Resources */}
+                <div className="coc-resources">
+                    {/* Coins */}
+                    <div className="resource-pill gold">
+                        <div className="resource-icon-wrap">
+                            <span className="resource-emoji">🪙</span>
+                        </div>
+                        <span className="resource-amount">{coins.toLocaleString()}</span>
+                        <button className="resource-plus">+</button>
                     </div>
-                    <span className="coins-count">{coins.toLocaleString()}</span>
-                    <ChevronRight size={16} className="coins-arrow" />
-                </motion.div>
+
+                    {/* Energy */}
+                    <div className="resource-pill energy">
+                        <div className="resource-icon-wrap">
+                            <Zap size={20} className="zap-icon" />
+                        </div>
+                        <span className="resource-amount">
+                            {userStats.premium ? "∞" : `${userStats.castsRemaining}/${userStats.maxCasts}`}
+                        </span>
+                        {!userStats.premium && (
+                            <button className="resource-plus">+</button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Settings */}
+                <button className="coc-settings-btn">
+                    <Settings size={20} />
+                </button>
             </motion.div>
 
-            {/* Main content */}
-            <div className="menu-content">
-                <motion.div 
-                    className="network-badge"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                >
-                    <div className="network-dot"></div>
-                    <span>BASE MAINNET</span>
-                </motion.div>
-
-                {/* Central fishing animation */}
-                <motion.div 
-                    className="main-circle-container"
-                    initial={{ scale: 0, opacity: 0 }}
+            {/* Main Content Area */}
+            <div className="coc-main-content">
+                {/* Logo Area */}
+                <motion.div
+                    className="coc-logo-area"
+                    initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.6, type: "spring", bounce: 0.4 }}
+                    transition={{ delay: 0.2, type: "spring" }}
                 >
-                    <div className="circle-glow"></div>
-                    <motion.div 
-                        className="main-circle"
-                        animate={{ 
-                            boxShadow: ripple 
-                                ? "0 0 60px 20px rgba(59, 130, 246, 0.4)" 
-                                : "0 0 40px 10px rgba(59, 130, 246, 0.2)"
-                        }}
-                        transition={{ duration: 1.5 }}
-                    >
-                        <motion.div
-                            animate={{ rotate: [0, -10, 10, -10, 0] }}
-                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                        >
-                            <Anchor size={64} className="anchor-icon" />
-                        </motion.div>
-                        <Waves className="waves-decoration" size={32} />
-                    </motion.div>
-                    <div className="ripple-rings">
-                        <div className="ripple-ring ring1"></div>
-                        <div className="ripple-ring ring2"></div>
-                        <div className="ripple-ring ring3"></div>
+                    <div className="logo-container">
+                        <img
+                            src="/seacaster-logo.png"
+                            alt="SeaCaster"
+                            className="logo-image"
+                            onError={(e) => {
+                                // Fallback to emoji if logo not found
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
+                        />
+                        <div className="logo-fallback hidden">
+                            <span className="logo-emoji">🎣</span>
+                            <span className="logo-text">SEACASTER</span>
+                        </div>
                     </div>
                 </motion.div>
 
+                {/* Main Play Button */}
                 <motion.button
-                    className={`connect-wallet-btn ${userStats.fid ? 'connected' : ''}`}
-                    onClick={onConnect}
-                    disabled={!!userStats.fid}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
+                    className="coc-play-btn"
+                    onClick={onCompete}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.3, type: "spring", bounce: 0.5 }}
                 >
-                    <Wallet size={20} />
-                    <span>{userStats.fid ? `${userStats.username}` : 'Connect Wallet'}</span>
-                    {userStats.fid && <div className="connected-indicator"></div>}
+                    <span className="play-icon">🎣</span>
+                    <span className="play-text">PLAY</span>
+                    <div className="play-shine"></div>
                 </motion.button>
 
-                {/* Quick stats */}
-                <motion.div 
-                    className="quick-stats"
+                {/* Connection Status */}
+                <motion.button
+                    className={`coc-connect-btn ${userStats.fid ? 'connected' : ''}`}
+                    onClick={onConnect}
+                    disabled={!!userStats.fid}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                >
+                    {userStats.fid ? (
+                        <>
+                            <div className="connected-dot"></div>
+                            <span>{userStats.username}</span>
+                        </>
+                    ) : (
+                        <>
+                            <span className="wallet-icon">👛</span>
+                            <span>Connect Wallet</span>
+                        </>
+                    )}
+                </motion.button>
+
+                {/* Quick Stats Row */}
+                <motion.div
+                    className="coc-quick-stats"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.7 }}
+                    transition={{ delay: 0.5 }}
                 >
-                    <div className="stat-item">
+                    <div className="stat-box">
+                        <span className="stat-icon">🔥</span>
                         <span className="stat-value">{userStats.streak}</span>
-                        <span className="stat-label">Day Streak 🔥</span>
+                        <span className="stat-label">Streak</span>
                     </div>
                     <div className="stat-divider"></div>
-                    <div className="stat-item">
-                        <span className="stat-value">{userStats.castsRemaining}</span>
-                        <span className="stat-label">Casts ⚡</span>
+                    <div className="stat-box">
+                        <span className="stat-icon">🐟</span>
+                        <span className="stat-value">0</span>
+                        <span className="stat-label">Fish</span>
+                    </div>
+                    <div className="stat-divider"></div>
+                    <div className="stat-box">
+                        <span className="stat-icon">🏆</span>
+                        <span className="stat-value">--</span>
+                        <span className="stat-label">Rank</span>
                     </div>
                 </motion.div>
             </div>
 
-            {/* Bottom navigation */}
-            <motion.div 
-                className="menu-nav"
+            {/* Season Pass Banner */}
+            {!userStats.premium && (
+                <motion.div
+                    className="coc-season-banner"
+                    initial={{ x: 100, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    onClick={() => setShowSeasonPass(true)}
+                >
+                    <Crown size={20} className="crown-icon" />
+                    <div className="banner-text">
+                        <span className="banner-title">SEASON PASS</span>
+                        <span className="banner-desc">Unlimited Casts • 2X XP</span>
+                    </div>
+                    <div className="banner-price">
+                        <span>$9.99</span>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* Bottom Navigation */}
+            <motion.div
+                className="coc-bottom-nav"
                 initial={{ y: 100 }}
                 animate={{ y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+                transition={{ type: "spring", bounce: 0.2 }}
             >
-                <motion.button 
-                    className="nav-btn compete-btn" 
-                    onClick={onCompete}
-                    whileHover={{ scale: 1.05, y: -4 }}
-                    whileTap={{ scale: 0.95 }}
-                >
-                    <div className="nav-icon-wrapper">
-                        <Trophy size={24} />
+                {/* Tournaments */}
+                <button className="nav-btn-coc" onClick={onCompete}>
+                    <div className="nav-icon-coc orange">
+                        <Trophy size={28} />
                     </div>
-                    <span className="nav-label">Compete</span>
-                </motion.button>
+                    <span className="nav-label-coc">Compete</span>
+                    {/* Notification badge */}
+                    <div className="nav-badge">3</div>
+                </button>
 
-                <motion.button 
-                    className="nav-btn home-btn"
-                    onClick={onCompete}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                >
-                    <span className="home-icon">🎣</span>
-                    <span className="play-text">PLAY</span>
-                </motion.button>
-
-                <motion.button 
-                    className="nav-btn shop-btn" 
-                    onClick={onShop}
-                    whileHover={{ scale: 1.05, y: -4 }}
-                    whileTap={{ scale: 0.95 }}
-                >
-                    <div className="nav-icon-wrapper">
-                        <ShoppingBag size={24} />
+                {/* Home/Fish - Center Button */}
+                <button className="nav-btn-coc center" onClick={onCompete}>
+                    <div className="nav-icon-coc blue large">
+                        <span className="fish-emoji">🐠</span>
                     </div>
-                    <span className="nav-label">Shop</span>
-                </motion.button>
+                    <span className="nav-label-coc">Fish</span>
+                </button>
+
+                {/* Shop */}
+                <button className="nav-btn-coc" onClick={onShop}>
+                    <div className="nav-icon-coc purple">
+                        <ShoppingBag size={28} />
+                    </div>
+                    <span className="nav-label-coc">Shop</span>
+                </button>
+
+                {/* Leaderboard */}
+                <button className="nav-btn-coc">
+                    <div className="nav-icon-coc green">
+                        <Users size={28} />
+                    </div>
+                    <span className="nav-label-coc">Social</span>
+                </button>
+
+                {/* Rewards */}
+                <button className="nav-btn-coc">
+                    <div className="nav-icon-coc red">
+                        <Gift size={28} />
+                    </div>
+                    <span className="nav-label-coc">Rewards</span>
+                    <div className="nav-badge pulse">!</div>
+                </button>
             </motion.div>
+
+            {/* Network Badge */}
+            <div className="coc-network-badge">
+                <div className="network-dot"></div>
+                <span>BASE</span>
+            </div>
         </div>
     );
 };

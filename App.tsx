@@ -7,6 +7,7 @@ import ShopScreen from './components/ShopScreen';
 import ProfileScreen from './components/ProfileScreen';
 import LeaderboardScreen from './components/LeaderboardScreen';
 import TrophyRoom from './components/TrophyRoom';
+import BossBattle from './components/BossBattle';
 import ToastContainer from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Home, Trophy, ShoppingBag } from 'lucide-react';
@@ -30,6 +31,7 @@ const SeaCasterApp: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showTrophyRoom, setShowTrophyRoom] = useState(false);
+  const [showBossBattle, setShowBossBattle] = useState(false);
   const { userStats, regenerateCasts, checkDailyLogin, syncPremiumStatus } = useGameStore();
   const { addToast } = useUIStore();
 
@@ -176,6 +178,20 @@ const SeaCasterApp: React.FC = () => {
       <ProfileScreen isOpen={showProfile} onClose={() => setShowProfile(false)} />
       <LeaderboardScreen isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
       <TrophyRoom isOpen={showTrophyRoom} onClose={() => setShowTrophyRoom(false)} />
+      <BossBattle
+        isOpen={showBossBattle}
+        onClose={() => setShowBossBattle(false)}
+        onVictory={(rewards) => {
+          useGameStore.setState(state => ({
+            userStats: {
+              ...state.userStats,
+              xp: state.userStats.xp + rewards.xp,
+              coins: state.userStats.coins + rewards.coins
+            }
+          }));
+          addToast(`Boss defeated! +${rewards.xp} XP, +${rewards.coins} coins`, 'success');
+        }}
+      />
 
     </div>
   );

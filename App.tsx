@@ -4,7 +4,8 @@ import GameHUD from './components/GameHUD';
 import FishModal from './components/FishModal';
 import TournamentBoard from './components/TournamentBoard';
 import ShopScreen from './components/ShopScreen';
-import ProfileModal from './components/ProfileModal';
+import ProfileScreen from './components/ProfileScreen';
+import LeaderboardScreen from './components/LeaderboardScreen';
 import ToastContainer from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Home, Trophy, ShoppingBag } from 'lucide-react';
@@ -26,6 +27,7 @@ const SeaCasterApp: React.FC = () => {
   const [screen, setScreen] = useState<'menu' | 'game' | 'shop'>('menu');
   const [isReady, setIsReady] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const { userStats, regenerateCasts, checkDailyLogin, syncPremiumStatus } = useGameStore();
   const { addToast } = useUIStore();
 
@@ -167,7 +169,8 @@ const SeaCasterApp: React.FC = () => {
       </div>
 
       {/* Modal Layer */}
-      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
+      <ProfileScreen isOpen={showProfile} onClose={() => setShowProfile(false)} />
+      <LeaderboardScreen isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
 
     </div>
   );

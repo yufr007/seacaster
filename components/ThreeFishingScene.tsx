@@ -4,6 +4,7 @@ import { PerspectiveCamera, WebGLRenderer } from 'three';
 import { useGameStore } from '../store/gameStore';
 import { GamePhase } from '../types';
 import { PerformanceMonitor, QualityLevel } from '../utils/performanceMonitor';
+import SwipeCasting from './SwipeCasting';
 
 // Three.js components
 import { Ocean } from './three/Ocean';
@@ -58,7 +59,6 @@ const ResponsiveHandler = () => {
  */
 const ThreeFishingScene: React.FC = () => {
   const { phase, castLine, attemptCatch, userStats, finishCatchAnimation } = useGameStore();
-  const touchStartY = useRef<number | null>(null);
   const [quality, setQuality] = useState<QualityLevel>('high');
   const perfMonitor = useRef(new PerformanceMonitor());
   // Initialize with correct DPR
@@ -84,29 +84,7 @@ const ThreeFishingScene: React.FC = () => {
     return () => clearInterval(interval);
   }, [quality, pixelRatio]);
 
-  // Touch controls for casting
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (phase === GamePhase.IDLE) {
-      touchStartY.current = e.touches[0].clientY;
-    }
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (phase === GamePhase.IDLE && touchStartY.current !== null) {
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaY = touchEndY - touchStartY.current;
-
-      // Swipe up to cast
-      if (deltaY < -50) {
-        castLine();
-        if (navigator.vibrate) {
-          navigator.vibrate([20, 10, 50]);
-        }
-      }
-      touchStartY.current = null;
-    }
-  };
-
+  // Handle tap for catching fish
   const handleTap = () => {
     if (phase === GamePhase.HOOKED) {
       attemptCatch();
@@ -129,8 +107,6 @@ const ThreeFishingScene: React.FC = () => {
   return (
     <div
       className="relative w-full h-full overflow-hidden select-none bg-gradient-to-b from-sky-300 to-sky-600"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
       onClick={handleTap}
     >
       {/* FPS Counter (Development) */}
@@ -180,13 +156,8 @@ const ThreeFishingScene: React.FC = () => {
       </Canvas>
 
       {/* UI Overlays (identical to 2D version) */}
-      {phase === GamePhase.IDLE && (
-        <div className="absolute bottom-32 left-0 right-0 flex justify-center pointer-events-none animate-bounce">
-          <div className="bg-white/90 px-6 py-3 rounded-full shadow-lg">
-            <p className="text-ocean-900 font-bold">Swipe up to cast! 🎣</p>
-          </div>
-        </div>
-      )}
+      {/* SwipeCasting Overlay - Premium physics-based casting UI */}
+      <SwipeCasting onCast={castLine} disabled={phase !== GamePhase.IDLE} />
 
       {phase === GamePhase.HOOKED && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">

@@ -150,6 +150,7 @@ const SeaCasterApp: React.FC = () => {
             onConnect={() => console.log('Connect wallet clicked')}
             onTrophyRoom={() => { triggerHaptic(Haptics.soft); setShowTrophyRoom(true); }}
             onLeaderboard={() => { triggerHaptic(Haptics.soft); setShowLeaderboard(true); }}
+            onBossBattle={() => { triggerHaptic(Haptics.medium); setShowBossBattle(true); }}
             xp={userStats.xp}
             coins={userStats.coins}
           />

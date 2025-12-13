@@ -9,6 +9,7 @@ interface MenuScreenProps {
     onConnect: () => void;
     onTrophyRoom: () => void;
     onLeaderboard: () => void;
+    onBossBattle?: () => void;
     xp: number;
     coins: number;
 }
@@ -19,10 +20,21 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
     onConnect,
     onTrophyRoom,
     onLeaderboard,
+    onBossBattle,
     xp,
     coins,
 }) => {
     const { userStats } = useGameStore();
+
+    // Check if it's weekend (Friday 6PM - Sunday 11PM)
+    const isWeekend = () => {
+        const now = new Date();
+        const day = now.getDay();
+        const hour = now.getHours();
+        // Friday (5) after 6PM, Saturday (6), or Sunday (0) before 11PM
+        return (day === 5 && hour >= 18) || day === 6 || (day === 0 && hour < 23);
+    };
+    const showBossBanner = isWeekend();
 
     // XP calculation
     const LEVEL_BASE_XP = 100;
@@ -177,6 +189,30 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                         <span style={styles.bannerDesc}>∞ Casts • 2X XP</span>
                     </div>
                     <span style={styles.bannerPrice}>$9.99</span>
+                </motion.div>
+            )}
+
+            {/* Weekend Boss Battle Banner */}
+            {showBossBanner && onBossBattle && (
+                <motion.div
+                    style={{
+                        ...styles.seasonBanner,
+                        background: 'linear-gradient(135deg, rgba(155, 89, 182, 0.9), rgba(142, 68, 173, 0.9))',
+                        borderColor: 'rgba(190, 144, 212, 0.5)',
+                        top: userStats.premium ? 'auto' : 140,
+                        marginTop: userStats.premium ? 0 : 0,
+                    }}
+                    initial={{ x: 100, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                    onClick={onBossBattle}
+                >
+                    <span style={{ fontSize: 20 }}>🦑</span>
+                    <div style={styles.bannerText}>
+                        <span style={{ ...styles.bannerTitle, color: '#F39C12' }}>BOSS RAID LIVE</span>
+                        <span style={styles.bannerDesc}>The Kraken awaits...</span>
+                    </div>
+                    <span style={{ ...styles.bannerPrice, background: 'rgba(243, 156, 18, 0.3)', color: '#F39C12' }}>FIGHT</span>
                 </motion.div>
             )}
 

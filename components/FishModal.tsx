@@ -4,10 +4,12 @@ import { useGameStore } from '../store/gameStore';
 import { GamePhase } from '../types';
 import { RARITY_COLORS, RARITY_BG } from '../constants';
 import { Check, Share2, Star, Trophy, Scale } from 'lucide-react';
+import ShareModal from './ShareModal';
 
 const FishModal: React.FC = () => {
   const { phase, lastCatch, collectReward, isNewCatch } = useGameStore();
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   const isRare = lastCatch && ['Rare', 'Epic', 'Legendary', 'Mythic'].includes(lastCatch.rarity);
 
@@ -284,7 +286,7 @@ const FishModal: React.FC = () => {
                     border: '4px solid #1A5276',
                     boxShadow: '0 5px 0 #0E3A5E, 0 8px 15px rgba(0,0,0,0.4)'
                   }}
-                  onClick={() => alert("Sharing to Farcaster...")}
+                  onClick={() => setShowShare(true)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95, y: 5 }}
                 >
@@ -294,6 +296,14 @@ const FishModal: React.FC = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* Share Modal */}
+        <ShareModal
+          isOpen={showShare}
+          onClose={() => setShowShare(false)}
+          fish={lastCatch}
+          isNewCatch={isNewCatch}
+        />
       </motion.div>
     </AnimatePresence>
   );

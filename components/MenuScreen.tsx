@@ -7,6 +7,8 @@ interface MenuScreenProps {
     onCompete: () => void;
     onShop: () => void;
     onConnect: () => void;
+    onTrophyRoom: () => void;
+    onLeaderboard: () => void;
     xp: number;
     coins: number;
 }
@@ -15,6 +17,8 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
     onCompete,
     onShop,
     onConnect,
+    onTrophyRoom,
+    onLeaderboard,
     xp,
     coins,
 }) => {
@@ -143,17 +147,17 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                 >
-                    <button style={styles.actionButton} onClick={onShop}>
-                        <ShoppingBag size={20} color="#F4D03F" />
-                        <span style={styles.actionLabel}>Shop</span>
+                    <button style={styles.actionButton} onClick={onTrophyRoom}>
+                        <Fish size={20} color="#F4D03F" />
+                        <span style={styles.actionLabel}>Collection</span>
                     </button>
-                    <button style={styles.actionButton}>
+                    <button style={styles.actionButton} onClick={onLeaderboard}>
                         <Trophy size={20} color="#E67E22" />
-                        <span style={styles.actionLabel}>Tournaments</span>
+                        <span style={styles.actionLabel}>Leaderboard</span>
                     </button>
-                    <button style={styles.actionButton}>
-                        <Users size={20} color="#3498DB" />
-                        <span style={styles.actionLabel}>Friends</span>
+                    <button style={styles.actionButton} onClick={onShop}>
+                        <ShoppingBag size={20} color="#9B59B6" />
+                        <span style={styles.actionLabel}>Shop</span>
                     </button>
                 </motion.div>
             </div>

@@ -6,6 +6,7 @@ import TournamentBoard from './components/TournamentBoard';
 import ShopScreen from './components/ShopScreen';
 import ProfileScreen from './components/ProfileScreen';
 import LeaderboardScreen from './components/LeaderboardScreen';
+import TrophyRoom from './components/TrophyRoom';
 import ToastContainer from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Home, Trophy, ShoppingBag } from 'lucide-react';
@@ -28,6 +29,7 @@ const SeaCasterApp: React.FC = () => {
   const [isReady, setIsReady] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showTrophyRoom, setShowTrophyRoom] = useState(false);
   const { userStats, regenerateCasts, checkDailyLogin, syncPremiumStatus } = useGameStore();
   const { addToast } = useUIStore();
 
@@ -144,6 +146,8 @@ const SeaCasterApp: React.FC = () => {
             onCompete={() => handleScreenChange('game')}
             onShop={() => handleScreenChange('shop')}
             onConnect={() => console.log('Connect wallet clicked')}
+            onTrophyRoom={() => { triggerHaptic(Haptics.soft); setShowTrophyRoom(true); }}
+            onLeaderboard={() => { triggerHaptic(Haptics.soft); setShowLeaderboard(true); }}
             xp={userStats.xp}
             coins={userStats.coins}
           />
@@ -171,6 +175,7 @@ const SeaCasterApp: React.FC = () => {
       {/* Modal Layer */}
       <ProfileScreen isOpen={showProfile} onClose={() => setShowProfile(false)} />
       <LeaderboardScreen isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
+      <TrophyRoom isOpen={showTrophyRoom} onClose={() => setShowTrophyRoom(false)} />
 
     </div>
   );

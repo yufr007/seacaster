@@ -3,7 +3,7 @@ import FishingScene from './components/FishingScene';
 import GameHUD from './components/GameHUD';
 import FishModal from './components/FishModal';
 import TournamentBoard from './components/TournamentBoard';
-import MarketplaceTab from './components/MarketplaceTab';
+import ShopScreen from './components/ShopScreen';
 import ProfileModal from './components/ProfileModal';
 import ToastContainer from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -162,7 +162,7 @@ const SeaCasterApp: React.FC = () => {
         */}
 
         {screen === 'shop' && (
-          <MarketplaceTab onBack={() => handleScreenChange('menu')} />
+          <ShopScreen onBack={() => handleScreenChange('menu')} />
         )}
       </div>
 

@@ -1,5 +1,6 @@
 import React, { Suspense, useState, useRef, useEffect } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { PerspectiveCamera, WebGLRenderer } from 'three';
 import { useGameStore } from '../store/gameStore';
 import { GamePhase } from '../types';
 import { PerformanceMonitor, QualityLevel } from '../utils/performanceMonitor';
@@ -29,8 +30,10 @@ const ResponsiveHandler = () => {
       gl.setSize(width, height);
 
       // Update camera
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
+      if ((camera as PerspectiveCamera).isPerspectiveCamera) {
+        (camera as PerspectiveCamera).aspect = width / height;
+        (camera as PerspectiveCamera).updateProjectionMatrix();
+      }
     };
 
     window.addEventListener('resize', handleResize);
@@ -155,6 +158,7 @@ const ThreeFishingScene: React.FC = () => {
         shadows={quality !== 'low'} // Disable shadows on low quality
         onCreated={({ gl }) => {
           // Enable physically correct lighting
+          // @ts-ignore - Legacy property support for older three.js versions or R3F wrapper quirks
           gl.physicallyCorrectLights = true;
         }}
       >
@@ -199,13 +203,15 @@ const ThreeFishingScene: React.FC = () => {
  * Performance Tracker Component
  * Updates performance monitor every frame
  */
+
+/**
+ * Performance Tracker Component
+ * Updates performance monitor every frame
+ */
 const PerformanceTracker: React.FC<{ monitor: PerformanceMonitor }> = ({ monitor }) => {
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      monitor.update();
-    }, 16); // ~60fps check
-    return () => clearInterval(interval);
-  }, [monitor]);
+  useFrame(() => {
+    monitor.update();
+  });
 
   return null;
 };

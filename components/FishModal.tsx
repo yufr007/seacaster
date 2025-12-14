@@ -5,20 +5,55 @@ import { GamePhase } from '../types';
 import { RARITY_COLORS, RARITY_BG } from '../constants';
 import { Check, Share2, Star, Trophy, Scale } from 'lucide-react';
 import ShareModal from './ShareModal';
+import { useSound } from '../hooks/useSound';
+import useScreenShake from '../utils/screenShake';
+import { CoinShower, PulsingGlow } from './JuiceAnimations';
+import { triggerHaptic, Haptics } from '../utils/haptics';
 
 const FishModal: React.FC = () => {
   const { phase, lastCatch, collectReward, isNewCatch } = useGameStore();
   const [showConfetti, setShowConfetti] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showCoins, setShowCoins] = useState(false);
+  const { play, playCatch } = useSound();
+  const { shakeForRarity } = useScreenShake();
 
   const isRare = lastCatch && ['Rare', 'Epic', 'Legendary', 'Mythic'].includes(lastCatch.rarity);
 
   useEffect(() => {
-    if (phase === GamePhase.REWARD && isRare) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000);
+    if (phase === GamePhase.REWARD && lastCatch) {
+      // Screen shake based on rarity
+      shakeForRarity(lastCatch.rarity);
+
+      // Play rarity-appropriate sound
+      playCatch(lastCatch.rarity);
+
+      // Haptic feedback
+      if (lastCatch.rarity === 'Mythic' || lastCatch.rarity === 'Legendary') {
+        triggerHaptic(Haptics.success);
+      } else {
+        triggerHaptic(Haptics.soft);
+      }
+
+      // Show confetti for rare catches
+      if (isRare) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+      }
     }
-  }, [phase, isRare]);
+  }, [phase, lastCatch, isRare, shakeForRarity, playCatch]);
+
+  // Handle collect with coin shower
+  const handleCollect = () => {
+    setShowCoins(true);
+    play('coinCollect');
+    triggerHaptic(Haptics.soft);
+
+    setTimeout(() => {
+      collectReward();
+      setShowCoins(false);
+    }, 500);
+  };
 
   if (phase !== GamePhase.REWARD || !lastCatch) return null;
 
@@ -53,6 +88,9 @@ const FishModal: React.FC = () => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
+        {/* Coin Shower */}
+        <CoinShower isActive={showCoins} coinCount={15} />
+
         {/* Confetti */}
         {showConfetti && (
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -259,7 +297,7 @@ const FishModal: React.FC = () => {
                     fontFamily: "'Lilita One', cursive",
                     textShadow: '2px 2px 0 #145A32'
                   }}
-                  onClick={collectReward}
+                  onClick={handleCollect}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98, y: 5, boxShadow: '0 0 0 #0B3D20' }}
                 >

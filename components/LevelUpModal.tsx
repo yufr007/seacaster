@@ -2,245 +2,259 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Zap, Gift, ChevronUp, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { useSound } from '../hooks/useSound';
+import useScreenShake from '../utils/screenShake';
+import { triggerHaptic, Haptics } from '../utils/haptics';
 
 interface LevelUpModalProps {
-    isOpen: boolean;
-    newLevel: number;
-    rewards: {
-        casts: number;
-        bait: { name: string; icon: string; quantity: number } | null;
-        special: string | null;
-        rodPiece: { name: string; icon: string } | null;
-    };
-    isPremium: boolean;
-    onClose: () => void;
+  isOpen: boolean;
+  newLevel: number;
+  rewards: {
+    casts: number;
+    bait: { name: string; icon: string; quantity: number } | null;
+    special: string | null;
+    rodPiece: { name: string; icon: string } | null;
+  };
+  isPremium: boolean;
+  onClose: () => void;
 }
 
 const LevelUpModal: React.FC<LevelUpModalProps> = ({
-    isOpen,
-    newLevel,
-    rewards,
-    isPremium,
-    onClose,
+  isOpen,
+  newLevel,
+  rewards,
+  isPremium,
+  onClose,
 }) => {
-    const [showRewards, setShowRewards] = useState(false);
+  const [showRewards, setShowRewards] = useState(false);
+  const { play } = useSound();
+  const { shakeOnLevelUp } = useScreenShake();
 
-    // Trigger confetti on open
-    useEffect(() => {
-        if (isOpen) {
-            setShowRewards(false);
+  // Trigger effects on open
+  useEffect(() => {
+    if (isOpen) {
+      setShowRewards(false);
 
-            // Gold confetti burst
-            setTimeout(() => {
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.4 },
-                    colors: ['#F4D03F', '#F39C12', '#E67E22', '#FFD700']
-                });
-            }, 300);
+      // Screen shake
+      shakeOnLevelUp();
 
-            // Show rewards after animation
-            setTimeout(() => setShowRewards(true), 1200);
-        }
-    }, [isOpen]);
+      // Sound effect
+      play('levelUp');
 
-    // Get milestone info
-    const isMilestone = newLevel % 10 === 0;
-    const getRodPieceInfo = () => {
-        switch (newLevel) {
-            case 10: return { name: 'Kraken Handle', icon: '🦑', piece: '1/5' };
-            case 20: return { name: 'Barnacle Rod', icon: '⚓', piece: '2/5' };
-            case 30: return { name: 'Anchor Hook', icon: '🪝', piece: '3/5' };
-            case 40: return { name: 'Spyglass Reel', icon: '🔭', piece: '4/5' };
-            case 50: return { name: 'Cannon Ship Animation', icon: '🏴‍☠️', piece: '5/5 COMPLETE!' };
-            default: return null;
-        }
-    };
+      // Haptic feedback
+      triggerHaptic(Haptics.levelUp);
 
-    const rodPiece = isPremium ? getRodPieceInfo() : null;
+      // Gold confetti burst
+      setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.4 },
+          colors: ['#F4D03F', '#F39C12', '#E67E22', '#FFD700']
+        });
+      }, 300);
 
-    return (
-        <AnimatePresence>
-            {isOpen && (
+      // Show rewards after animation
+      setTimeout(() => setShowRewards(true), 1200);
+    }
+  }, [isOpen, play, shakeOnLevelUp]);
+
+  // Get milestone info
+  const isMilestone = newLevel % 10 === 0;
+  const getRodPieceInfo = () => {
+    switch (newLevel) {
+      case 10: return { name: 'Kraken Handle', icon: '🦑', piece: '1/5' };
+      case 20: return { name: 'Barnacle Rod', icon: '⚓', piece: '2/5' };
+      case 30: return { name: 'Anchor Hook', icon: '🪝', piece: '3/5' };
+      case 40: return { name: 'Spyglass Reel', icon: '🔭', piece: '4/5' };
+      case 50: return { name: 'Cannon Ship Animation', icon: '🏴‍☠️', piece: '5/5 COMPLETE!' };
+      default: return null;
+    }
+  };
+
+  const rodPiece = isPremium ? getRodPieceInfo() : null;
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="level-up-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          {/* Animated rays behind */}
+          <motion.div
+            className="rays-bg"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          />
+
+          {/* Main content */}
+          <motion.div
+            className="level-up-content"
+            initial={{ scale: 0, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
+            exit={{ scale: 0 }}
+            transition={{ type: "spring", bounce: 0.5 }}
+          >
+            {/* Stars decoration */}
+            <motion.div
+              className="stars-left"
+              initial={{ x: -100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Star className="star" />
+              <Star className="star small" />
+            </motion.div>
+            <motion.div
+              className="stars-right"
+              initial={{ x: 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Star className="star" />
+              <Star className="star small" />
+            </motion.div>
+
+            {/* Level Up Text */}
+            <motion.div
+              className="level-up-header"
+              initial={{ y: -50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2, type: "spring" }}
+            >
+              <ChevronUp className="up-arrow" />
+              <h1>LEVEL UP!</h1>
+            </motion.div>
+
+            {/* Level Badge */}
+            <motion.div
+              className="level-badge-container"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.4, type: "spring", bounce: 0.6 }}
+            >
+              <div className={`level-badge ${isMilestone ? 'milestone' : ''}`}>
+                <span className="level-number">{newLevel}</span>
+                {isPremium && (
+                  <motion.div
+                    className="premium-crown"
+                    animate={{ rotate: [-5, 5, -5] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  >
+                    👑
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Pulse rings */}
+              <motion.div
+                className="pulse-ring"
+                animate={{ scale: [1, 1.5], opacity: [1, 0] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              />
+              <motion.div
+                className="pulse-ring"
+                animate={{ scale: [1, 1.5], opacity: [1, 0] }}
+                transition={{ duration: 1, delay: 0.5, repeat: Infinity }}
+              />
+            </motion.div>
+
+            {/* Rewards */}
+            <AnimatePresence>
+              {showRewards && (
                 <motion.div
-                    className="level-up-overlay"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                  className="rewards-section"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
                 >
-                    {/* Animated rays behind */}
-                    <motion.div
-                        className="rays-bg"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    />
+                  <h3>REWARDS</h3>
 
-                    {/* Main content */}
+                  <div className="rewards-grid">
+                    {/* Casts */}
                     <motion.div
-                        className="level-up-content"
-                        initial={{ scale: 0, rotate: -10 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        exit={{ scale: 0 }}
-                        transition={{ type: "spring", bounce: 0.5 }}
+                      className="reward-item"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.1 }}
                     >
-                        {/* Stars decoration */}
-                        <motion.div
-                            className="stars-left"
-                            initial={{ x: -100, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                        >
-                            <Star className="star" />
-                            <Star className="star small" />
-                        </motion.div>
-                        <motion.div
-                            className="stars-right"
-                            initial={{ x: 100, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                        >
-                            <Star className="star" />
-                            <Star className="star small" />
-                        </motion.div>
-
-                        {/* Level Up Text */}
-                        <motion.div
-                            className="level-up-header"
-                            initial={{ y: -50, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.2, type: "spring" }}
-                        >
-                            <ChevronUp className="up-arrow" />
-                            <h1>LEVEL UP!</h1>
-                        </motion.div>
-
-                        {/* Level Badge */}
-                        <motion.div
-                            className="level-badge-container"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.4, type: "spring", bounce: 0.6 }}
-                        >
-                            <div className={`level-badge ${isMilestone ? 'milestone' : ''}`}>
-                                <span className="level-number">{newLevel}</span>
-                                {isPremium && (
-                                    <motion.div
-                                        className="premium-crown"
-                                        animate={{ rotate: [-5, 5, -5] }}
-                                        transition={{ duration: 1, repeat: Infinity }}
-                                    >
-                                        👑
-                                    </motion.div>
-                                )}
-                            </div>
-
-                            {/* Pulse rings */}
-                            <motion.div
-                                className="pulse-ring"
-                                animate={{ scale: [1, 1.5], opacity: [1, 0] }}
-                                transition={{ duration: 1, repeat: Infinity }}
-                            />
-                            <motion.div
-                                className="pulse-ring"
-                                animate={{ scale: [1, 1.5], opacity: [1, 0] }}
-                                transition={{ duration: 1, delay: 0.5, repeat: Infinity }}
-                            />
-                        </motion.div>
-
-                        {/* Rewards */}
-                        <AnimatePresence>
-                            {showRewards && (
-                                <motion.div
-                                    className="rewards-section"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.4 }}
-                                >
-                                    <h3>REWARDS</h3>
-
-                                    <div className="rewards-grid">
-                                        {/* Casts */}
-                                        <motion.div
-                                            className="reward-item"
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            transition={{ delay: 0.1 }}
-                                        >
-                                            <span className="reward-icon">⚡</span>
-                                            <span className="reward-value">+{rewards.casts}</span>
-                                            <span className="reward-label">Casts</span>
-                                        </motion.div>
-
-                                        {/* Bait */}
-                                        {rewards.bait && (
-                                            <motion.div
-                                                className="reward-item"
-                                                initial={{ scale: 0 }}
-                                                animate={{ scale: 1 }}
-                                                transition={{ delay: 0.2 }}
-                                            >
-                                                <span className="reward-icon">{rewards.bait.icon}</span>
-                                                <span className="reward-value">+{rewards.bait.quantity}</span>
-                                                <span className="reward-label">{rewards.bait.name}</span>
-                                            </motion.div>
-                                        )}
-                                    </div>
-
-                                    {/* Rod Piece (Milestone) */}
-                                    {rodPiece && isMilestone && (
-                                        <motion.div
-                                            className="rod-piece-reward"
-                                            initial={{ scale: 0, y: 20 }}
-                                            animate={{ scale: 1, y: 0 }}
-                                            transition={{ delay: 0.4, type: "spring" }}
-                                        >
-                                            <div className="rod-piece-header">
-                                                <Sparkles className="sparkle" />
-                                                <span>ROD PIECE UNLOCKED!</span>
-                                                <Sparkles className="sparkle" />
-                                            </div>
-                                            <div className="rod-piece-content">
-                                                <span className="rod-piece-icon">{rodPiece.icon}</span>
-                                                <div className="rod-piece-info">
-                                                    <span className="rod-piece-name">{rodPiece.name}</span>
-                                                    <span className="rod-piece-progress">{rodPiece.piece}</span>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    )}
-
-                                    {/* Special reward text */}
-                                    {rewards.special && (
-                                        <motion.div
-                                            className="special-reward"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{ delay: 0.5 }}
-                                        >
-                                            <Gift className="gift-icon" />
-                                            <span>{rewards.special}</span>
-                                        </motion.div>
-                                    )}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* Continue Button */}
-                        <motion.button
-                            className="continue-btn"
-                            onClick={onClose}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 1 }}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            AWESOME!
-                        </motion.button>
+                      <span className="reward-icon">⚡</span>
+                      <span className="reward-value">+{rewards.casts}</span>
+                      <span className="reward-label">Casts</span>
                     </motion.div>
 
-                    <style>{`
+                    {/* Bait */}
+                    {rewards.bait && (
+                      <motion.div
+                        className="reward-item"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <span className="reward-icon">{rewards.bait.icon}</span>
+                        <span className="reward-value">+{rewards.bait.quantity}</span>
+                        <span className="reward-label">{rewards.bait.name}</span>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Rod Piece (Milestone) */}
+                  {rodPiece && isMilestone && (
+                    <motion.div
+                      className="rod-piece-reward"
+                      initial={{ scale: 0, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      transition={{ delay: 0.4, type: "spring" }}
+                    >
+                      <div className="rod-piece-header">
+                        <Sparkles className="sparkle" />
+                        <span>ROD PIECE UNLOCKED!</span>
+                        <Sparkles className="sparkle" />
+                      </div>
+                      <div className="rod-piece-content">
+                        <span className="rod-piece-icon">{rodPiece.icon}</span>
+                        <div className="rod-piece-info">
+                          <span className="rod-piece-name">{rodPiece.name}</span>
+                          <span className="rod-piece-progress">{rodPiece.piece}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Special reward text */}
+                  {rewards.special && (
+                    <motion.div
+                      className="special-reward"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <Gift className="gift-icon" />
+                      <span>{rewards.special}</span>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Continue Button */}
+            <motion.button
+              className="continue-btn"
+              onClick={onClose}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              AWESOME!
+            </motion.button>
+          </motion.div>
+
+          <style>{`
             .level-up-overlay {
               position: fixed;
               inset: 0;
@@ -515,10 +529,10 @@ const LevelUpModal: React.FC<LevelUpModalProps> = ({
               box-shadow: none;
             }
           `}</style>
-                </motion.div>
-            )}
-        </AnimatePresence>
-    );
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 };
 
 export default LevelUpModal;

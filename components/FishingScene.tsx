@@ -5,6 +5,7 @@ import { GamePhase } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../hooks/useSound';
 import { Haptics, triggerHaptic } from '../utils/haptics';
+import { SwipeTrail, CastPowerMeter, WaterSplash, FishBiteIndicator } from './CastingEffects';
 
 // Lazy load 3D scene for performance
 const ThreeFishingScene = lazy(() => import('./ThreeFishingScene'));
@@ -72,6 +73,13 @@ const FishingScene2D: React.FC = () => {
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const { play } = useSound();
 
+  // Casting effects state
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [castPower, setCastPower] = useState(0);
+  const [showSplash, setShowSplash] = useState(false);
+  const [splashPos, setSplashPos] = useState({ x: 0, y: 0 });
+  const [biteIntensity, setBiteIntensity] = useState(0);
+
   // Rod Visual Logic
   const hasHandle = userStats.level >= 10;
   const hasCarbon = userStats.level >= 20;
@@ -113,22 +121,60 @@ const FishingScene2D: React.FC = () => {
   const handleTouchStart = (e: React.TouchEvent) => {
     if (phase === GamePhase.IDLE) {
       touchStartY.current = e.touches[0].clientY;
+      setIsSwiping(true);
+      setCastPower(0);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (phase === GamePhase.IDLE && touchStartY.current !== null) {
+      const touchY = e.touches[0].clientY;
+      const deltaY = touchStartY.current - touchY;
+      // Calculate power based on swipe distance (0-100%)
+      const power = Math.min(100, Math.max(0, (deltaY / 200) * 100));
+      setCastPower(power);
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    setIsSwiping(false);
+
     if (phase === GamePhase.IDLE && touchStartY.current !== null) {
       const touchEndY = e.changedTouches[0].clientY;
       const deltaY = touchEndY - touchStartY.current;
 
       // Swipe Up (negative delta) - Tuned for responsiveness
       if (deltaY < -50) {
+        // Trigger splash at center of screen
+        setSplashPos({ x: window.innerWidth / 2, y: window.innerHeight * 0.55 });
+        setShowSplash(true);
+        setTimeout(() => setShowSplash(false), 1000);
+
         castLine();
         triggerHaptic([20, 50]); // Tension -> Snap
       }
       touchStartY.current = null;
+      setCastPower(0);
     }
   };
+
+  // Bite intensity animation during HOOKED phase
+  useEffect(() => {
+    if (phase === GamePhase.HOOKED) {
+      let intensity = 20;
+      const interval = setInterval(() => {
+        intensity = Math.min(100, intensity + Math.random() * 15);
+        setBiteIntensity(intensity);
+        if (intensity > 60) {
+          triggerHaptic(Haptics.soft);
+        }
+      }, 300);
+      return () => {
+        clearInterval(interval);
+        setBiteIntensity(0);
+      };
+    }
+  }, [phase]);
 
   const handleTap = () => {
     if (phase === GamePhase.HOOKED) {
@@ -142,9 +188,16 @@ const FishingScene2D: React.FC = () => {
     <div
       className="relative w-full h-full bg-gradient-to-b from-sky-400 via-sky-600 to-ocean-800 overflow-hidden select-none"
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onClick={handleTap}
     >
+      {/* === CASTING EFFECTS === */}
+      <SwipeTrail isActive={isSwiping} color="#5DADE2" />
+      <CastPowerMeter power={castPower} isVisible={isSwiping && castPower > 10} />
+      <WaterSplash position={splashPos} isActive={showSplash} />
+      <FishBiteIndicator intensity={biteIntensity} isActive={phase === GamePhase.HOOKED} />
+
       {/* --- SKY & AMBIANCE --- */}
       <div className="absolute top-10 right-10 w-32 h-32 bg-yellow-200 rounded-full blur-[60px] opacity-40 animate-pulse"></div>
 

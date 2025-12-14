@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
 import { Trophy, ShoppingBag, Zap, Settings, Crown, Users, Gift, Fish, Anchor } from 'lucide-react';
+import { PremiumButton3D } from './PremiumUI';
+import { FloatingParticles } from './GameplayEffects';
+import { useSound } from '../hooks/useSound';
 
 interface MenuScreenProps {
     onCompete: () => void;
@@ -53,6 +56,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                 <div style={styles.sky} />
                 <div style={styles.ocean} />
                 <div style={styles.waves} />
+                <FloatingParticles count={25} color="rgba(93, 173, 226, 0.4)" />
             </div>
 
             {/* Top Header Bar */}
@@ -113,18 +117,21 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                 </motion.div>
 
                 {/* Big PLAY Button */}
-                <motion.button
-                    style={styles.playButton}
-                    onClick={onCompete}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95, y: 4 }}
+                <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.3, type: "spring", bounce: 0.5 }}
                 >
-                    <span style={styles.playButtonIcon}>🐟</span>
-                    <span style={styles.playButtonText}>CAST LINE</span>
-                </motion.button>
+                    <PremiumButton3D
+                        variant="success"
+                        size="xl"
+                        onClick={onCompete}
+                        glow
+                        icon="🐟"
+                    >
+                        CAST LINE
+                    </PremiumButton3D>
+                </motion.div>
 
                 {/* Stats Row */}
                 <motion.div

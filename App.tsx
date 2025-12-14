@@ -10,6 +10,7 @@ import TrophyRoom from './components/TrophyRoom';
 import BossBattle from './components/BossBattle';
 import ToastContainer from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
+import AnimatedLoading from './components/AnimatedLoading';
 import { Home, Trophy, ShoppingBag } from 'lucide-react';
 
 import { MenuScreen } from './components/MenuScreen';
@@ -117,13 +118,7 @@ const SeaCasterApp: React.FC = () => {
   };
 
   if (!isReady) {
-    return (
-      <div className="h-screen w-screen bg-ocean-900 flex items-center justify-center text-white flex-col gap-4">
-        <div className="text-6xl animate-bounce">🎣</div>
-        <div className="font-black text-2xl tracking-[0.5em] animate-pulse text-sky-400">SEACASTER</div>
-        <div className="text-xs text-ocean-400 uppercase tracking-widest mt-8">Loading Assets...</div>
-      </div>
-    );
+    return <AnimatedLoading variant="default" showTips={true} />;
   }
 
   return (

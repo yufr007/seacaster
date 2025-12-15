@@ -1,97 +1,55 @@
-
-import React, { useRef, useState, useEffect, lazy, Suspense } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { GamePhase } from '../types';
+import { GamePhase, Rarity } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../hooks/useSound';
 import { Haptics, triggerHaptic } from '../utils/haptics';
-import { SwipeTrail, CastPowerMeter, WaterSplash, FishBiteIndicator } from './CastingEffects';
-
-// Lazy load 3D scene for performance
-const ThreeFishingScene = lazy(() => import('./ThreeFishingScene'));
-
-
-import { Home } from 'lucide-react';
+import { ChevronLeft, Zap } from 'lucide-react';
 
 interface FishingSceneProps {
   onBack?: () => void;
 }
 
 /**
- * Fishing Scene Wrapper
- * Toggles between 2D (Framer Motion) and 3D (Three.js) based on feature flag
+ * Improved 2D Fishing Scene with visible rod, fish, and synchronized haptics
+ * Replaces previous off-screen rod implementation
  */
 const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
-  const { userStats } = useGameStore();
+  const {
+    phase,
+    castLine,
+    attemptCatch,
+    failCatch,
+    userStats,
+    hookedFish,
+    finishCatchAnimation
+  } = useGameStore();
 
-  // Feature flag: Enable 3D for all users (can be changed to level-based)
-  const use3D = userStats.level >= 1; // Change to >= 50 for L50+ only
-
-  const SceneComponent = use3D ? (
-    <Suspense fallback={<LoadingFallback />}>
-      <ThreeFishingScene />
-    </Suspense>
-  ) : (
-    <FishingScene2D />
-  );
-
-  return (
-    <div className="relative w-full h-full">
-      {SceneComponent}
-
-      {/* Back to Menu Button */}
-      {onBack && (
-        <div className="absolute top-4 left-4 z-50">
-          <button
-            onClick={onBack}
-            className="p-3 bg-ocean-900/50 backdrop-blur-md rounded-full text-white hover:bg-ocean-800 transition-colors border border-white/10 shadow-lg"
-          >
-            <Home size={24} />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/**
- * Loading fallback while 3D scene loads
- */
-const LoadingFallback: React.FC = () => (
-  <div className="relative w-full h-full bg-gradient-to-b from-sky-400 via-sky-600 to-ocean-800 flex items-center justify-center">
-    <div className="text-white text-xl font-bold animate-pulse">Loading 3D Scene...</div>
-  </div>
-);
-
-/**
- * Original 2D Fishing Scene (Framer Motion)
- * Kept as fallback for compatibility and A/B testing
- */
-const FishingScene2D: React.FC = () => {
-  const { phase, castLine, attemptCatch, userStats, finishCatchAnimation } = useGameStore();
   const touchStartY = useRef<number | null>(null);
   const [showSwipeHint, setShowSwipeHint] = useState(true);
+  const [castPower, setCastPower] = useState(0);
+  const [isCasting, setIsCasting] = useState(false);
   const { play } = useSound();
 
-  // Casting effects state
-  const [isSwiping, setIsSwiping] = useState(false);
-  const [castPower, setCastPower] = useState(0);
-  const [showSplash, setShowSplash] = useState(false);
-  const [splashPos, setSplashPos] = useState({ x: 0, y: 0 });
-  const [biteIntensity, setBiteIntensity] = useState(0);
+  // Rod animation state
+  const [rodAngle, setRodAngle] = useState(0);
 
-  // Rod Visual Logic
-  const hasHandle = userStats.level >= 10;
-  const hasCarbon = userStats.level >= 20;
-  const hasHook = userStats.level >= 30;
-  const hasReel = userStats.level >= 40;
-  const hasEffect = userStats.level >= 50;
+  // Fish animation state
+  const [fishBounce, setFishBounce] = useState(0);
+  const [showFish, setShowFish] = useState(false);
 
+  // Hide swipe hint when not idle
   useEffect(() => {
-    if (phase !== GamePhase.IDLE) setShowSwipeHint(false);
-    else setTimeout(() => setShowSwipeHint(true), 1000);
+    if (phase !== GamePhase.IDLE) {
+      setShowSwipeHint(false);
+    } else {
+      const timer = setTimeout(() => setShowSwipeHint(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
 
-    // Sound Triggers based on phase changes
+  // Sound effects based on phase
+  useEffect(() => {
     if (phase === GamePhase.CASTING) {
       play('cast');
     } else if (phase === GamePhase.HOOKED) {
@@ -101,81 +59,115 @@ const FishingScene2D: React.FC = () => {
     }
   }, [phase, play]);
 
-  // Handle L50 Animation Completion
+  // Rod animation during casting
+  useEffect(() => {
+    if (phase === GamePhase.CASTING) {
+      // Casting animation sequence
+      const timeline = [
+        { angle: -20, time: 0 },     // Wind up
+        { angle: 45, time: 200 },    // Forward swing
+        { angle: 30, time: 400 },    // Follow through
+        { angle: 15, time: 600 },    // Settling
+        { angle: 10, time: 1000 },   // Rest during cast
+      ];
+
+      timeline.forEach(({ angle, time }) => {
+        setTimeout(() => setRodAngle(angle), time);
+      });
+
+      return () => setRodAngle(0);
+    } else if (phase === GamePhase.WAITING) {
+      // Slight idle movement
+      setRodAngle(10);
+    } else if (phase === GamePhase.HOOKED) {
+      // Rod bends hard when fish is hooked
+      setRodAngle(-15);
+    } else {
+      setRodAngle(0);
+    }
+  }, [phase]);
+
+  // Fish appearance and bounce when hooked
+  useEffect(() => {
+    if (phase === GamePhase.HOOKED && hookedFish) {
+      setShowFish(true);
+
+      // Fish bounce animation synchronized with haptics
+      let bounceCount = 0;
+      const maxBounces = 20;
+
+      const bounceInterval = setInterval(() => {
+        bounceCount++;
+        const bounceValue = Math.sin(bounceCount * 0.4) * 15;
+        setFishBounce(bounceValue);
+
+        // Synchronized haptic feedback
+        if (bounceCount % 2 === 0) {
+          triggerHaptic(Haptics.bite);
+        }
+
+        if (bounceCount >= maxBounces) {
+          clearInterval(bounceInterval);
+        }
+      }, 150);
+
+      return () => {
+        clearInterval(bounceInterval);
+        setFishBounce(0);
+      };
+    } else {
+      setShowFish(false);
+      setFishBounce(0);
+    }
+  }, [phase, hookedFish]);
+
+  // Auto-finish prestige animation
   useEffect(() => {
     if (phase === GamePhase.ANIMATING_CATCH) {
-      // Sequence: Ship Arrives (0.8s) -> Cannon Fire (1.0s) -> Fish Lands (2.5s)
+      triggerHaptic(Haptics.heavy);
       setTimeout(() => {
-        play('cast'); // Cannon boom sound (reusing cast for now)
-        triggerHaptic(Haptics.heavy);
-      }, 800);
-
-      setTimeout(() => {
-        play('success'); // Land in basket
+        play('success');
         triggerHaptic(Haptics.success);
         finishCatchAnimation();
-      }, 2500);
+      }, 2000);
     }
   }, [phase, finishCatchAnimation, play]);
 
+  // Touch handlers for swipe-to-cast
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (phase === GamePhase.IDLE) {
+    if (phase === GamePhase.IDLE && userStats.castsRemaining > 0) {
       touchStartY.current = e.touches[0].clientY;
-      setIsSwiping(true);
+      setIsCasting(true);
       setCastPower(0);
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (phase === GamePhase.IDLE && touchStartY.current !== null) {
-      const touchY = e.touches[0].clientY;
-      const deltaY = touchStartY.current - touchY;
-      // Calculate power based on swipe distance (0-100%)
-      const power = Math.min(100, Math.max(0, (deltaY / 200) * 100));
+      const deltaY = touchStartY.current - e.touches[0].clientY;
+      const power = Math.min(100, Math.max(0, (deltaY / 150) * 100));
       setCastPower(power);
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    setIsSwiping(false);
+    setIsCasting(false);
 
     if (phase === GamePhase.IDLE && touchStartY.current !== null) {
       const touchEndY = e.changedTouches[0].clientY;
-      const deltaY = touchEndY - touchStartY.current;
+      const deltaY = touchStartY.current - touchEndY;
 
-      // Swipe Up (negative delta) - Tuned for responsiveness
-      if (deltaY < -50) {
-        // Trigger splash at center of screen
-        setSplashPos({ x: window.innerWidth / 2, y: window.innerHeight * 0.55 });
-        setShowSplash(true);
-        setTimeout(() => setShowSplash(false), 1000);
-
+      // Swipe up triggers cast
+      if (deltaY > 40) {
         castLine();
-        triggerHaptic([20, 50]); // Tension -> Snap
+        triggerHaptic(Haptics.castRelease);
       }
       touchStartY.current = null;
       setCastPower(0);
     }
   };
 
-  // Bite intensity animation during HOOKED phase
-  useEffect(() => {
-    if (phase === GamePhase.HOOKED) {
-      let intensity = 20;
-      const interval = setInterval(() => {
-        intensity = Math.min(100, intensity + Math.random() * 15);
-        setBiteIntensity(intensity);
-        if (intensity > 60) {
-          triggerHaptic(Haptics.soft);
-        }
-      }, 300);
-      return () => {
-        clearInterval(interval);
-        setBiteIntensity(0);
-      };
-    }
-  }, [phase]);
-
+  // Tap to catch when hooked
   const handleTap = () => {
     if (phase === GamePhase.HOOKED) {
       play('reelSpin');
@@ -184,373 +176,865 @@ const FishingScene2D: React.FC = () => {
     }
   };
 
+  // Cut line (fail catch)
+  const handleCutLine = () => {
+    if (phase === GamePhase.HOOKED) {
+      triggerHaptic(Haptics.fail);
+      failCatch();
+    }
+  };
+
+  // Get rarity color
+  const getRarityColor = (rarity: Rarity): string => {
+    const colors: Record<Rarity, string> = {
+      [Rarity.COMMON]: '#95A5A6',
+      [Rarity.UNCOMMON]: '#27AE60',
+      [Rarity.RARE]: '#3498DB',
+      [Rarity.EPIC]: '#9B59B6',
+      [Rarity.LEGENDARY]: '#F39C12',
+      [Rarity.MYTHIC]: '#E74C3C'
+    };
+    return colors[rarity] || '#95A5A6';
+  };
+
   return (
     <div
-      className="relative w-full h-full bg-gradient-to-b from-sky-400 via-sky-600 to-ocean-800 overflow-hidden select-none"
+      className="fishing-scene"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onClick={handleTap}
     >
-      {/* === CASTING EFFECTS === */}
-      <SwipeTrail isActive={isSwiping} color="#5DADE2" />
-      <CastPowerMeter power={castPower} isVisible={isSwiping && castPower > 10} />
-      <WaterSplash position={splashPos} isActive={showSplash} />
-      <FishBiteIndicator intensity={biteIntensity} isActive={phase === GamePhase.HOOKED} />
-
-      {/* --- SKY & AMBIANCE --- */}
-      <div className="absolute top-10 right-10 w-32 h-32 bg-yellow-200 rounded-full blur-[60px] opacity-40 animate-pulse"></div>
-
-      {/* Cloud animation - only during active gameplay */}
-      {(phase === GamePhase.IDLE || phase === GamePhase.WAITING || phase === GamePhase.CASTING) && (
-        <motion.div
-          initial={{ x: -100 }} animate={{ x: 400 }} transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-          className="absolute top-12 left-0 w-48 h-12 bg-white/10 rounded-full blur-xl"
-        />
-      )}
-
-      {/* --- WATER SURFACE --- */}
-      <div className="absolute top-[52%] w-full h-[48%] bg-ocean-700 opacity-95 backdrop-blur-sm z-10 border-t border-sky-300/30">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
-      </div>
-
-      {/* --- FISH SHADOWS --- */}
-      <AnimatePresence>
-        {phase === GamePhase.WAITING && (
-          <>
-            {/* Shadow 1: The Investigator */}
-            <motion.div
-              initial={{ x: -100, y: 50, opacity: 0, rotate: 10 }}
-              animate={{
-                x: [0, 180, 400],
-                y: [0, -40, 120],
-                opacity: [0, 0.25, 0],
-                rotate: [10, 0, 25]
-              }}
-              transition={{ duration: 8, ease: "easeInOut", repeat: Infinity, repeatDelay: 2 }}
-              className="absolute top-[60%] left-[0%] w-28 h-8 bg-black/20 rounded-full blur-md z-10"
-            />
-
-            {/* Shadow 2: Deep Lurker */}
-            <motion.div
-              initial={{ x: 400, y: 120, opacity: 0 }}
-              animate={{
-                x: -200,
-                opacity: [0, 0.15, 0]
-              }}
-              transition={{ duration: 15, ease: "linear", repeat: Infinity, delay: 1 }}
-              className="absolute top-[65%] left-[0%] w-48 h-12 bg-black/10 rounded-full blur-lg z-0"
-            />
-
-            {/* Shadow 3: The Nibbler */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{
-                opacity: [0, 0.2, 0],
-                scale: [0.8, 1.0, 0.9],
-                x: [0, 20, -10],
-                y: [0, -5, 5]
-              }}
-              transition={{ duration: 4, ease: "easeInOut", repeat: Infinity, repeatDelay: 5, delay: 2 }}
-              className="absolute top-[58%] left-[45%] w-14 h-5 bg-indigo-900/30 rounded-full blur-[3px] z-10"
-            />
-
-            {/* Shadow 4: Schooling Formation */}
-            {[
-              { ox: 0, oy: 0 },
-              { ox: -25, oy: 15 },
-              { ox: -25, oy: -15 },
-              { ox: -50, oy: 30 },
-              { ox: -50, oy: -30 }
-            ].map((offset, i) => (
-              <motion.div
-                key={`school-${i}`}
-                initial={{
-                  x: 250 + offset.ox,
-                  y: 200 + offset.oy,
-                  opacity: 0,
-                  rotate: -40
-                }}
-                animate={{
-                  x: [-250 + offset.ox],
-                  y: [-200 + offset.oy],
-                  opacity: [0, 0.15, 0]
-                }}
-                transition={{
-                  duration: 12,
-                  ease: "linear",
-                  repeat: Infinity,
-                  repeatDelay: 15,
-                  delay: 2 // Offset start to avoid clash with other shadows
-                }}
-                className="absolute top-[55%] left-[50%] w-10 h-3 bg-black/10 rounded-full blur-[1px] z-0"
-              />
-            ))}
-          </>
+      {/* Header Bar */}
+      <div className="fishing-header">
+        {onBack && (
+          <button className="back-btn" onClick={(e) => { e.stopPropagation(); onBack(); }}>
+            <ChevronLeft size={24} />
+          </button>
         )}
-      </AnimatePresence>
 
-      {/* --- PIER --- */}
-      <div className="absolute bottom-0 left-0 w-full h-24 bg-[#3e2723] z-20 flex justify-center shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-        <div className="w-full h-full opacity-30 bg-[repeating-linear-gradient(90deg,transparent,transparent_19px,#000_20px)]"></div>
+        {/* Energy Counter */}
+        <div className="energy-counter">
+          <Zap size={16} className="energy-icon" />
+          <span className="energy-text">
+            {userStats.premium ? '∞' : userStats.castsRemaining}/{userStats.maxCasts}
+          </span>
+        </div>
       </div>
 
-      {/* --- ROD & LINE --- */}
-      <motion.div
-        className="absolute bottom-[-40px] right-[-40px] w-64 h-[450px] z-30 pointer-events-none"
-        style={{ transformOrigin: 'bottom right' }}
-        animate={
-          phase === GamePhase.CASTING ? {
-            // Physics: Idle -> Windup (Right) -> Snap (Left/Forward) -> Recoil -> Settle
-            rotate: [0, 45, -60, -10, 0],
-            skewX: [0, 10, -30, 5, 0],
-            x: [0, 50, -20, 0, 0]
-          } :
-            phase === GamePhase.HOOKED ? { rotate: [0, -8, 0, -5], transition: { repeat: Infinity, duration: 0.15 } } :
-              phase === GamePhase.ANIMATING_CATCH ? { rotate: -50, transition: { duration: 0.5 } } :
-                { rotate: 0, skewX: 0, x: 0 }
-        }
-        transition={
-          phase === GamePhase.CASTING
-            ? { duration: 3.0, times: [0, 0.3, 0.45, 0.7, 1], ease: "easeInOut" }
-            : { type: "spring", stiffness: 80, damping: 15 }
-        }
-      >
-        {/* Rod Body - L20 Barnacle/Driftwood or Standard */}
-        <div className={`w-3 h-full rounded-full relative shadow-2xl border-r border-white/10 ${hasCarbon ? 'bg-[#5D4037]' : 'bg-gradient-to-t from-amber-900 to-amber-700'}`}>
-          {/* L20 Texture Overlay (Barnacles/Moss) */}
-          {hasCarbon && (
-            <>
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-50 mix-blend-overlay"></div>
-              <div className="absolute top-1/4 left-0 w-full h-12 bg-green-900/40 blur-[1px]"></div> {/* Moss */}
-              <div className="absolute top-1/2 -left-1 w-2 h-2 bg-gray-300 rounded-full shadow-sm"></div> {/* Barnacle */}
-              <div className="absolute top-1/3 -right-1 w-1.5 h-1.5 bg-gray-300 rounded-full shadow-sm"></div>
-            </>
-          )}
+      {/* Main Scene */}
+      <div className="fishing-main">
+        {/* Sky */}
+        <div className="sky-gradient" />
 
-          {/* L10 Kraken Handle */}
-          {hasHandle && (
-            <div className="absolute bottom-0 left-[-3px] w-5 h-36 bg-gradient-to-b from-purple-900 via-purple-950 to-black rounded-lg border-l border-purple-800 flex flex-col items-center justify-around py-2 z-10">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="w-2 h-2 rounded-full bg-purple-600/50 shadow-inner border border-purple-800/50"></div>
-              ))}
-            </div>
-          )}
-
-          {/* L40 Spyglass Reel */}
-          <div className={`absolute bottom-36 -left-5 w-16 h-16 rounded-full border-4 shadow-xl flex items-center justify-center z-20 ${hasReel ? 'bg-yellow-700 border-yellow-500' : 'bg-gray-700 border-gray-500'}`}>
-            {hasReel && <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_50%,#000_100%)] opacity-30"></div>}
-            <div className={`w-12 h-1.5 bg-gray-300 rotate-45 rounded-full ${hasReel ? 'bg-yellow-200 shadow-[0_0_10px_gold]' : ''}`}></div>
-            {hasReel && <div className="absolute w-10 h-10 rounded-full border-2 border-yellow-900/50"></div>}
-          </div>
-
-          {/* Guides / L30 Anchor Hook */}
-          {[0.1, 0.3, 0.5, 0.7, 0.9].map((pos, i) => (
-            <div key={i} className={`absolute -left-1 w-2.5 h-2.5 rounded-full z-10 ${hasHook ? 'border-2 border-yellow-500 bg-yellow-900' : 'border border-yellow-600'}`} style={{ top: `${pos * 100}%` }}>
-              {hasHook && i === 0 && (
-                <div className="absolute -left-4 top-0 text-lg rotate-90 filter drop-shadow-md">⚓</div>
-              )}
-            </div>
-          ))}
-
-          {/* L50 Effect */}
-          {hasEffect && (
-            <div className="absolute top-0 left-0 w-full h-full animate-pulse opacity-30 bg-gradient-to-t from-transparent via-purple-500 to-transparent mix-blend-color-dodge"></div>
-          )}
+        {/* Water Surface */}
+        <div className="water-surface">
+          <div className="water-waves" />
         </div>
-      </motion.div>
 
-      {/* --- LINE & BOBBER --- */}
-      {phase !== GamePhase.IDLE && phase !== GamePhase.ANIMATING_CATCH && (
-        <>
-          <svg className="absolute inset-0 pointer-events-none z-20 w-full h-full overflow-visible">
-            <motion.line
-              initial={{ x1: "82%", y1: "65%", x2: "82%", y2: "65%" }}
-              animate={
-                phase === GamePhase.CASTING
-                  ? {
-                    // Tip Tracking (Matches Rod Rotation Stages)
-                    // 0: Idle, 0.3: Windup (Down/Right), 0.45: Snap (Up/Left), 0.7: Recoil, 1: Idle
-                    x1: ["82%", "98%", "35%", "75%", "82%"],
-                    y1: ["65%", "85%", "35%", "60%", "65%"],
-
-                    // Bobber Connection Tracking
-                    // 0: Idle, 0.3: With Rod, 0.45: Launching, 0.7: Landed, 1: Settle
-                    x2: ["82%", "98%", "40%", "50%", "50%"],
-                    y2: ["65%", "85%", "25%", "55%", "55%"],
-                    opacity: [0, 1, 1, 1, 1]
-                  }
-                  : { x1: "82%", y1: "65%", x2: "50%", y2: "55%", opacity: 1 }
-              }
-              transition={
-                phase === GamePhase.CASTING
-                  ? {
-                    default: { duration: 1.0, ease: "easeInOut", times: [0, 0.3, 0.45, 0.7, 1] }
-                  }
-                  : { duration: 0.5 }
-              }
-              stroke={hasCarbon ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.5)"}
-              strokeWidth="1.5"
-            />
-          </svg>
-
-          <motion.div
-            className="absolute z-20 pointer-events-none"
-            initial={{ top: "60%", left: "80%", scale: 1, opacity: 0 }}
-            animate={
-              phase === GamePhase.CASTING
-                ? {
-                  // Flight Path
-                  top: ["60%", "85%", "25%", "55%", "55%"], // Deep arc
-                  left: ["80%", "98%", "40%", "50%", "50%"],
-
-                  // Depth Simulation (Close -> Far)
-                  scale: [1, 0.9, 1.2, 0.6, 0.6],
-                  opacity: [0, 1, 1, 1, 1],
-                  rotate: [0, 45, -45, 180, 0]
-                }
-                : phase === GamePhase.WAITING
-                  ? { top: "55%", left: "50%", scale: 0.6, opacity: 1, y: [0, 4, 0] }
-                  : phase === GamePhase.HOOKED
-                    ? { top: "60%", left: "50%", scale: 0.7, opacity: 1, rotate: [0, 15, -15, 0] }
-                    : { top: "55%", left: "50%", scale: 0.6, opacity: 1 }
-            }
-            transition={
-              phase === GamePhase.CASTING
-                ? { duration: 3.0, times: [0, 0.3, 0.45, 0.7, 1], ease: "easeInOut" }
-                : phase === GamePhase.WAITING
-                  ? { repeat: Infinity, duration: 2.5, ease: "easeInOut" }
-                  : { duration: 0.4 }
-            }
-          >
-            <div className="relative -translate-x-1/2 -translate-y-1/2 group">
-              <div className="w-6 h-6 bg-red-600 rounded-t-full border border-black/20 shadow-lg relative overflow-hidden">
-                <div className="absolute top-1 left-1 w-2 h-1 bg-white/40 rounded-full"></div>
-              </div>
-              <div className="w-6 h-6 bg-white rounded-b-full border border-black/20 shadow-lg"></div>
-              {phase === GamePhase.HOOKED && (
+        {/* Underwater */}
+        <div className="underwater">
+          {/* Fish Shadows during WAITING */}
+          <AnimatePresence>
+            {phase === GamePhase.WAITING && (
+              <>
                 <motion.div
-                  animate={{ scale: [1, 2], opacity: [0.8, 0] }}
-                  transition={{ repeat: Infinity, duration: 0.6 }}
-                  className="absolute -inset-4 bg-white rounded-full z-[-1]"
+                  className="fish-shadow"
+                  initial={{ x: -100, opacity: 0 }}
+                  animate={{
+                    x: [0, 150, 300],
+                    y: [0, -20, 40],
+                    opacity: [0, 0.3, 0]
+                  }}
+                  transition={{ duration: 6, repeat: Infinity, repeatDelay: 2 }}
                 />
-              )}
-            </div>
-          </motion.div>
-        </>
-      )}
-
-      {/* --- UI HINTS --- */}
-      <AnimatePresence>
-        {phase === GamePhase.IDLE && showSwipeHint && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="absolute top-[35%] w-full flex flex-col items-center pointer-events-none z-40"
-          >
-            <div className="text-white font-black text-2xl tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] stroke-black uppercase">Swipe Up</div>
-            <motion.div
-              animate={{ y: [0, -20, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}
-              className="mt-2 text-4xl filter drop-shadow-lg"
-            >
-              👆
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {phase === GamePhase.HOOKED && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-50 pointer-events-none bg-red-500/10">
-          <motion.div
-            animate={{ scale: [0.9, 1.1, 0.9] }}
-            transition={{ duration: 0.2, repeat: Infinity }}
-            className="text-6xl font-black text-white tracking-tighter drop-shadow-[0_4px_0px_rgba(0,0,0,1)] stroke-black"
-          >
-            TAP!
-          </motion.div>
-          <div className="mt-8 w-48 h-12 border-4 border-white rounded-full overflow-hidden relative shadow-2xl bg-black/40">
-            <motion.div
-              initial={{ width: "100%" }}
-              animate={{ width: "0%" }}
-              transition={{ duration: 1, ease: "linear" }}
-              className="h-full bg-gradient-to-r from-green-500 to-green-300"
-            />
-          </div>
+                <motion.div
+                  className="fish-shadow fish-shadow-2"
+                  initial={{ x: 350, opacity: 0 }}
+                  animate={{
+                    x: [-100],
+                    opacity: [0, 0.2, 0]
+                  }}
+                  transition={{ duration: 8, repeat: Infinity, delay: 1 }}
+                />
+              </>
+            )}
+          </AnimatePresence>
         </div>
-      )}
 
-      {/* --- L50 PRESTIGE ANIMATION --- */}
-      <AnimatePresence>
-        {phase === GamePhase.ANIMATING_CATCH && (
-          <div className="absolute inset-0 z-[60] pointer-events-none flex items-center justify-center overflow-hidden">
+        {/* FISHING ROD - VISIBLE AND CENTERED */}
+        <motion.div
+          className="rod-wrapper"
+          animate={{ rotate: rodAngle }}
+          transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+        >
+          {/* Rod Handle */}
+          <div className="rod-handle">
+            <div className="handle-grip" />
+            <div className="reel">
+              <div className="reel-inner" />
+            </div>
+          </div>
 
-            {/* 1. Pirate Ship Slides In from Right */}
+          {/* Rod Shaft */}
+          <div className="rod-shaft">
+            <div className="rod-tip" />
+          </div>
+
+          {/* Fishing Line */}
+          {phase !== GamePhase.IDLE && (
             <motion.div
-              initial={{ x: '100vw', opacity: 0 }}
-              animate={{ x: '20%', opacity: 1 }}
-              exit={{ x: '100vw', opacity: 0 }}
-              transition={{ duration: 0.8, ease: "circOut" }}
-              className="absolute bottom-32 right-0 w-80 h-80 z-10"
-            >
-              <div className="text-[200px] drop-shadow-2xl transform -scale-x-100">⛵</div>
-            </motion.div>
-
-            {/* 2. Muzzle Flash (Explosion) */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: [0, 1, 0], scale: [0.5, 2, 0] }}
-              transition={{ delay: 0.8, duration: 0.3 }}
-              className="absolute bottom-48 right-[10%] w-32 h-32 bg-yellow-400 rounded-full blur-md z-20 mix-blend-screen"
-            >
-              <div className="absolute inset-0 bg-white rounded-full animate-ping"></div>
-            </motion.div>
-
-            {/* 3. Cannon Ball / Fish Flight (Ballistic Arc) */}
-            <motion.div
-              initial={{ x: 150, y: 150, scale: 0, rotate: 0 }}
+              className="fishing-line"
+              initial={{ height: 0 }}
               animate={{
-                x: [150, -100],
-                y: [150, -300, 200], // Up then Down
-                scale: [0.5, 1.5, 1],
-                rotate: [0, 360, 720, 1080]
+                height: phase === GamePhase.CASTING ? 180 : 120,
+                opacity: 1
               }}
-              transition={{ duration: 1.5, delay: 0.9, ease: "easeInOut" }} // Match explosion
-              className="absolute z-30"
+              transition={{ duration: 0.5 }}
             >
-              <div className="text-7xl filter drop-shadow-lg">🐟</div>
-              {/* Trail */}
+              {/* Bobber */}
               <motion.div
-                animate={{ opacity: [0.8, 0] }}
-                transition={{ repeat: Infinity, duration: 0.2 }}
-                className="absolute top-1/2 left-1/2 w-4 h-4 bg-white rounded-full blur-sm"
-              />
-            </motion.div>
-
-            {/* 4. Basket Catch Impact */}
-            <motion.div
-              initial={{ scale: 0, opacity: 0, y: 100 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ delay: 1.5 }} // Appears before fish lands
-              className="absolute bottom-10 left-[calc(50%-50px)] text-8xl z-20"
-            >
-              <motion.div
-                animate={{ scale: [1, 1.3, 1], rotate: [0, -10, 10, 0] }}
-                transition={{ delay: 2.3, duration: 0.4 }} // Impact time
+                className="bobber"
+                animate={
+                  phase === GamePhase.WAITING
+                    ? { y: [0, 5, 0] }
+                    : phase === GamePhase.HOOKED
+                      ? { y: [0, -10, 5, -8], scale: [1, 1.2, 1, 1.1] }
+                      : {}
+                }
+                transition={{
+                  duration: phase === GamePhase.HOOKED ? 0.3 : 2,
+                  repeat: Infinity,
+                  ease: phase === GamePhase.HOOKED ? 'easeOut' : 'easeInOut'
+                }}
               >
-                🧺
+                <div className="bobber-top" />
+                <div className="bobber-bottom" />
               </motion.div>
             </motion.div>
+          )}
+        </motion.div>
 
-            {/* Impact Dust */}
+        {/* HOOKED FISH */}
+        <AnimatePresence>
+          {showFish && hookedFish && (
             <motion.div
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: [0, 0.8, 0], scale: [1, 2, 3] }}
-              transition={{ delay: 2.3, duration: 0.5 }}
-              className="absolute bottom-10 left-[calc(50%-50px)] w-24 h-24 bg-orange-100 rounded-full blur-xl z-10"
-            />
+              className="fish-container"
+              initial={{ opacity: 0, y: 50, scale: 0.5 }}
+              animate={{
+                opacity: 1,
+                y: fishBounce,
+                scale: 1,
+                x: Math.sin(fishBounce * 0.2) * 10
+              }}
+              exit={{ opacity: 0, y: 100, scale: 0.3 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="fish-card">
+                <div className="fish-emoji">{hookedFish.image}</div>
+                <div className="fish-name">{hookedFish.name}</div>
+                <div
+                  className="fish-rarity"
+                  style={{
+                    borderColor: getRarityColor(hookedFish.rarity),
+                    color: getRarityColor(hookedFish.rarity)
+                  }}
+                >
+                  {hookedFish.rarity}
+                </div>
+              </div>
+
+              {/* Bubbles */}
+              <motion.div className="bubble b1" animate={{ y: -80, opacity: 0 }} transition={{ duration: 2, repeat: Infinity }} />
+              <motion.div className="bubble b2" animate={{ y: -100, opacity: 0 }} transition={{ duration: 2.5, repeat: Infinity, delay: 0.3 }} />
+              <motion.div className="bubble b3" animate={{ y: -70, opacity: 0 }} transition={{ duration: 2.2, repeat: Infinity, delay: 0.6 }} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Cast Power Meter */}
+        {isCasting && castPower > 10 && (
+          <motion.div
+            className="power-meter"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="power-bar">
+              <div className="power-fill" style={{ height: `${castPower}%` }} />
+            </div>
+            <span className="power-label">POWER</span>
+          </motion.div>
+        )}
+
+        {/* Swipe Hint */}
+        <AnimatePresence>
+          {phase === GamePhase.IDLE && showSwipeHint && userStats.castsRemaining > 0 && (
+            <motion.div
+              className="swipe-hint"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="swipe-icon"
+                animate={{ y: [0, -15, 0] }}
+                transition={{ duration: 1.2, repeat: Infinity }}
+              >
+                👆
+              </motion.div>
+              <span className="swipe-text">SWIPE UP TO CAST</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Casting Indicator */}
+        {phase === GamePhase.CASTING && (
+          <motion.div
+            className="phase-indicator casting"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <div className="indicator-bar">
+              <motion.div
+                className="indicator-fill"
+                initial={{ width: 0 }}
+                animate={{ width: '100%' }}
+                transition={{ duration: 2.5, ease: 'linear' }}
+              />
+            </div>
+            <span>Casting...</span>
+          </motion.div>
+        )}
+
+        {/* Waiting Indicator */}
+        {phase === GamePhase.WAITING && (
+          <motion.div
+            className="phase-indicator waiting"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            🎣 Waiting for bite...
+          </motion.div>
+        )}
+
+        {/* Hooked Actions */}
+        <AnimatePresence>
+          {phase === GamePhase.HOOKED && (
+            <motion.div
+              className="hooked-ui"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 30 }}
+            >
+              <motion.div
+                className="tap-prompt"
+                animate={{ scale: [0.95, 1.05, 0.95] }}
+                transition={{ duration: 0.25, repeat: Infinity }}
+              >
+                TAP TO CATCH!
+              </motion.div>
+
+              <div className="catch-timer">
+                <motion.div
+                  className="timer-fill"
+                  initial={{ width: '100%' }}
+                  animate={{ width: '0%' }}
+                  transition={{ duration: hookedFish?.catchWindow || 2, ease: 'linear' }}
+                />
+              </div>
+
+              <div className="action-buttons">
+                <button
+                  className="btn-catch"
+                  onClick={(e) => { e.stopPropagation(); handleTap(); }}
+                >
+                  🎯 REEL IN
+                </button>
+                <button
+                  className="btn-cut"
+                  onClick={(e) => { e.stopPropagation(); handleCutLine(); }}
+                >
+                  ✂️ CUT LINE
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* No Casts Available */}
+        {phase === GamePhase.IDLE && userStats.castsRemaining <= 0 && !userStats.premium && (
+          <div className="no-casts">
+            <span className="no-casts-icon">⏳</span>
+            <span className="no-casts-text">No energy left!</span>
+            <span className="no-casts-hint">Refills over time</span>
           </div>
         )}
-      </AnimatePresence>
+      </div>
 
+      {/* Bottom HUD */}
+      <div className="fishing-hud">
+        <div className="hud-item">
+          <span className="hud-label">Bait</span>
+          <span className="hud-value">🪱</span>
+        </div>
+        <div className="hud-item">
+          <span className="hud-label">Level</span>
+          <span className="hud-value">{userStats.level}</span>
+        </div>
+        <div className="hud-item">
+          <span className="hud-label">Streak</span>
+          <span className="hud-value">🔥 {userStats.streak}</span>
+        </div>
+      </div>
+
+      <style>{`
+        .fishing-scene {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          font-family: 'Nunito', -apple-system, sans-serif;
+          touch-action: none;
+          user-select: none;
+        }
+
+        .fishing-header {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 50;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 16px;
+          padding-top: max(12px, env(safe-area-inset-top));
+        }
+
+        .back-btn {
+          width: 44px;
+          height: 44px;
+          background: linear-gradient(180deg, #5DADE2 0%, #2E86C1 100%);
+          border: 3px solid #1A5276;
+          border-radius: 10px;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 3px 0 #0E3A5E;
+        }
+
+        .energy-counter {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(8px);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          border-radius: 20px;
+          padding: 8px 14px;
+        }
+
+        .energy-icon {
+          color: #F4D03F;
+          fill: #F4D03F;
+        }
+
+        .energy-text {
+          color: white;
+          font-weight: 700;
+          font-size: 14px;
+        }
+
+        .fishing-main {
+          flex: 1;
+          position: relative;
+          overflow: hidden;
+        }
+
+        /* Sky */
+        .sky-gradient {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 45%;
+          background: linear-gradient(180deg, #1A365D 0%, #2C5282 40%, #4299E1 100%);
+        }
+
+        /* Water */
+        .water-surface {
+          position: absolute;
+          top: 42%;
+          left: 0;
+          right: 0;
+          height: 8%;
+          background: linear-gradient(180deg, #4299E1 0%, #2B6CB0 50%, #1E4E8C 100%);
+          z-index: 5;
+        }
+
+        .water-waves {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 100%;
+          background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60'%3E%3Cpath d='M0,30 Q300,0 600,30 T1200,30' stroke='%23ffffff' stroke-width='2' fill='none' opacity='0.3'/%3E%3C/svg%3E") repeat-x;
+          background-size: 400px 30px;
+          animation: waveMove 4s linear infinite;
+        }
+
+        @keyframes waveMove {
+          0% { background-position: 0 0; }
+          100% { background-position: 400px 0; }
+        }
+
+        .underwater {
+          position: absolute;
+          top: 48%;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(180deg, #1E4E8C 0%, #0D3B66 30%, #051F40 100%);
+          z-index: 4;
+        }
+
+        .fish-shadow {
+          position: absolute;
+          top: 20%;
+          left: 10%;
+          width: 80px;
+          height: 20px;
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 50%;
+          filter: blur(4px);
+        }
+
+        .fish-shadow-2 {
+          top: 40%;
+          width: 120px;
+          height: 30px;
+        }
+
+        /* ROD STYLES */
+        .rod-wrapper {
+          position: absolute;
+          bottom: 20%;
+          right: 15%;
+          width: 200px;
+          height: 350px;
+          transform-origin: bottom right;
+          z-index: 20;
+          pointer-events: none;
+        }
+
+        .rod-handle {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          width: 30px;
+          height: 70px;
+          background: linear-gradient(90deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+          border-radius: 4px;
+          border: 2px solid #654321;
+          box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        .handle-grip {
+          position: absolute;
+          inset: 4px;
+          background: linear-gradient(90deg, #D2B48C 0%, #8B7355 50%, #D2B48C 100%);
+          border-radius: 2px;
+          opacity: 0.7;
+        }
+
+        .reel {
+          position: absolute;
+          top: -10px;
+          left: -15px;
+          width: 35px;
+          height: 35px;
+          background: radial-gradient(circle, #C0C0C0 0%, #707070 100%);
+          border-radius: 50%;
+          border: 2px solid #404040;
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .reel-inner {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 10px;
+          height: 10px;
+          background: #505050;
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+        }
+
+        .rod-shaft {
+          position: absolute;
+          bottom: 65px;
+          right: 12px;
+          width: 8px;
+          height: 280px;
+          background: linear-gradient(90deg, #4A4A4A 0%, #6B6B6B 50%, #4A4A4A 100%);
+          border-radius: 4px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .rod-tip {
+          position: absolute;
+          top: -6px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 6px;
+          height: 10px;
+          background: #FF4500;
+          border-radius: 50%;
+        }
+
+        /* Fishing Line */
+        .fishing-line {
+          position: absolute;
+          top: 5px;
+          right: 15px;
+          width: 2px;
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 100%);
+          transform-origin: top;
+        }
+
+        .bobber {
+          position: absolute;
+          bottom: -30px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 20px;
+          height: 30px;
+        }
+
+        .bobber-top {
+          width: 20px;
+          height: 15px;
+          background: #E74C3C;
+          border-radius: 50% 50% 0 0;
+          border: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .bobber-bottom {
+          width: 20px;
+          height: 15px;
+          background: white;
+          border-radius: 0 0 50% 50%;
+          border: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        /* FISH DISPLAY */
+        .fish-container {
+          position: absolute;
+          top: 55%;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 30;
+          text-align: center;
+        }
+
+        .fish-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+          padding: 12px 16px;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(8px);
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-radius: 12px;
+        }
+
+        .fish-emoji {
+          font-size: 48px;
+          animation: fishWiggle 0.4s ease-in-out infinite alternate;
+        }
+
+        @keyframes fishWiggle {
+          0% { transform: scaleX(1) rotate(-5deg); }
+          100% { transform: scaleX(-1) rotate(5deg); }
+        }
+
+        .fish-name {
+          font-size: 14px;
+          font-weight: 700;
+          color: white;
+          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .fish-rarity {
+          font-size: 10px;
+          padding: 2px 8px;
+          border: 2px solid;
+          border-radius: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .bubble {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          background: rgba(255, 255, 255, 0.4);
+          border-radius: 50%;
+          border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .b1 { left: 0; bottom: -20px; }
+        .b2 { left: 30px; bottom: -15px; }
+        .b3 { left: 60px; bottom: -25px; }
+
+        /* Power Meter */
+        .power-meter {
+          position: absolute;
+          left: 20px;
+          top: 50%;
+          transform: translateY(-50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          z-index: 40;
+        }
+
+        .power-bar {
+          width: 20px;
+          height: 120px;
+          background: rgba(0, 0, 0, 0.4);
+          border-radius: 10px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column-reverse;
+        }
+
+        .power-fill {
+          width: 100%;
+          background: linear-gradient(0deg, #27AE60 0%, #F1C40F 50%, #E74C3C 100%);
+          border-radius: 8px;
+          transition: height 0.1s;
+        }
+
+        .power-label {
+          color: white;
+          font-size: 10px;
+          font-weight: 700;
+          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Swipe Hint */
+        .swipe-hint {
+          position: absolute;
+          top: 30%;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          z-index: 35;
+          pointer-events: none;
+        }
+
+        .swipe-icon {
+          font-size: 48px;
+        }
+
+        .swipe-text {
+          color: white;
+          font-size: 16px;
+          font-weight: 800;
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+          letter-spacing: 1px;
+        }
+
+        /* Phase Indicators */
+        .phase-indicator {
+          position: absolute;
+          top: 15%;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 35;
+          color: white;
+          font-weight: 700;
+          font-size: 14px;
+          text-align: center;
+        }
+
+        .phase-indicator.casting {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .indicator-bar {
+          width: 150px;
+          height: 8px;
+          background: rgba(0, 0, 0, 0.4);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+
+        .indicator-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #27AE60 0%, #58D68D 100%);
+          box-shadow: 0 0 10px rgba(88, 214, 141, 0.5);
+        }
+
+        /* Hooked UI */
+        .hooked-ui {
+          position: absolute;
+          bottom: 15%;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+          z-index: 40;
+        }
+
+        .tap-prompt {
+          font-size: 28px;
+          font-weight: 900;
+          color: white;
+          text-shadow: 3px 3px 0 #C0392B, 0 0 20px rgba(231, 76, 60, 0.8);
+          letter-spacing: 2px;
+        }
+
+        .catch-timer {
+          width: 180px;
+          height: 12px;
+          background: rgba(0, 0, 0, 0.5);
+          border-radius: 6px;
+          overflow: hidden;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .timer-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #27AE60 0%, #F1C40F 50%, #E74C3C 100%);
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 12px;
+        }
+
+        .btn-catch, .btn-cut {
+          padding: 12px 20px;
+          border-radius: 10px;
+          font-family: inherit;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          border: none;
+          box-shadow: 0 4px 0;
+        }
+
+        .btn-catch {
+          background: linear-gradient(180deg, #58D68D 0%, #27AE60 100%);
+          color: white;
+          box-shadow: 0 4px 0 #145A32;
+        }
+
+        .btn-cut {
+          background: linear-gradient(180deg, #E74C3C 0%, #C0392B 100%);
+          color: white;
+          box-shadow: 0 4px 0 #922B21;
+        }
+
+        /* No Casts */
+        .no-casts {
+          position: absolute;
+          top: 40%;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          z-index: 35;
+        }
+
+        .no-casts-icon {
+          font-size: 48px;
+        }
+
+        .no-casts-text {
+          color: white;
+          font-weight: 700;
+          font-size: 18px;
+          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .no-casts-hint {
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 12px;
+        }
+
+        /* Bottom HUD */
+        .fishing-hud {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 60px;
+          background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 30%, rgba(0, 0, 0, 0.9) 100%);
+          display: flex;
+          justify-content: space-around;
+          align-items: center;
+          padding: 0 20px;
+          padding-bottom: max(8px, env(safe-area-inset-bottom));
+          z-index: 45;
+        }
+
+        .hud-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2px;
+        }
+
+        .hud-label {
+          font-size: 10px;
+          color: rgba(255, 255, 255, 0.6);
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .hud-value {
+          font-size: 16px;
+          color: white;
+          font-weight: 700;
+        }
+
+        /* Mobile Optimization */
+        @media (max-height: 700px) {
+          .rod-wrapper {
+            height: 280px;
+          }
+
+          .rod-shaft {
+            height: 220px;
+          }
+
+          .tap-prompt {
+            font-size: 22px;
+          }
+        }
+      `}</style>
     </div>
   );
 };

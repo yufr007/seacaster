@@ -1,0 +1,509 @@
+You are a senior full‑stack engineer building a production‑grade, mobile‑first Farcaster Mini App called **SeaCaster** on the **Base** network.
+
+SeaCaster is a casual, mobile-only fishing game with progression, tournaments, and onchain rewards using USDC on Base. It runs as a Farcaster Mini App, uses Base OnchainKit for wallet/payments, and must be built to enterprise standards (clean architecture, test coverage, security, observability, config management).
+
+You must generate the **entire stack**: frontend, backend, smart contracts, and infra wiring, following the specification below.
+
+================================
+1. HIGH-LEVEL PRODUCT OVERVIEW
+================================
+
+SeaCaster is:
+
+- A **mobile-only** (portrait) web app embedded as a **Farcaster Mini App**, optimized for Warpcast mobile.
+- A **fishing game** with a 30-second loop: cast → wait → catch → reward.
+- A **progression system** with:
+  - Levels 1–50 per 60-day season.
+  - Infinite prestige beyond 50 (60, 70, 80, 90, 100, etc.) with loot chests.
+- A **tournament layer** with:
+  - Daily, Weekly, Boss Battle, and Championship tournaments.
+  - Fixed instance sizes and clearly defined prize pools and margins.
+- A **monetization model**:
+  - $9.99 USDC Season Pass (60 days, 6 seasons/year).
+  - Tournament entry fees with 10–20% house cut.
+  - 10% marketplace fee on player-to-player trades.
+  - Rewarded video ads (AdMob) with one free skip per day for Season Pass users.
+- A **marketplace**:
+  - Tradeable: RNG loot (bait, rod parts, tickets, fish, cosmetics).
+  - Soulbound: Season Pass exclusive rod set, animated titles/badges, Level 100 titles.
+- A **Base + Farcaster native app**:
+  - Uses USDC on Base L2 via OnchainKit.
+  - Uses Farcaster Mini App SDK for identity, context, and launch.
+
+Your job: produce a monorepo-style project (or clearly separated folders) ready to deploy to **Vercel (frontend)**, **Railway (backend)**, **Supabase (Postgres)**, **Upstash (Redis)**, and **Base Mainnet (smart contracts)**.
+
+======================
+2. TECH STACK & ARCH
+======================
+
+2.1 Frontend (Mobile-First, PWA, Farcaster Mini App)
+
+- **Framework**: React 18 (Vite).
+- **Language**: TypeScript (strict).
+- **Styling**: Tailwind CSS (mobile-first, portrait only).
+- **Canvas/Animations**: Fabric.js (fishing rod, bobber, fish animations).
+- **State Management**: Zustand.
+- **Real-time**: Socket.IO client.
+- **Wallet / Onchain**:
+  - Wagmi + Viem.
+  - Base OnchainKit (for wallet connect, USDC payments, TX flow).
+- **Farcaster**:
+  - @farcaster/miniapp-sdk for Mini App integration.
+- **PWA**:
+  - Service worker, manifest.json, offline caching.
+- **Ads**:
+  - Google AdMob rewarded video (integrate as a configurable module; allow stubbing in dev).
+
+2.2 Backend
+
+- **Runtime**: Node.js 20+.
+- **Framework**: Express.js.
+- **GraphQL**: Apollo Server (for rich querying from frontend).
+- **Real-time**: Socket.IO server.
+- **ORM**: Prisma (PostgreSQL).
+- **Auth**: JWT (for app-level sessions keyed on Farcaster FID & wallet address).
+- **Validation**: Zod (or similar) for request & response schemas.
+
+2.3 Data Layer
+
+- **Primary DB**: PostgreSQL (Supabase).
+  - Users, inventory, catches, tournaments, marketplace listings, audit logs.
+- **Cache / Realtime**: Redis (Upstash).
+  - Live leaderboards, rate limiting, recent activity feeds, ephemeral session data.
+
+2.4 Blockchain
+
+- **Network**: Base Mainnet.
+- **Token**: USDC on Base (standard contract address).
+- **Smart Contracts (Solidity 0.8.x)**:
+  - TournamentPool: collects entry fees, tracks prize pools, distributes payouts with set splits.
+  - SeasonPass: validates who has an active Season Pass (60-day duration).
+  - RodNFT (optional initial stub): ERC-721 or minimal SBT-style contract for future use (note: Season Pass exclusives are soulbound – do NOT implement transfers for those; design accordingly).
+- Integrate via OnchainKit + Viem + Wagmi with proper ABI typings.
+
+2.5 Deployment & Config
+
+- **Frontend**: Vercel (SPA, PWA).
+- **Backend**: Railway (containerized Node app).
+- **DB**: Supabase Postgres.
+- **Cache**: Upstash Redis.
+- **Smart contracts**: Base Mainnet (and Base Sepolia for staging).
+- Use `.env` with clearly named vars and a config module:
+  - DB URL, Redis URL, AdMob keys, OnchainKit API key, Base RPC URL, contract addresses, Farcaster-related config.
+
+===========================
+3. CORE GAME FUNCTIONALITY
+===========================
+
+3.1 Mobile-Only Constraints
+
+- Portrait orientation only.
+- Primary input: touch gestures (swipe, tap).
+- No mouse/keyboard-specific UX.
+- Large touch targets (min ~48x48px).
+- Haptic feedback where supported:
+  - Light vibrate on bite.
+  - Medium on catch.
+  - Strong on level-up.
+
+3.2 Fishing Loop
+
+Implement a 30-second average loop:
+
+1. CAST
+   - User sees ocean from a **pier**, not a boat (no boat in MVP).
+   - Fish shadows at different depths.
+   - Swipe up to cast; rod bends and bobber arcs into water.
+2. WAIT
+   - 5–15s random delay.
+   - Bobber floats; fish shadows approach.
+   - Bobber starts shaking; “!” appears.
+3. CATCH
+   - Tap anywhere during the timing window (based on rarity).
+   - Success: reel-in animation, fish emerges, haptic feedback.
+   - Fail: fish escapes, sad sound, no XP.
+4. REWARD
+   - Show fish card with:
+     - Species, rarity, weight, XP gained.
+   - Animate XP bar; trigger level-up UI if threshold crossed.
+
+3.3 Fish Rarity & Species (Season 1)
+
+Implement rarity tiers with probabilities and XP:
+
+- Common: 60%, 10 XP, 2.0s window.
+- Uncommon: 25%, 25 XP, 1.5s.
+- Rare: 10%, 50 XP, 1.0s.
+- Epic: 4%, 100 XP, 0.75s.
+- Legendary: 0.9%, 250 XP, 0.5s.
+- Mythic: 0.1%, 500 XP, 0.5s.
+
+Season 1 Pirate-themed specimen (just examples, you choose naming consistent with spec):
+
+- Common: sardine, mackerel, seabass, cod.
+- Uncommon: snapper, grouper, tuna.
+- Rare: swordfish, mahi mahi, sailfish.
+- Epic: marlin, giant tuna, hammerhead.
+- Legendary: megalodon, kraken tentacle.
+- Mythic: ghost ship leviathan.
+
+3.4 Bait System
+
+Implement bait inventory & effects:
+
+- Basic Worm (infinite, default).
+- Premium Shrimp: +15% bite speed.
+- Uncommon Lure: +10% rare chance.
+- Rare Squid: +15% rare chance.
+- Epic Chum: +25% epic+ chance.
+- Legendary Kraken Bait: +50% legendary chance.
+
+Rules:
+
+- Each cast consumes 1 bait of currently selected type.
+- If a premium type runs out, fallback to Basic Worm.
+- Show bait counts in UI and allow switching before casting.
+
+=============================
+4. PROGRESSION & REWARDS
+=============================
+
+4.1 XP & Leveling
+
+- Levels 1–50 per 60-day season.
+- Exponential XP curve (approx 40% more per level).
+- Track XP on backend; never trust client.
+- XP sources:
+  - Catches (per rarity).
+  - Daily login.
+  - Daily challenges.
+  - Tournament participation & placement.
+  - Sharing on social.
+  - Watching ads (limited per day).
+
+4.2 Level Rewards
+
+Every level gives something:
+
+- Free users: bonus casts + bait tiers, scaling over level ranges (1-9, 11-19, 21-29, etc.) as per spec.
+- Premium users: more casts and higher-tier bait for same levels.
+
+Every 10 levels is a **milestone**:
+
+- Level 1:
+  - Free: static season badge.
+  - Premium: animated season badge.
+- Level 10, 20, 30, 40, 50:
+  - Free: tournament entries (Daily, Weekly, Boss, Boss, Championship).
+  - Premium: rod pieces (Handle, Rod, Hook, Reel, Animation) + same tournament entries.
+
+4.3 Rod Building
+
+- Rod is built over Levels 10, 20, 30, 40, 50:
+  - L10: Kraken Tentacle Handle.
+  - L20: Barnacle-Encrusted Rod.
+  - L30: Anchor Hook.
+  - L40: Brass Spyglass Reel.
+  - L50: unlocks Pirate Cannon Ship catch animation.
+- Display rod silhouette in UI with progress 1/5 → 5/5.
+
+4.4 Level 50 Catch Animation (Premium Only, Soulbound)
+
+- When full rod is equipped:
+  - Fish morphs into a mini pirate ship.
+  - Ship surfaces, cannons fire in sequence, with smoke & splash.
+  - Ship lands in basket, flag unfurls, then morphs back to fish.
+- Only Level 50 Season Pass holders see this animation.
+- This animation is **non-tradeable** and account-bound.
+
+4.5 Prestige System (Beyond Level 50)
+
+- Continue XP beyond 50.
+- Every +10 levels (60, 70, 80, 90, 100) grant **prestige loot chests** with named tiers:
+  - Season 1:
+    - L60: Scallywag’s Wood Plunder.
+    - L70: Powder Monkey’s Bronze Plunder.
+    - L80: Quartermaster’s Silver Plunder.
+    - L90: First Mate’s Gold Plunder.
+    - L100: Captain’s Legendary Plunder + “Pirate King” Title (soulbound).
+- Loot chests contain:
+  - Guaranteed: rare/epic parts, epic/legendary bait, tournament tickets.
+  - RNG extras: cosmetics, higher-tier parts, Mythic Bait, jackpot items.
+
+- Prestige resets each season (levels back to 1), but:
+  - Level 100 **titles** remain permanently (soulbound proof-of-grind).
+
+4.6 Daily Login Streak – Bait Box
+
+- Visual: bait box on pier with 7 slots, Day 1–7.
+- Free and Premium streaks differ in rewards (premium better).
+- At Day 7:
+  - Free: Shark → streak chest (premium bait + XP + rare part).
+  - Premium: Whale → premium chest (epic bait, XP, epic part, $1 USDC credit).
+- Add **Kraken Easter Egg** at Day 7:
+  - Box shakes, kraken tentacle appears.
+  - Player chooses:
+    - “FIGHT!”: tap challenge to earn bonus Legendary Bait on win.
+    - “Swim with the fishes”: lose 1 premium bait to skip mini-game.
+- Missing any day:
+  - Box empties, fish skeleton appears to show failed streak.
+  - Weekly reset on Monday.
+
+=========================
+5. TOURNAMENT SYSTEM
+=========================
+
+Implement 4 tournament types with EXACT economics:
+
+5.1 General Rules
+
+- Tournament instances:
+  - When an instance fills (fixed participant count), start it.
+  - New players join new instances; unlimited instances per day.
+- Data model:
+  - Each instance has type, participants, scores, status, prizes.
+- Player limits:
+  - At least 1 entry per player per day per type via earned tickets.
+  - Additional entries via paid fees / tickets as allowed by design.
+
+5.2 Daily Tournament (Speedrun)
+
+- Schedule: every day at 20:00 local.
+- Duration: 10 minutes per instance.
+- Goal: **most fish caught**.
+- Entry: $0.50 USDC.
+- Participants per instance: 60.
+- Total collected: $30.00.
+- Prize pool: $27.00 (90%).
+- Our cut: $3.00 (10%).
+
+Prize distribution (top 40 paid):
+
+- 1st: $5.00
+- 2nd: $2.80
+- 3rd: $2.00
+- 4th: $1.50
+- 5th: $1.20
+- 6–10: $0.90 each
+- 11–20: $0.50 each
+- 21–30: $0.30 each
+- 31–40: $0.20 each
+- 41–60: $0.00
+
+5.3 Weekly Tournament (Big Fish)
+
+- Schedule: Sundays at 15:00 local.
+- Duration: 60 minutes.
+- Goal: **largest single fish by weight**.
+- Entry: $2.00 USDC.
+- Participants per instance: 75.
+- Total collected: $150.00.
+- Prize pool: $135.00 (90%).
+- Our cut: $15.00 (10%).
+
+Prize distribution (top 40 paid, weighted as per spec):
+
+- 1st: $25.00
+- 2nd: $14.00
+- 3rd: $10.00
+- 4th: $7.50
+- 5th: $6.00
+- 6–10: $4.50 each
+- 11–20: $2.50 each
+- 21–30: $1.50 each
+- 31–40: $1.00 each
+- 41–75: $0.00
+
+5.4 Boss Battle (Weekend League)
+
+- Schedule: Friday 18:00 – Sunday 23:00.
+- Duration: 30 minutes per attempt.
+- Attempts: 2 per entry (Friday + Sunday).
+- Goal: defeat a themed boss (e.g., Baby Kraken, Ghost Ship Crew, etc.).
+- Entry: $7.99 USDC.
+- Participants per instance: 31.
+- Total collected: $247.69.
+- Prize pool: $198.15 (80%).
+- Our cut: $49.54 (20%).
+
+Prize distribution (top 25 paid):
+
+- 1st: $33.03
+- 2nd: $18.51
+- 3rd: $13.21
+- 4th: $9.91
+- 5th: $7.93
+- 6–10: $5.94 each
+- 11–15: $3.96 each
+- 16–20: $2.64 each
+- 21–25: $1.98 each
+- 26–31: $0.00
+
+Season 1 bosses: 8 pirate-themed bosses over 8 weekends, increasing difficulty.
+
+5.5 Championship (Season Finale)
+
+- Schedule: last Sunday of the season at 14:00.
+- Duration: 2 hours.
+- Goal: combined score (quantity × rarity × variety).
+- Entry: $50.00 USDC or free ticket from Level 50.
+- Participants per instance: 200.
+- Total collected: $10,000.
+- Prize pool: $8,000 (80%).
+- Our cut: $2,000 (20%).
+
+Prize distribution (top 20):
+
+- 1st: $2,000
+- 2nd: $1,120
+- 3rd: $800
+- 4th: $600
+- 5th: $480
+- 6–10: $360 each
+- 11–15: $240 each
+- 16–20: $160 each
+
+Crown the winner as Season Champion; award permanent badge/title.
+
+=================================
+6. MONETIZATION & ECONOMY RULES
+=================================
+
+6.1 Season Pass ($9.99 USDC)
+
+- Duration: 60 days (2 months).
+- Includes:
+  - Unlimited casts.
+  - 2× XP rate.
+  - Premium daily streak rewards.
+  - Seasonal rod set (5 pieces; soulbound).
+  - Unique Level 50 catch animation (soulbound).
+  - Animated badge & title (soulbound).
+  - Ability to sell items on marketplace.
+  - Tournament tickets at every 10-level milestone.
+  - 1 free ad skip per day.
+
+6.2 Marketplace (10% Fee)
+
+- Tradeable:
+  - RNG fishing loot (bait, rod parts).
+  - Fish (all rarities).
+  - Tournament tickets.
+  - Prestige loot drop items.
+  - Cosmetics (when added).
+- Soulbound/non-tradeable:
+  - Season Pass-exclusive rod pieces.
+  - Season Pass animated badges/titles.
+  - Prestige Level 100 titles.
+  - Achievements.
+
+- Implement:
+  - List item (type, name, price, quantity).
+  - Buy item (USDC payment, fee extraction).
+  - 10% fee to house, 90% to seller.
+
+6.3 Ads (Rewarded Video, AdMob)
+
+- Integrate rewarded video ads via AdMob:
+  - Extra Loot: 1 ad.
+  - Bonus Casts (3): 2 ads.
+  - XP Boost: 1 ad.
+  - Daily Tournament Entry: 3 ads.
+  - Common Loot Box: 5 ads.
+- Max 5 ads/day/user.
+- Premium users: 1 free skip/day giving an ad reward with no ad.
+
+6.4 Anti-Sybil / Anti-Bot
+
+- Identity:
+  - Use Farcaster FID as base identity.
+  - Enforce one main account per FID for Season Pass ownership.
+- Rate limits:
+  - API-level rate limiting per FID/IP.
+  - Tournament entry limits per user/day.
+- Heuristics:
+  - Monitor suspicious win rates and patterns.
+  - Flag and review high-profit accounts.
+
+==================================
+7. FARCASTER & BASE INTEGRATION
+==================================
+
+7.1 Farcaster Mini App
+
+- Implement manifest at `/.well-known/farcaster.json`:
+  - Signed `accountAssociation`.
+  - `frame.version = "1"`.
+  - Proper icon, splash, OG image URLs.
+- Add `fc:miniapp` meta tag on main entry page with:
+  - Button title: “Start Fishing”.
+  - Launch action: type `launch_frame`, home URL set to app URL.
+
+- Use @farcaster/miniapp-sdk:
+  - On load, call `sdk.actions.ready()` to hide splash.
+  - Use `sdk.context` to get user FID, username, pfp, etc.
+  - Use `sdk.actions.openUrl()` for share flows.
+  - Use `sdk.actions.addMiniApp()` to let user pin the app.
+
+7.2 Base + OnchainKit
+
+- Configure OnchainKit Provider at app root with Base network.
+- Use OnchainKit components/hooks for:
+  - Wallet connect.
+  - USDC payment flows (Season Pass, tournament entries).
+  - Transaction status UI.
+
+- Ensure all price amounts are USDC on Base and gas is minimal.
+
+======================
+8. NON-FUNCTIONAL REQS
+======================
+
+- Clean architecture:
+  - Separate domains: game logic, tournaments, economy, auth, blockchain.
+- Security:
+  - Validate all inputs server-side.
+  - Never trust client for XP, progress, or tournament scoring.
+  - Use parameterized queries via Prisma.
+- Observability:
+  - Add logging middleware.
+  - Integrate basic error tracking hooks (e.g., Sentry stubs).
+- Config:
+  - Central config module reading from environment.
+  - No secrets in code.
+- Testing:
+  - Unit tests for core game logic (XP, rarity, distributions).
+  - Integration tests for tournaments & payouts (mock chain).
+  - At least snapshot tests for key UI flows (if feasible).
+
+=====================
+9. OUTPUT EXPECTATION
+=====================
+
+Generate:
+
+1. A clear **file/folder structure** for the monorepo:
+   - `/frontend`, `/backend`, `/contracts`, `/infra` (or similar).
+2. Frontend implementation:
+   - Core pages/components/hooks.
+   - State stores for user, fishing, tournaments, economy.
+   - Integration with Farcaster SDK & OnchainKit.
+3. Backend implementation:
+   - Express + GraphQL API.
+   - Socket.IO server.
+   - Prisma models and migrations.
+   - Tournament scheduling + settlement jobs (even if basic cron or in-app scheduler for now).
+4. Smart contracts:
+   - TournamentPool with 90/10 and 80/20 splits as specified.
+   - SeasonPass.
+   - Minimal Rod/Reward SBT or stub for future use.
+5. Configuration:
+   - Example `.env.example` with all needed environment variables.
+6. Documentation:
+   - A top-level README explaining:
+     - How to run frontend, backend, and contracts locally.
+     - How to configure Base network and contract addresses.
+     - How to run initial DB migrations.
+     - How to run tests.
+
+Focus on correctness, clarity, and production readiness over novelty. Follow the exact game, economy, and tournament specifications above. Avoid scope creep beyond this spec.

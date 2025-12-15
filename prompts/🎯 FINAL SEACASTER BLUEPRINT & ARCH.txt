@@ -1,0 +1,1116 @@
+🎯 FINAL SEACASTER BLUEPRINT & ARCHITECTURE
+Master Document - Complete Game Design Specification
+📋 TABLE OF CONTENTS
+Core Game Mechanics
+
+Progression System
+
+Monetization Model
+
+Tournament Structure
+
+Visual Design & UI
+
+Technical Architecture
+
+Marketing & Launch Strategy
+
+Success Metrics
+
+1️⃣ CORE GAME MECHANICS
+The Fishing Loop (30-Second Cycle)
+text
+STEP 1: THE CAST (3 seconds)
+├─ Player sees ocean view with fish shadows at various depths
+├─ Flick/swipe up gesture (mobile) or click-drag (desktop)
+├─ Rod bends, line extends with physics
+├─ Bobber lands with splash + ripple animation
+└─ Visual feedback: "Nice cast!" or "Perfect!" based on distance
+
+STEP 2: THE WAIT (5-15 seconds)
+├─ Bobber floats with gentle wave animation
+├─ Underwater view shows fish shadows approaching
+├─ Tension builds with ambient sound
+├─ Random wait time creates anticipation
+└─ Visual cue: Bobber starts shaking violently
+
+STEP 3: THE CATCH (1-2 seconds)
+├─ "!" appears above bobber
+├─ Splash sound + water eruption
+├─ Timing window: 0.5-2 seconds (varies by rarity)
+├─ SUCCESS: Tap/click → Reel animation → Fish caught
+├─ MISS: "Fish got away!" → Line goes slack
+└─ Display: Fish species, size, rarity, XP earned
+
+STEP 4: THE REWARD (5 seconds)
+├─ XP bar fills (+10 to +500 XP)
+├─ Floating "+50 XP" text animation
+├─ Fish added to session catch log
+├─ Level up? → Celebration animation
+└─ Return to Step 1 (if casts remain)
+Total Loop: ~30 seconds per cast = Highly addictive rhythm
+
+Fish Rarity System
+Rarity	Catch Rate	XP Value	Visual Indicator	Timing Window
+Common	60%	10 XP	Gray	2 seconds (easy)
+Uncommon	25%	25 XP	Green	1.5 seconds
+Rare	10%	50 XP	Blue	1 second
+Epic	4%	100 XP	Purple	0.75 seconds
+Legendary	0.9%	250 XP	Gold	0.5 seconds (hard!)
+Mythic	0.1%	500 XP	Rainbow	0.5 seconds (hard!)
+Species Examples (Season 1: Pirates):
+
+Common: Sardine, Mackerel, Seabass
+
+Uncommon: Snapper, Grouper, Cod
+
+Rare: Tuna, Swordfish, Mahi Mahi
+
+Epic: Marlin, Sailfish, Giant Tuna
+
+Legendary: Megalodon, Kraken Tentacle
+
+Mythic: Ghost Ship Leviathan (seasonal exclusive)
+
+Bait System
+Bait Type	Cost	Effect	Source
+Basic Worm	Free	Standard catch rates	Daily login, level rewards
+Premium Shrimp	Login reward	+15% bite speed	Daily login (premium)
+Uncommon Lure	Level reward	+10% rare fish chance	Level 21-29 rewards
+Rare Squid	Level reward	+15% rare fish chance	Level 31-39 rewards
+Epic Chum	Level reward	+25% epic+ fish chance	Level 41-49 rewards
+Legendary Kraken Bait	Day 7 streak	+50% legendary chance	Weekly streak chest
+Bait Management:
+
+Displayed as inventory counter (e.g., "Worms: 15")
+
+Consumed per cast
+
+Run out = must use Basic Worm (always available)
+
+Creates resource management strategy
+
+2️⃣ PROGRESSION SYSTEM
+XP & Leveling Formula
+XP Required Per Level:
+
+text
+Level 1→2:   100 XP
+Level 2→3:   200 XP
+Level 3→4:   350 XP
+Level 4→5:   550 XP
+Level 5→6:   800 XP
+...
+Pattern: XP_needed = previous_XP × 1.4 (exponential growth)
+Max Level: 50 per season
+Time to Max Level (Estimates):
+
+Casual (1 hr/day): ~60 days (achievable)
+
+Active (2-3 hrs/day): ~35 days
+
+Hardcore (4+ hrs/day): ~20 days
+
+Level Rewards - Every Single Level
+Levels 1-9 (Tutorial Phase):
+
+Free: 2× Bonus casts + 1× Basic bait
+
+Premium: 5× Bonus casts + 1× Premium bait
+
+Levels 11-19 (Early Game):
+
+Free: 3× Bonus casts + 1× Basic bait
+
+Premium: 7× Bonus casts + 1× Premium bait
+
+Levels 21-29 (Mid Game):
+
+Free: 4× Bonus casts + 1× Uncommon bait
+
+Premium: 10× Bonus casts + 1× Rare bait
+
+Levels 31-39 (Late Game):
+
+Free: 5× Bonus casts + 1× Uncommon bait
+
+Premium: 12× Bonus casts + 1× Rare bait
+
+Levels 41-49 (End Game):
+
+Free: 6× Bonus casts + 1× Rare bait
+
+Premium: 15× Bonus casts + 1× Epic bait
+
+Milestone Rewards - Every 10 Levels
+Level	Free Players	Premium Players
+1	Plain Season Badge	Animated Season Badge
+10	1× Daily Tournament Entry ($0.50)	Rod Handle (1/5) + Entry
+20	1× Weekly Tournament Entry ($2.00)	Rod Piece (2/5) + Entry
+30	1× Boss Battle Entry ($7.99)	Hook Piece (3/5) + Entry
+40	1× Special Event Entry ($10.00)	Reel Piece (4/5) + Entry
+50	1× Championship Entry ($50.00) + Plain Title	Catch Animation (5/5) + Animated Title + Entry
+Rod Building Visual Progress:
+
+Level 1-9: Empty rod silhouette (gray)
+
+Level 10: Handle appears (1/5 filled)
+
+Level 20: Rod piece appears (2/5 filled)
+
+Level 30: Hook appears (3/5 filled)
+
+Level 40: Reel appears (4/5 filled)
+
+Level 50: COMPLETE! + Catch animation unlocked
+
+Daily Login Streak - Bait Box System
+Visual Design:
+
+text
+[Wooden Pier Background]
+    ↓
+[Bait Box on pier with 7 slots]
+    ↓
+[Streak counter: "Day 3/7"]
+Free Player Streak (Weekly Reset):
+
+Day	Visual	Reward
+1	🪱 Worm appears	1× Basic Bait
+2	🎣 Cast token	3× Bonus Casts
+3	🐟 Small fish	1× Premium Bait
+4	🪱🪱 Two worms	2× Basic Bait
+5	🎣 Bigger token	5× Bonus Casts
+6	🐠 Medium fish	50 XP Bonus
+7	🦈 SHARK!	Streak Chest: 3× Premium Bait + 100 XP + Rare Part
+Premium Player Streak:
+
+Day	Visual	Reward
+1	🦐 Shrimp	2× Premium Bait
+2	🎣 Gold token	5× Bonus Casts
+3	🐟 Large fish	3× Premium Bait + 25 XP
+4	🦞 Lobster	4× Premium Bait
+5	🎣 Platinum token	10× Bonus Casts
+6	🐠 Exotic fish	5× Premium Bait + 50 XP
+7	🐋 WHALE!	Premium Chest: 5× Epic Bait + 200 XP + Epic Part + $1 USDC
+Day 7 Easter Egg - The Kraken:
+
+text
+1. Tap Day 7 reward
+2. Bait box shakes violently
+3. 🦑 Kraken tentacle emerges
+4. Popup: "THE KRAKEN WANTS YOUR STREAK!"
+5. Two buttons:
+   ├─ "FIGHT!" → Mini-game (tap rapidly 10 times in 5 sec)
+   │  └─ Win: Get chest + BONUS Legendary Bait
+   │  └─ Lose: Get chest (no bonus)
+   └─ "Swim with the fishes" → Lose 1 Premium Bait, auto-claim chest
+Missed Streak Punishment:
+
+Bait box empties
+
+🦴 Fish skeleton appears at bottom
+
+Text: "Your streak died... Start fresh tomorrow!"
+
+Skeleton decays over 3 days, then vanishes
+
+Resets every Monday (fresh start)
+
+3️⃣ MONETIZATION MODEL
+Revenue Streams Breakdown
+Primary: Season Pass ($9.99 USDC)
+
+3-month access (one season)
+
+Unlimited casts
+
+2× XP earn rate
+
+Premium daily rewards
+
+Complete seasonal rod set (5 pieces)
+
+Unique catch animation at Level 50
+
+Animated season title
+
+Ad-free experience
+
+Marketplace selling privileges
+
+Secondary: Tournament Entries
+
+Generated from both free and premium players
+
+We take 10% of all pools
+
+Scales with player base
+
+Tertiary: Marketplace Fees
+
+10% on all custom rod sales
+
+10% royalty on NFT fish sales
+
+Passive income stream
+
+Tournament Economics (YOUR OPTIMIZED VERSION)
+Tournament	Entry	Participants	Total In	Prize Pool	Winner	2nd	3rd	Your Cut
+Daily	$0.50	60	$30.00	$30.00	$18.00	$7.50	$4.50	$6.00 (20%)
+Weekly	$2.00	75	$150.00	$150.00	$90.00	$37.50	$22.50	$30.00 (20%)
+Boss Battle	$7.99	31	$247.69	$247.69	$148.61	$61.92	$37.16	$49.54 (20%)
+Special Event	$10.00	Variable	Variable	80% of pool	60% pool	25% pool	15% pool	20% of total
+Championship	$50.00	200	$10,000	$10,000	$6,000	$2,500	$1,500	$2,000 (20%)
+Corrected Calculation:
+
+You're taking 20% of entry fees, not 10%
+
+Prize pool = 80% of total entries
+
+Top 3 split that 80% (60% / 25% / 15%)
+
+This is BETTER margin for sustainability
+
+Boss Battle Details:
+
+$7.99 entry includes 2× attempts
+
+Available Friday 6PM - Sunday 11PM
+
+30 minutes per attempt
+
+Can use both attempts or save second for Sunday
+
+Catch specific legendary fish (changes weekly)
+
+Special Event Details:
+
+Single entry: $10.00
+
+4-entry pack: $36.00 (save $4, 24hr cooldown)
+
+Requires GeoCaster check-in at location
+
+Duration: 3-7 days
+
+Examples: "Pacific Ocean Challenge", "Mississippi River Madness"
+
+Revenue Projections (Conservative)
+Month 1 (Soft Launch - 200 Total Players):
+
+100 Season Passes × $9.99 = $999
+
+Daily (20 participants): $30/day × 30 × 20% = $180
+
+Weekly (30 participants): $150/week × 4 × 20% = $120
+
+Boss (15 participants): $247/weekend × 2 × 20% = $99
+
+Monthly Total: $1,398
+
+Month 3 (Growing - 1,000 Total Players):
+
+500 Season Passes × $9.99 = $4,995
+
+Daily (60 participants): $30/day × 30 × 20% = $180
+
+Weekly (75 participants): $150/week × 4 × 20% = $120
+
+Boss (31 participants): $247/weekend × 4 × 20% = $198
+
+Special Event (50 participants): $500 × 1 × 20% = $100
+
+Monthly Total: $5,593
+
+Month 6 (Top 100 - 3,000 Total Players):
+
+1,500 Season Passes × $9.99 = $14,985
+
+Daily: $180**
+
+Weekly: $120**
+
+Boss: $198**
+
+Special: $200 (more events)**
+
+Marketplace: $500 (trading picking up)**
+
+Monthly Total: $16,183
+
+Month 12 (Top 10 - 10,000 Total Players):
+
+5,000 Season Passes × $9.99 = $49,950
+
+Daily: $180**
+
+Weekly: $120**
+
+Boss: $198**
+
+Special: $400 (2 events)**
+
+Championship: $2,000 (quarterly)**
+
+Marketplace: $3,000**
+
+Monthly Total: $55,848
+
+Year 1 Total Revenue: ~$450,000
+
+4️⃣ TOURNAMENT STRUCTURE
+Daily Tournament
+Time: 8PM local time (automatically adjusts)
+
+Duration: 10 minutes
+
+Goal: Most fish caught (quantity over quality)
+
+Entry: $0.50 or free ticket
+
+Format: Speed round, no bait restrictions
+
+Leaderboard: Live updates during tournament
+
+Payout: Top 3 instantly after tournament ends
+
+Weekly Tournament
+Time: Sunday 3PM local time
+
+Duration: 1 hour
+
+Goal: Biggest single fish (quality over quantity)
+
+Entry: $2.00 or free ticket
+
+Format: Strategic, bait choice matters
+
+Leaderboard: Updates every 5 minutes
+
+Payout: Within 1 hour of completion
+
+Boss Battle (Weekend League)
+Time: Friday 6PM - Sunday 11PM
+
+Duration: 30 minutes per attempt, 2 attempts included
+
+Goal: Catch specific legendary fish (e.g., "Catch Ghost Ship Leviathan")
+
+Entry: $7.99 (includes 2 attempts)
+
+Format: Boss has special mechanics (harder timing window)
+
+Strategy: Try Friday, learn patterns, perfect Sunday
+
+Leaderboard: Best catch across both attempts
+
+Payout: Monday morning
+
+Special Event (GeoCaster Integration)
+Time: Monthly, runs 3-7 days
+
+Duration: 1 hour per attempt
+
+Goal: Location-specific challenge
+
+Entry: $10.00 single OR $36.00 for 4-pack (24hr cooldown)
+
+Requirement: Must check-in at location in GeoCaster app
+
+Format: Themed catches (e.g., "Hawaiian Marlin Hunt")
+
+Cross-Promo: "Play GeoCaster to unlock locations!"
+
+Payout: After event ends
+
+Championship (Seasonal Finale)
+Time: Last Sunday of season, 2PM
+
+Duration: 2 hours
+
+Goal: Overall score (quantity + quality + variety)
+
+Entry: $50.00 or Level 50 free ticket
+
+Eligibility: Top 200 season leaders auto-qualified
+
+Format: All fish count, bonus for rare species
+
+Prize Pool: Minimum $10,000
+
+Payout: Top 10 split pool, announced live
+
+Prestige: Champion gets permanent title "Season 1 Champion"
+
+5️⃣ VISUAL DESIGN & UI
+Design System (Perplexity Color Palette)
+Color Scheme:
+
+css
+/* Light Mode (Default) */
+--bg-primary: #FCFCF9 (Cream)
+--bg-secondary: #FFFFFE (White)
+--text-primary: #134252 (Slate)
+--text-secondary: #626C71 (Gray)
+--accent-primary: #218089 (Teal)
+--accent-hover: #1D7480 (Darker Teal)
+--accent-active: #1A6873 (Darkest Teal)
+--error: #C0152F (Red)
+--success: #218089 (Teal)
+
+/* Dark Mode */
+--bg-primary: #1F2121 (Charcoal)
+--bg-secondary: #262828 (Dark Gray)
+--text-primary: #F5F5F5 (Light Gray)
+--text-secondary: #A7A9A9 (Medium Gray)
+--accent-primary: #32B8C6 (Light Teal)
+Typography:
+
+Font Family: "FKGroteskNeue", -apple-system, sans-serif
+
+Headers: 550 weight (semibold)
+
+Body: 400 weight (normal)
+
+Buttons: 500 weight (medium)
+
+Spacing System:
+
+Base unit: 4px
+
+Small: 8px
+
+Medium: 16px
+
+Large: 24px
+
+XL: 32px
+
+Main Screen Layout
+text
+┌─────────────────────────────────────┐
+│  [Profile Icon]    [Bait Box 🎁]    │ ← Top Bar
+│  Level 23          Day 5/7          │
+│  XP: 1,250/1,500   [Streak Fire]   │
+├─────────────────────────────────────┤
+│                                     │
+│         [Ocean Background]          │
+│                                     │
+│     Fish shadows visible below      │
+│     surface (depth indicators)      │
+│                                     │
+│                                     │
+│          🎣 [Your Rod]              │ ← Interactive
+│                                     │
+│     [Swipe up to cast!]             │ ← Tutorial hint
+│                                     │
+├─────────────────────────────────────┤
+│ Casts: 3/15  Bait: Worm (15)       │ ← Resource Bar
+│ [Change Bait ▾]                     │
+├─────────────────────────────────────┤
+│ [Tournaments] [Collection] [Shop]   │ ← Bottom Nav
+└─────────────────────────────────────┘
+Season 1 Aesthetic: Seven Seas Pirates
+Color Palette:
+
+Primary: Deep ocean blue (#0A3A52)
+
+Secondary: Weathered wood brown (#5E4F3C)
+
+Accent: Treasure gold (#D4AF37)
+
+Details: Rope beige (#C9B89A)
+
+Visual Elements:
+
+Wooden pier texture
+
+Rope borders
+
+Barnacle decorations
+
+Weathered metal accents
+
+Pirate flag motifs
+
+Compass rose icons
+
+Rod Parts Design:
+
+Level 10 - Kraken Tentacle Handle
+
+Black/purple gradient
+
+Suction cups visible
+
+Slimy texture
+
+Subtle animation (breathing)
+
+Level 20 - Barnacle-Encrusted Rod
+
+Weathered driftwood
+
+Barnacles attached
+
+Green moss patches
+
+Water stains
+
+Level 30 - Anchor Hook
+
+Rusty iron
+
+Rope wrapped around shank
+
+Fluke (pointed ends)
+
+Chain attached
+
+Level 40 - Brass Spyglass Reel
+
+Vintage telescope design
+
+Extends when reeling
+
+Brass rings
+
+Leather accents
+
+Level 50 - Pirate Cannon Ship Animation
+
+Fish transforms into miniature ship
+
+Fish body = hull
+
+Fins = sails
+
+Cannons fire in sequence (BOOM BOOM BOOM)
+
+Smoke + splash effects
+
+Ship lands in boat
+
+Pirate flag unfurls
+
+Only plays for complete rod set
+
+Animation Specifications
+Cast Animation (3 seconds):
+
+text
+Frame 1-10:   Rod bends back (anticipation)
+Frame 11-20:  Rod whips forward (action)
+Frame 21-30:  Line extends with physics trail
+Frame 31-40:  Bobber flies through air (arc trajectory)
+Frame 41-50:  Splash on water impact
+Frame 51-60:  Ripples expand outward
+Bite Animation (2 seconds):
+
+text
+Frame 1-10:   Bobber shakes subtly
+Frame 11-20:  Shaking intensifies
+Frame 21-30:  "!" icon appears above bobber
+Frame 31-40:  Water churns below
+Frame 41-50:  SPLASH - fish breaks surface
+Frame 51-60:  [Player input window]
+Catch Animation (4 seconds):
+
+text
+SUCCESS PATH:
+Frame 1-10:   Hook sets, line tightens
+Frame 11-30:  Reel-in motion (rod bending)
+Frame 31-50:  Fish breaks water surface
+Frame 51-70:  Fish flips into boat
+Frame 71-90:  Sparkle effect, rarity indicator
+Frame 91-120: XP gain animation, level check
+
+MISS PATH:
+Frame 1-10:   Line goes slack
+Frame 11-20:  Fish shadow swims away
+Frame 21-30:  "Got away!" text appears
+Frame 31-40:  Sad trombone sound (playful)
+Level Up Animation (5 seconds):
+
+text
+Frame 1-20:   Screen flash (gold burst)
+Frame 21-40:  "LEVEL UP!" text zooms in
+Frame 41-60:  New level number displays
+Frame 61-80:  Reward preview (what you unlocked)
+Frame 81-100: Confetti falls
+Frame 101-120: Return to game (skipable after frame 60)
+Pirate Cannon Ship Animation (8 seconds - Level 50 only):
+
+text
+Frame 1-20:   Fish bites, reel begins
+Frame 21-40:  Water churns violently
+Frame 41-60:  Fish transforms (morphing effect)
+Frame 61-80:  Ship emerges in slow-motion
+Frame 81-100: Left cannons fire (BOOM!)
+Frame 101-120: Right cannons fire (BOOM!)
+Frame 121-140: Smoke effects, water splash
+Frame 141-160: Ship lands in boat with THUD
+Frame 161-180: Pirate flag unfurls
+Frame 181-200: Fish reverts, catch display
+Frame 201-220: Sea shanty music sting (2 seconds)
+6️⃣ TECHNICAL ARCHITECTURE
+Technology Stack
+Frontend (Single-Page App):
+
+HTML5 Canvas for fishing animations
+
+CSS3 with custom properties (design system)
+
+Vanilla JavaScript (ES6+)
+
+No frameworks (keep it lightweight)
+
+Blockchain Integration:
+
+Base L2 (Ethereum Layer 2)
+
+USDC for all transactions
+
+Base Pay SDK (3 lines of code for payments)
+
+Wallet: Coinbase Wallet or WalletConnect
+
+Farcaster Integration:
+
+Frames.js for Frame compatibility
+
+Neynar API for social graph
+
+Farcaster FID for user identity
+
+Cast composer for sharing
+
+Backend (Minimal - Mostly Client-Side):
+
+Vercel serverless functions
+
+PostgreSQL database (user data, leaderboards)
+
+Redis cache (real-time tournament data)
+
+Cloudflare CDN (asset delivery)
+
+Smart Contract Architecture
+TournamentPool.sol (Base Sepolia → Base Mainnet):
+
+text
+// Simplified structure
+
+contract SeaCasterTournament {
+    // Tournament entry tracking
+    mapping(uint256 => Tournament) public tournaments;
+    mapping(address => mapping(uint256 => bool)) public hasEntered;
+    
+    // Prize distribution
+    uint256 public constant HOUSE_FEE = 20; // 20%
+    uint256 public constant FIRST_PLACE = 60; // 60% of pool
+    uint256 public constant SECOND_PLACE = 25; // 25% of pool
+    uint256 public constant THIRD_PLACE = 15; // 15% of pool
+    
+    function enterTournament(uint256 _tournamentId) external payable {
+        require(msg.value == tournaments[_tournamentId].entryFee);
+        // Logic
+    }
+    
+    function distributePrizes(uint256 _tournamentId, address[] winners) external onlyOracle {
+        // Automated payout after oracle confirms results
+    }
+}
+RodNFT.sol (ERC-721 for Custom Rods):
+
+text
+contract SeaCasterRod is ERC721 {
+    struct Rod {
+        uint256 handleId;
+        uint256 rodId;
+        uint256 hookId;
+        uint256 reelId;
+        uint256 animationId;
+        uint256 season;
+    }
+    
+    // Each complete rod is unique NFT
+    // Tradeable on marketplace
+    // Royalties to creator + 10% to us
+}
+Marketplace.sol (Buy/Sell Rods):
+
+text
+contract Marketplace {
+    uint256 public constant PLATFORM_FEE = 10; // 10%
+    
+    function listRod(uint256 tokenId, uint256 price) external;
+    function buyRod(uint256 tokenId) external payable;
+    // Escrow system, instant transfers
+}
+Data Architecture
+User Table:
+
+sql
+CREATE TABLE users (
+    fid BIGINT PRIMARY KEY,  -- Farcaster ID
+    wallet_address VARCHAR(42),
+    level INT DEFAULT 1,
+    xp INT DEFAULT 0,
+    season_pass BOOLEAN DEFAULT false,
+    season_pass_expiry TIMESTAMP,
+    created_at TIMESTAMP,
+    last_login TIMESTAMP
+);
+Catches Table:
+
+sql
+CREATE TABLE catches (
+    id SERIAL PRIMARY KEY,
+    user_fid BIGINT REFERENCES users(fid),
+    fish_species VARCHAR(50),
+    fish_rarity VARCHAR(20),
+    fish_size DECIMAL(5,2),
+    xp_earned INT,
+    bait_used VARCHAR(30),
+    caught_at TIMESTAMP,
+    tournament_id INT  -- NULL if casual fishing
+);
+Tournaments Table:
+
+sql
+CREATE TABLE tournaments (
+    id SERIAL PRIMARY KEY,
+    type VARCHAR(20),  -- daily, weekly, boss, special, championship
+    entry_fee DECIMAL(10,2),
+    prize_pool DECIMAL(10,2),
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    status VARCHAR(20),  -- upcoming, active, completed
+    winner_fid BIGINT,
+    second_fid BIGINT,
+    third_fid BIGINT
+);
+Inventory Table:
+
+sql
+CREATE TABLE inventory (
+    user_fid BIGINT REFERENCES users(fid),
+    item_type VARCHAR(30),  -- bait, rod_part, tournament_ticket
+    item_name VARCHAR(50),
+    quantity INT,
+    PRIMARY KEY (user_fid, item_type, item_name)
+);
+API Endpoints
+text
+POST /api/cast
+    → Records fishing attempt
+    → Returns fish caught (client validates)
+    
+POST /api/tournament/enter
+    → Processes entry fee
+    → Adds user to tournament
+    
+GET /api/leaderboard/:tournamentId
+    → Returns live rankings
+    
+POST /api/claim-reward
+    → Distributes tournament winnings
+    
+GET /api/user/:fid
+    → Returns user profile data
+    
+POST /api/purchase-season-pass
+    → Processes payment
+    → Grants premium status
+    
+GET /api/marketplace
+    → Lists available rods for sale
+    
+POST /api/marketplace/buy
+    → Executes rod purchase
+7️⃣ MARKETING & LAUNCH STRATEGY
+Pre-Launch (Weeks 1-2)
+Teaser Campaign:
+
+Post mysterious fishing-themed casts on Farcaster
+
+"Something's lurking beneath the waves... 🎣"
+
+Countdown timer
+
+Exclusive whitelist for early testers
+
+Influencer Outreach:
+
+Contact top 50 Farcaster users
+
+Offer free Season Pass for promotion
+
+Request to share first catch
+
+Community Building:
+
+Create /seacaster channel on Warpcast
+
+Post daily fishing facts/tips
+
+Engage with /frames-devs community
+
+Launch Day (Week 3)
+Phase 1: Soft Launch (8AM EST)
+
+Release to whitelist (100 users)
+
+Monitor for bugs
+
+Gather immediate feedback
+
+Phase 2: Public Launch (8PM EST - Peak Traffic)
+
+Post in /frames, /base, /farcaster channels
+
+"SeaCaster is LIVE! Catch fish, build legendary rods, win USDC 🎣"
+
+First 500 users get bonus 10 casts
+
+First tournament at 9PM (1 hour after launch)
+
+Phase 3: First Tournament (9PM EST)
+
+Daily tournament with DOUBLED prize pool ($60 instead of $30)
+
+Livestream in /seacaster channel
+
+Share winner's catch immediately
+
+Winner posts "I just won $36 fishing on SeaCaster!"
+
+Growth Phase (Weeks 4-12)
+Week 4:
+
+Launch Boss Battle (weekend league)
+
+Partner with GeoCaster for Special Event announcement
+
+Milestone: 500 users
+
+Week 6:
+
+First Special Event (GeoCaster integration live)
+
+Location: "Pacific Ocean Challenge"
+
+Cross-promote in both apps
+
+Milestone: 1,000 users
+
+Week 8:
+
+Introduce marketplace for custom rod trading
+
+Feature "Rod of the Week" in /seacaster
+
+Milestone: 2,000 users
+
+Week 12:
+
+First Championship tournament ($10,000 pool)
+
+Livestream finale
+
+Crown Season 1 Champion
+
+Milestone: 5,000 users (Top 100 achieved)
+
+Viral Mechanics
+Share Your Catch:
+
+Auto-generates cast with fish image
+
+Template: "Just caught a 47lb Marlin on SeaCaster! 🎣 [Play Now]"
+
+One-click share
+
+Earns sharer +25 XP bonus
+
+Referral System:
+
+Invite friend = 50 XP for both
+
+Friend buys Season Pass = You get 1 free weekly tournament entry
+
+Friend reaches Level 10 = You get rare rod part
+
+Leaderboards:
+
+Global: All-time biggest fish
+
+Weekly: Most fish caught
+
+Friends: Compare with Farcaster social graph
+
+Visible in profile, shareable
+
+Daily Highlights:
+
+"Catch of the Day" featured cast
+
+Biggest fish caught today
+
+Rare catches showcased
+
+Creates FOMO
+
+8️⃣ SUCCESS METRICS
+North Star Metric: Daily Active Users (DAU)
+Key Performance Indicators:
+
+Metric	Week 1	Month 1	Month 3	Month 6	Month 12
+Total Users	200	500	2,000	5,000	15,000
+DAU	100	200	800	2,000	6,000
+Season Pass Sales	50	100	500	1,500	5,000
+Daily Tournament Entries	30	60	150	300	500
+Avg Session Time	8 min	12 min	15 min	18 min	20 min
+Retention (D7)	40%	45%	50%	55%	60%
+Revenue	$500	$1,400	$5,600	$16,000	$56,000
+Milestone Targets:
+
+✅ Week 1: 200 users, no major bugs
+
+✅ Month 1: Top 200 on Farcaster mini apps
+
+✅ Month 3: Top 100 on Farcaster mini apps
+
+✅ Month 6: Top 50, profitable
+
+✅ Month 12: Top 10, $500K annual revenue
+
+Analytics Tracking
+Player Behavior:
+
+Casts per session
+
+Conversion rate (free → premium)
+
+Drop-off points (where players quit)
+
+Most used bait types
+
+Tournament participation rate
+
+Monetization:
+
+ARPPU (Average Revenue Per Paying User)
+
+LTV (Lifetime Value)
+
+CAC (Customer Acquisition Cost)
+
+Tournament ROI
+
+Marketplace transaction volume
+
+Engagement:
+
+Daily login streak completion rate
+
+Level progression speed
+
+Social sharing frequency
+
+Referral effectiveness
+
+Time to Level 50
+
+🎯 RISK MITIGATION
+Potential Issues & Solutions
+Risk 1: Bot Farming
+
+Mitigation: Farcaster FID verification, tournament skill gates, rate limiting
+
+Detection: Abnormal catch patterns, inhuman reaction times
+
+Response: Ban accounts, refund legitimate players
+
+Risk 2: Low Tournament Participation
+
+Mitigation: Free entries at milestones, varied times, push notifications
+
+Backup: Reduce min participants, combine tournament types if needed
+
+Risk 3: Wallet Integration Friction
+
+Mitigation: Clear onboarding, video tutorial, Base Pay SDK (3 clicks)
+
+Alternative: Play free without wallet, prompt when claiming prizes
+
+Risk 4: Season Pass Not Selling
+
+Mitigation: Free trial (3 days premium), referral discounts, bundle deals
+
+Pivot: Lower price to $6.99, or monthly $3.99 option
+
+Risk 5: Marketplace Not Active
+
+Mitigation: Seed marketplace with starter rods, featured listings, trading events
+
+Alternative: NPC buy-back program (we buy rods at 50% value)
+
+✅ FINAL PRE-DEVELOPMENT CHECKLIST
+Game Design:
+ Core loop defined (cast → wait → catch → reward)
+
+ Progression system complete (XP, levels, milestones)
+
+ Monetization model validated (season pass + tournaments)
+
+ Visual design specified (Season 1 aesthetic)
+
+ Animation requirements documented
+
+Technical:
+ Tech stack chosen (HTML5 Canvas, Vanilla JS, Base, Farcaster)
+
+ Smart contracts planned (Tournament, Rod NFT, Marketplace)
+
+ Database schema designed
+
+ API endpoints mapped
+
+Business:
+ Revenue projections calculated ($450K Year 1)
+
+ Tournament economics optimized (20% margin)
+
+ Marketing strategy outlined
+
+ Success metrics defined
+
+Legal/Compliance:
+ Terms of Service (draft after build)
+
+ Privacy Policy (draft after build)
+
+ Age verification (13+ for Farcaster)
+
+ Gambling regulations review (skill-based = OK in most jurisdictions)
+
+🚀 NEXT STEP: GEMINI 3 PRO PROMPT
+This blueprint is COMPLETE and READY for development.
+
+Your changes made this incredibly focused:
+
+✅ 20% tournament margins (sustainable)
+
+✅ "Swim with the fishes" (perfect thematic fit)
+
+✅ Clean milestone structure
+
+✅ Realistic projections
+
+Should I now create the master Gemini 3 Pro prompt that builds the working prototype?
+
+The prompt will reference this entire blueprint and generate the first playable version in a single session. 🎣⚓
+

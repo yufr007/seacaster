@@ -38,6 +38,12 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
   const [fishBounce, setFishBounce] = useState(0);
   const [showFish, setShowFish] = useState(false);
 
+  // Screen shake for impact
+  const [screenShake, setScreenShake] = useState(false);
+
+  // Cast splash effect
+  const [showSplash, setShowSplash] = useState(false);
+
   // Hide swipe hint when not idle
   useEffect(() => {
     if (phase !== GamePhase.IDLE) {
@@ -59,29 +65,44 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
     }
   }, [phase, play]);
 
-  // Rod animation during casting
+  // Rod animation during casting with screen shake
   useEffect(() => {
     if (phase === GamePhase.CASTING) {
-      // Casting animation sequence
+      // Dramatic casting animation sequence
       const timeline = [
-        { angle: -20, time: 0 },     // Wind up
-        { angle: 45, time: 200 },    // Forward swing
-        { angle: 30, time: 400 },    // Follow through
-        { angle: 15, time: 600 },    // Settling
-        { angle: 10, time: 1000 },   // Rest during cast
+        { angle: -35, time: 0 },      // Big wind up
+        { angle: 60, time: 150 },     // Power swing forward
+        { angle: 45, time: 250 },     // Follow through
+        { angle: 30, time: 400 },     // Cast release
+        { angle: 15, time: 600 },     // Settling
+        { angle: 10, time: 1000 },    // Rest during cast
       ];
 
       timeline.forEach(({ angle, time }) => {
         setTimeout(() => setRodAngle(angle), time);
       });
 
+      // Screen shake on release
+      setTimeout(() => {
+        setScreenShake(true);
+        setTimeout(() => setScreenShake(false), 300);
+      }, 150);
+
+      // Splash effect when bobber hits water
+      setTimeout(() => {
+        setShowSplash(true);
+        setTimeout(() => setShowSplash(false), 800);
+      }, 600);
+
       return () => setRodAngle(0);
     } else if (phase === GamePhase.WAITING) {
-      // Slight idle movement
-      setRodAngle(10);
+      // Gentle idle sway
+      setRodAngle(12);
     } else if (phase === GamePhase.HOOKED) {
-      // Rod bends hard when fish is hooked
-      setRodAngle(-15);
+      // Rod bends dramatically when fish is hooked
+      setRodAngle(-25);
+      setScreenShake(true);
+      setTimeout(() => setScreenShake(false), 200);
     } else {
       setRodAngle(0);
     }
@@ -199,7 +220,7 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
 
   return (
     <div
-      className="fishing-scene"
+      className={`fishing-scene ${screenShake ? 'screen-shake' : ''}`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -230,6 +251,38 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
         {/* Water Surface */}
         <div className="water-surface">
           <div className="water-waves" />
+
+          {/* Splash Effect */}
+          <AnimatePresence>
+            {showSplash && (
+              <motion.div
+                className="splash-container"
+                initial={{ opacity: 0, scale: 0.3 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.5 }}
+                transition={{ duration: 0.4 }}
+              >
+                <motion.div className="splash-ring ring-1" animate={{ scale: [1, 2.5], opacity: [0.8, 0] }} transition={{ duration: 0.6 }} />
+                <motion.div className="splash-ring ring-2" animate={{ scale: [1, 2], opacity: [0.6, 0] }} transition={{ duration: 0.5, delay: 0.1 }} />
+                <motion.div className="splash-ring ring-3" animate={{ scale: [1, 1.5], opacity: [0.4, 0] }} transition={{ duration: 0.4, delay: 0.15 }} />
+                {/* Water droplets */}
+                {[...Array(8)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="splash-droplet"
+                    initial={{ x: 0, y: 0, opacity: 1 }}
+                    animate={{
+                      x: Math.cos(i * 45 * Math.PI / 180) * 60,
+                      y: Math.sin(i * 45 * Math.PI / 180) * 60 - 40,
+                      opacity: 0
+                    }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                    style={{ transform: `rotate(${i * 45}deg)` }}
+                  />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Underwater */}
@@ -264,7 +317,7 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
 
         {/* FISHING ROD - VISIBLE AND CENTERED */}
         <motion.div
-          className="rod-wrapper"
+          className={`rod-wrapper ${userStats.premium ? 'premium' : ''}`}
           animate={{ rotate: rodAngle }}
           transition={{ type: 'spring', stiffness: 120, damping: 20 }}
         >
@@ -330,8 +383,18 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
               exit={{ opacity: 0, y: 100, scale: 0.3 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="fish-card">
-                <div className="fish-emoji">{hookedFish.image}</div>
+              <div className="fish-card" data-rarity={hookedFish.rarity}>
+                <div className="fish-image">
+                  {hookedFish.image.startsWith('/') ? (
+                    <img
+                      src={hookedFish.image}
+                      alt={hookedFish.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    <span className="fish-emoji">{hookedFish.image}</span>
+                  )}
+                </div>
                 <div className="fish-name">{hookedFish.name}</div>
                 <div
                   className="fish-rarity"
@@ -619,13 +682,13 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
           height: 30px;
         }
 
-        /* ROD STYLES */
+        /* ROD STYLES - LARGE AND PROMINENT */
         .rod-wrapper {
           position: absolute;
-          bottom: 20%;
-          right: 15%;
-          width: 200px;
-          height: 350px;
+          bottom: 18%;
+          right: 10%;
+          width: 260px;
+          height: 420px;
           transform-origin: bottom right;
           z-index: 20;
           pointer-events: none;
@@ -676,10 +739,10 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
 
         .rod-shaft {
           position: absolute;
-          bottom: 65px;
-          right: 12px;
-          width: 8px;
-          height: 280px;
+          bottom: 70px;
+          right: 14px;
+          width: 10px;
+          height: 340px;
           background: linear-gradient(90deg, #4A4A4A 0%, #6B6B6B 50%, #4A4A4A 100%);
           border-radius: 4px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -1033,6 +1096,114 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
           .tap-prompt {
             font-size: 22px;
           }
+        }
+
+        /* SCREEN SHAKE */
+        .screen-shake {
+          animation: shakeIt 0.3s ease-in-out;
+        }
+
+        @keyframes shakeIt {
+          0%, 100% { transform: translate(0, 0); }
+          10% { transform: translate(-8px, -5px); }
+          20% { transform: translate(8px, 5px); }
+          30% { transform: translate(-6px, 3px); }
+          40% { transform: translate(6px, -3px); }
+          50% { transform: translate(-4px, 4px); }
+          60% { transform: translate(4px, -2px); }
+          70% { transform: translate(-3px, 2px); }
+          80% { transform: translate(2px, -1px); }
+          90% { transform: translate(-1px, 1px); }
+        }
+
+        /* SPLASH EFFECTS */
+        .splash-container {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: 40px;
+          height: 40px;
+          z-index: 20;
+        }
+
+        .splash-ring {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: 30px;
+          height: 15px;
+          border: 3px solid rgba(255, 255, 255, 0.8);
+          border-radius: 50%;
+          background: transparent;
+        }
+
+        .ring-1 { border-width: 4px; }
+        .ring-2 { border-width: 3px; }
+        .ring-3 { border-width: 2px; }
+
+        .splash-droplet {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 8px;
+          height: 8px;
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, #87CEEB 100%);
+          border-radius: 50% 50% 50% 0;
+          transform: translate(-50%, -50%);
+        }
+
+        /* FISH IMAGE STYLES */
+        .fish-image {
+          width: 120px;
+          height: 120px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 8px;
+        }
+
+        .fish-image img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+          filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+          animation: fishWiggle 0.4s ease-in-out infinite alternate;
+        }
+
+        /* RARITY GLOW EFFECTS */
+        .fish-card[data-rarity="LEGENDARY"] .fish-image img,
+        .fish-card[data-rarity="MYTHIC"] .fish-image img {
+          filter: drop-shadow(0 0 20px #F39C12) drop-shadow(0 0 40px rgba(243, 156, 18, 0.5));
+        }
+
+        .fish-card[data-rarity="MYTHIC"] .fish-image img {
+          filter: drop-shadow(0 0 25px #E74C3C) drop-shadow(0 0 50px rgba(231, 76, 60, 0.6));
+          animation: fishWiggle 0.4s ease-in-out infinite alternate, mythicPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes mythicPulse {
+          0%, 100% { filter: drop-shadow(0 0 25px #E74C3C) drop-shadow(0 0 50px rgba(231, 76, 60, 0.6)); }
+          50% { filter: drop-shadow(0 0 35px #9B59B6) drop-shadow(0 0 70px rgba(155, 89, 182, 0.8)); }
+        }
+
+        /* ENHANCED ROD - PIRATE STYLE */
+        .rod-wrapper.premium .rod-handle {
+          background: linear-gradient(90deg, #8B4513 0%, #DAA520 50%, #8B4513 100%);
+          border-color: #B8860B;
+        }
+
+        .rod-wrapper.premium .rod-shaft {
+          background: linear-gradient(90deg, #5C4033 0%, #8B4513 50%, #5C4033 100%);
+        }
+
+        .rod-wrapper.premium::before {
+          content: '☠️';
+          position: absolute;
+          bottom: 5px;
+          right: 8px;
+          font-size: 16px;
         }
       `}</style>
     </div>

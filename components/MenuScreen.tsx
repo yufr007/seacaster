@@ -1,8 +1,10 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
-import { Trophy, ShoppingBag, Zap, Crown, Fish } from 'lucide-react';
+import { Trophy, ShoppingBag, Zap, Crown, Fish, Gift } from 'lucide-react';
 import { triggerHaptic, Haptics } from '../utils/haptics';
+import DailyBaitBox from './DailyBaitBox';
+import RodBuilder from './RodBuilder';
 
 interface MenuScreenProps {
     onCompete: () => void;
@@ -26,6 +28,8 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
     coins,
 }) => {
     const { userStats } = useGameStore();
+    const [showBaitBox, setShowBaitBox] = useState(false);
+    const [showRodBuilder, setShowRodBuilder] = useState(false);
 
     // XP calculation for level progress
     const LEVEL_BASE_XP = 100;
@@ -88,6 +92,20 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                     <span>BASE</span>
                 </div>
 
+                {/* Daily Bait Box Button */}
+                <motion.button
+                    className="daily-gift-btn"
+                    onClick={() => {
+                        triggerHaptic(Haptics.medium);
+                        setShowBaitBox(true);
+                    }}
+                    whileTap={{ scale: 0.9 }}
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                >
+                    <Gift size={20} />
+                </motion.button>
+
                 {/* Logo Section */}
                 <motion.div
                     className="logo-section"
@@ -140,6 +158,20 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                         <span className="stat-value">--</span>
                         <span className="stat-label">RANK</span>
                     </div>
+                </motion.div>
+
+                {/* Rod Builder Compact Display */}
+                <motion.div
+                    className="rod-progress-row"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.45 }}
+                    onClick={() => {
+                        triggerHaptic(Haptics.soft);
+                        setShowRodBuilder(true);
+                    }}
+                >
+                    <RodBuilder compact />
                 </motion.div>
 
                 {/* Season Pass Banner (only if not premium) */}
@@ -209,6 +241,20 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                 </button>
             </motion.nav>
 
+            {/* Daily Bait Box Modal */}
+            <AnimatePresence>
+                {showBaitBox && (
+                    <DailyBaitBox onClose={() => setShowBaitBox(false)} />
+                )}
+            </AnimatePresence>
+
+            {/* Rod Builder Modal */}
+            <AnimatePresence>
+                {showRodBuilder && (
+                    <RodBuilder onClose={() => setShowRodBuilder(false)} />
+                )}
+            </AnimatePresence>
+
             <style>{`
                 .menu-container {
                     position: relative;
@@ -255,6 +301,36 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                     height: 40px;
                     background: linear-gradient(180deg, rgba(30, 78, 140, 0) 0%, rgba(30, 78, 140, 0.6) 50%, #1E4E8C 100%);
                     border-radius: 50% 50% 0 0;
+                }
+
+                /* Daily Gift Button */
+                .daily-gift-btn {
+                    position: absolute;
+                    top: 60px;
+                    right: 16px;
+                    width: 48px;
+                    height: 48px;
+                    background: linear-gradient(180deg, #F39C12 0%, #D68910 100%);
+                    border: 3px solid #B7950B;
+                    border-radius: 14px;
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    box-shadow: 0 4px 0 #9A7D0A, 0 0 20px rgba(243, 156, 18, 0.4);
+                    z-index: 20;
+                }
+
+                .daily-gift-btn:active {
+                    transform: translateY(4px);
+                    box-shadow: 0 0 0 #9A7D0A, 0 0 15px rgba(243, 156, 18, 0.3);
+                }
+
+                /* Rod Progress Row */
+                .rod-progress-row {
+                    cursor: pointer;
+                    margin: 8px 0;
                 }
 
                 /* Content */

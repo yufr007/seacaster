@@ -27,11 +27,13 @@ interface GameState {
   setActiveBait: (baitId: string) => void;
   buyItem: (itemId: string, price: number, type: 'bait' | 'other', amount?: number) => void;
   purchaseSeasonPass: () => void;
-  syncPremiumStatus: (isActive: boolean) => void; // New Action
+  syncPremiumStatus: (isActive: boolean) => void;
   regenerateCasts: () => void;
   watchAd: () => void;
-  checkDailyLogin: () => string | null; // Returns reward message if triggered
-  openChest: () => string; // Opens chest and returns reward message
+  checkDailyLogin: () => string | null;
+  openChest: () => string;
+  addXP: (amount: number) => void;
+  addCasts: (amount: number) => void;
 }
 
 // XP Calculation Helper
@@ -98,6 +100,37 @@ export const useGameStore = create<GameState>()(
             ...state.userStats,
             coins: state.userStats.coins + 25,
             castsRemaining: Math.min(state.userStats.maxCasts, state.userStats.castsRemaining + 2)
+          }
+        }));
+      },
+
+      addXP: (amount) => {
+        const { userStats } = get();
+        const newXp = userStats.xp + amount;
+        const nextLevelXp = getNextLevelXp(userStats.level + 1);
+
+        if (newXp >= nextLevelXp) {
+          confetti({ particleCount: 100, spread: 60, origin: { y: 0.7 } });
+          triggerHaptic(Haptics.levelUp);
+          set(state => ({
+            userStats: {
+              ...state.userStats,
+              xp: newXp,
+              level: state.userStats.level + 1
+            }
+          }));
+        } else {
+          set(state => ({
+            userStats: { ...state.userStats, xp: newXp }
+          }));
+        }
+      },
+
+      addCasts: (amount) => {
+        set(state => ({
+          userStats: {
+            ...state.userStats,
+            castsRemaining: state.userStats.premium ? 9999 : Math.min(state.userStats.maxCasts, state.userStats.castsRemaining + amount)
           }
         }));
       },

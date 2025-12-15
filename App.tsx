@@ -122,7 +122,22 @@ const SeaCasterApp: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full w-full max-w-md mx-auto relative bg-ocean-900 shadow-2xl overflow-hidden font-sans">
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        // @ts-ignore - dvh fallback
+        height: '100dvh',
+        width: '100%',
+        maxWidth: '480px',
+        margin: '0 auto',
+        position: 'relative',
+        background: '#0a1628',
+        overflow: 'hidden',
+        fontFamily: "'Nunito', -apple-system, sans-serif"
+      }}
+    >
       <div className="absolute top-4 right-4 z-50">
         <WalletConnect />
       </div>
@@ -137,7 +152,7 @@ const SeaCasterApp: React.FC = () => {
       <ToastContainer />
 
       {/* Main Content Area */}
-      <div className="flex-1 relative overflow-hidden bg-ocean-900 h-full">
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#0a1628', height: '100%' }}>
         {screen === 'menu' && (
           <MenuScreen
             onCompete={() => handleScreenChange('game')}

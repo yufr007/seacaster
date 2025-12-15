@@ -555,12 +555,18 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
           position: relative;
           width: 100%;
           height: 100%;
+          height: 100dvh;
           display: flex;
           flex-direction: column;
           overflow: hidden;
           font-family: 'Nunito', -apple-system, sans-serif;
           touch-action: none;
           user-select: none;
+          /* Ocean background - fixes white screen */
+          background: linear-gradient(180deg, #1A365D 0%, #2C5282 25%, #1E4E8C 50%, #0D3B66 75%, #051F40 100%);
+          background-image: url('/assets/ui/ocean_bg.png');
+          background-size: cover;
+          background-position: center;
         }
 
         .fishing-header {

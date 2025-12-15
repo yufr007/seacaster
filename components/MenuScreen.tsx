@@ -259,7 +259,8 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                 .menu-container {
                     position: relative;
                     width: 100%;
-                    height: 100%;
+                    height: 100vh;
+                    height: 100dvh; /* Dynamic viewport for Samsung S24+ */
                     max-width: 480px;
                     margin: 0 auto;
                     display: flex;

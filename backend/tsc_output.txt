@@ -1,0 +1,47 @@
+src/graphql/resolvers.ts(68,35): error TS6133: 'type' is declared but its value is never read.
+src/middleware/auth.ts(34,17): error TS7030: Not all code paths return a value.
+src/middleware/auth.ts(58,48): error TS6133: 'res' is declared but its value is never read.
+src/middleware/auth.ts(82,17): error TS7030: Not all code paths return a value.
+src/middleware/rateLimiter.ts(1,10): error TS6133: 'Request' is declared but its value is never read.
+src/middleware/rateLimiter.ts(29,23): error TS7030: Not all code paths return a value.
+src/middleware/rateLimiter.ts(41,55): error TS2339: Property 'WINDOW' does not exist on type '{ FREE_MAX: number; FREE_WINDOW: number; PREMIUM_MAX: number; } | { MAX: number; WINDOW: number; } | { MAX: number; WINDOW: number; }'.
+  Property 'WINDOW' does not exist on type '{ FREE_MAX: number; FREE_WINDOW: number; PREMIUM_MAX: number; }'.
+src/middleware/rateLimiter.ts(57,33): error TS2339: Property 'MAX' does not exist on type '{ FREE_MAX: number; FREE_WINDOW: number; PREMIUM_MAX: number; } | { MAX: number; WINDOW: number; } | { MAX: number; WINDOW: number; }'.
+  Property 'MAX' does not exist on type '{ FREE_MAX: number; FREE_WINDOW: number; PREMIUM_MAX: number; }'.
+src/middleware/rateLimiter.ts(58,73): error TS2339: Property 'WINDOW' does not exist on type '{ FREE_MAX: number; FREE_WINDOW: number; PREMIUM_MAX: number; } | { MAX: number; WINDOW: number; } | { MAX: number; WINDOW: number; }'.
+  Property 'WINDOW' does not exist on type '{ FREE_MAX: number; FREE_WINDOW: number; PREMIUM_MAX: number; }'.
+src/middleware/rateLimiter.ts(64,25): error TS2339: Property 'MAX' does not exist on type '{ FREE_MAX: number; FREE_WINDOW: number; PREMIUM_MAX: number; } | { MAX: number; WINDOW: number; } | { MAX: number; WINDOW: number; }'.
+  Property 'MAX' does not exist on type '{ FREE_MAX: number; FREE_WINDOW: number; PREMIUM_MAX: number; }'.
+src/routes/leaderboard.ts(8,30): error TS6133: 'req' is declared but its value is never read.
+src/routes/leaderboard.ts(36,30): error TS6133: 'req' is declared but its value is never read.
+src/routes/leaderboard.ts(96,29): error TS7030: Not all code paths return a value.
+src/routes/tournaments.ts(9,24): error TS6133: 'req' is declared but its value is never read.
+src/routes/tournaments.ts(43,20): error TS7030: Not all code paths return a value.
+src/routes/tournaments.ts(87,27): error TS7030: Not all code paths return a value.
+src/routes/tournaments.ts(116,40): error TS6133: 'exError' is declared but its value is never read.
+src/routes/tournaments.ts(157,27): error TS7030: Not all code paths return a value.
+src/routes/tournaments.ts(214,18): error TS7030: Not all code paths return a value.
+src/routes/users.ts(8,21): error TS7030: Not all code paths return a value.
+src/routes/users.ts(51,18): error TS7030: Not all code paths return a value.
+src/routes/users.ts(81,25): error TS7030: Not all code paths return a value.
+src/routes/users.ts(140,31): error TS7030: Not all code paths return a value.
+src/routes/users.ts(173,29): error TS7030: Not all code paths return a value.
+src/routes/users.ts(199,33): error TS7030: Not all code paths return a value.
+src/routes/webhook.ts(42,17): error TS6133: 'user' is declared but its value is never read.
+src/server.ts(83,15): error TS6133: 'res' is declared but its value is never read.
+src/server.ts(107,5): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(server: ApolloServer<BaseContext>, options?: ExpressMiddlewareOptions<BaseContext> | undefined): RequestHandler<...>', gave the following error.
+    Argument of type 'ApolloServer<Context>' is not assignable to parameter of type 'ApolloServer<BaseContext>'.
+      Type 'BaseContext' is missing the following properties from type 'Context': isAuthenticated, isAdmin
+  Overload 2 of 2, '(server: ApolloServer<Context>, options: WithRequired<ExpressMiddlewareOptions<Context>, "context">): RequestHandler<...>', gave the following error.
+    Type '({ req }: { req: AuthRequest; }) => { fid?: number | undefined; isAuthenticated: boolean; isAdmin: boolean; }' is not assignable to type 'ContextFunction<[ExpressContextFunctionArgument], Context>'.
+      Type '{ fid?: number | undefined; isAuthenticated: boolean; isAdmin: boolean; }' is missing the following properties from type 'Promise<Context>': then, catch, finally, [Symbol.toStringTag]
+src/server.ts(128,21): error TS6133: 'req' is declared but its value is never read.
+src/server.ts(138,19): error TS6133: 'req' is declared but its value is never read.
+src/server.ts(195,65): error TS6133: 'next' is declared but its value is never read.
+src/server.ts(291,43): error TS6133: 'promise' is declared but its value is never read.
+src/services/catchValidationService.ts(2,1): error TS6133: 'crypto' is declared but its value is never read.
+src/services/catchValidationService.ts(3,22): error TS6133: 'RARITY_WEIGHTS' is declared but its value is never read.
+src/services/catchValidationService.ts(10,11): error TS2304: Cannot find name 'Float'.
+src/services/marketplaceService.ts(17,19): error TS2304: Cannot find name 'int'.
+src/sockets/tournamentSocket.ts(8,3): error TS6133: 'LeaderboardUpdate' is declared but its value is never read.

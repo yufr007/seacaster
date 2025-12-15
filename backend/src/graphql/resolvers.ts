@@ -3,6 +3,7 @@ import { GraphQLError } from 'graphql';
 import { tournamentService } from '../services/tournamentService';
 import { catchValidationService } from '../services/catchValidationService';
 import { marketplaceService } from '../services/marketplaceService';
+import { broadcastTournamentUpdate, broadcastUserJoined } from '../sockets/tournamentSocket';
 
 const prisma = new PrismaClient();
 
@@ -422,6 +423,17 @@ export const resolvers = {
         where: { id: tournamentId },
         data: { currentParticipants: { increment: 1 } }
       });
+
+      // Broadcast real-time update to tournament room
+      broadcastTournamentUpdate(tournamentId, 'NEW_ENTRY');
+
+      // Broadcast user:joined event with details
+      broadcastUserJoined(
+        tournamentId,
+        context.fid,
+        entry.user?.username || 'Anonymous',
+        tournament.currentParticipants + 1
+      );
 
       return entry;
     },

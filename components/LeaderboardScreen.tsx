@@ -22,6 +22,14 @@ interface LeaderboardEntry {
     change: 'up' | 'down' | 'same';
 }
 
+// Premium badge images for top 3 positions
+const BADGE_IMAGES: Record<number, string> = {
+    1: '/assets/badges/leaderboard_badge_gold_1765863298734.png',
+    2: '/assets/badges/leaderboard_badge_silver_1765863318657.png',
+    3: '/assets/badges/leaderboard_badge_bronze_1765863334872.png',
+};
+
+
 // Simulated leaderboard data
 const generateLeaderboard = (count: number, myRank: number): LeaderboardEntry[] => {
     const names = [
@@ -175,7 +183,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ isOpen, onClose, 
                                     transition={{ delay: 0.1 }}
                                 >
                                     <div style={styles.podiumAvatar2}>{leaderboard[1].avatar}</div>
-                                    <Medal size={20} color="#BDC3C7" style={{ marginTop: -8 }} />
+                                    <img src={BADGE_IMAGES[2]} alt="Silver" style={{ width: 28, height: 28, marginTop: -8 }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                                     <span style={styles.podiumName}>{leaderboard[1].username}</span>
                                     <span style={styles.podiumScore}>{leaderboard[1].score.toLocaleString()}</span>
                                 </motion.div>
@@ -188,7 +196,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ isOpen, onClose, 
                                     initial={{ y: 20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                 >
-                                    <Crown size={24} color="#F4D03F" style={{ marginBottom: 4 }} />
+                                    <img src={BADGE_IMAGES[1]} alt="Gold" style={{ width: 36, height: 36, marginBottom: 4 }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                                     <div style={styles.podiumAvatar1}>{leaderboard[0].avatar}</div>
                                     <span style={styles.podiumName}>{leaderboard[0].username}</span>
                                     <span style={{ ...styles.podiumScore, color: '#F4D03F' }}>{leaderboard[0].score.toLocaleString()}</span>
@@ -204,7 +212,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ isOpen, onClose, 
                                     transition={{ delay: 0.2 }}
                                 >
                                     <div style={styles.podiumAvatar3}>{leaderboard[2].avatar}</div>
-                                    <Medal size={20} color="#D35400" style={{ marginTop: -8 }} />
+                                    <img src={BADGE_IMAGES[3]} alt="Bronze" style={{ width: 28, height: 28, marginTop: -8 }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                                     <span style={styles.podiumName}>{leaderboard[2].username}</span>
                                     <span style={styles.podiumScore}>{leaderboard[2].score.toLocaleString()}</span>
                                 </motion.div>

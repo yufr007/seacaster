@@ -765,6 +765,45 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
           border-radius: 50%;
         }
 
+        /* PREMIUM ROD STYLES - Season Pass holders */
+        .rod-wrapper.premium .rod-handle {
+          background: linear-gradient(90deg, #DAA520 0%, #FFD700 50%, #DAA520 100%);
+          border-color: #B8860B;
+          box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .rod-wrapper.premium .handle-grip {
+          background: linear-gradient(90deg, #8B0000 0%, #DC143C 50%, #8B0000 100%);
+          opacity: 0.9;
+        }
+
+        .rod-wrapper.premium .reel {
+          background: radial-gradient(circle, #FFD700 0%, #B8860B 100%);
+          border-color: #8B7500;
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .rod-wrapper.premium .reel-inner {
+          background: #DAA520;
+        }
+
+        .rod-wrapper.premium .rod-shaft {
+          background: linear-gradient(90deg, #5D4037 0%, #8D6E63 50%, #5D4037 100%);
+          border: 1px solid #3E2723;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .rod-wrapper.premium .rod-tip {
+          background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
+          box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+          animation: premiumGlow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes premiumGlow {
+          0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.8); }
+          50% { box-shadow: 0 0 20px rgba(255, 215, 0, 1), 0 0 30px rgba(255, 165, 0, 0.5); }
+        }
+
         /* Fishing Line */
         .fishing-line {
           position: absolute;

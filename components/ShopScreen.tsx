@@ -3,385 +3,406 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
 import { useUIStore } from '../store/uiStore';
 import {
-    Crown, Zap, Gift, Ticket, Fish, Star,
-    ChevronLeft, Check, Lock, Sparkles, X
+  Crown, Zap, Gift, Ticket, Fish, Star,
+  ChevronLeft, Check, Lock, Sparkles, X
 } from 'lucide-react';
 import { BAITS } from '../constants';
 
+// Premium bait images
+const BAIT_IMAGES: Record<string, string> = {
+  '🦐': '/assets/bait/bait_shrimp_1765863173083.png',
+  '🦑': '/assets/bait/bait_squid_1765863189969.png',
+  '🥩': '/assets/bait/bait_legendary_chum_1765863253233.png',
+  '👁️': '/assets/bait/bait_squid_1765863189969.png', // Kraken eye - use squid for now
+  '🪱': '/assets/bait/bait_worm_1765863155303.png',
+};
+
 interface ShopScreenProps {
-    onBack: () => void;
+  onBack: () => void;
 }
 
 type Tab = 'pass' | 'bait' | 'tickets' | 'items';
 
 interface ShopItem {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    currency: 'USDC' | 'coins';
-    icon: string;
-    quantity?: number;
-    popular?: boolean;
-    bestValue?: boolean;
-    type: 'bait' | 'ticket' | 'item';
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  currency: 'USDC' | 'coins';
+  icon: string;
+  quantity?: number;
+  popular?: boolean;
+  bestValue?: boolean;
+  type: 'bait' | 'ticket' | 'item';
 }
 
 const SHOP_ITEMS: ShopItem[] = [
-    // Bait Bundles
-    { id: 'bait_shrimp_5', name: 'Shrimp Pack', description: '5× Premium Shrimp', price: 100, currency: 'coins', icon: '🦐', quantity: 5, type: 'bait' },
-    { id: 'bait_shrimp_20', name: 'Shrimp Bundle', description: '20× Premium Shrimp', price: 350, currency: 'coins', icon: '🦐', quantity: 20, popular: true, type: 'bait' },
-    { id: 'bait_squid_5', name: 'Squid Pack', description: '5× Rare Squid', price: 250, currency: 'coins', icon: '🦑', quantity: 5, type: 'bait' },
-    { id: 'bait_squid_20', name: 'Squid Bundle', description: '20× Rare Squid', price: 850, currency: 'coins', icon: '🦑', quantity: 20, bestValue: true, type: 'bait' },
-    { id: 'bait_chum_3', name: 'Epic Chum', description: '3× Epic Chum', price: 500, currency: 'coins', icon: '🥩', quantity: 3, type: 'bait' },
-    { id: 'bait_kraken_1', name: 'Kraken Bait', description: '1× Legendary Bait', price: 1000, currency: 'coins', icon: '👁️', quantity: 1, type: 'bait' },
+  // Bait Bundles
+  { id: 'bait_shrimp_5', name: 'Shrimp Pack', description: '5× Premium Shrimp', price: 100, currency: 'coins', icon: '🦐', quantity: 5, type: 'bait' },
+  { id: 'bait_shrimp_20', name: 'Shrimp Bundle', description: '20× Premium Shrimp', price: 350, currency: 'coins', icon: '🦐', quantity: 20, popular: true, type: 'bait' },
+  { id: 'bait_squid_5', name: 'Squid Pack', description: '5× Rare Squid', price: 250, currency: 'coins', icon: '🦑', quantity: 5, type: 'bait' },
+  { id: 'bait_squid_20', name: 'Squid Bundle', description: '20× Rare Squid', price: 850, currency: 'coins', icon: '🦑', quantity: 20, bestValue: true, type: 'bait' },
+  { id: 'bait_chum_3', name: 'Epic Chum', description: '3× Epic Chum', price: 500, currency: 'coins', icon: '🥩', quantity: 3, type: 'bait' },
+  { id: 'bait_kraken_1', name: 'Kraken Bait', description: '1× Legendary Bait', price: 1000, currency: 'coins', icon: '👁️', quantity: 1, type: 'bait' },
 
-    // Tournament Tickets
-    { id: 'ticket_daily', name: 'Daily Entry', description: 'Daily Tournament Ticket', price: 0.50, currency: 'USDC', icon: '🎫', type: 'ticket' },
-    { id: 'ticket_weekly', name: 'Weekly Entry', description: 'Weekly Tournament Ticket', price: 2.00, currency: 'USDC', icon: '🎟️', type: 'ticket' },
-    { id: 'ticket_boss', name: 'Boss Battle', description: 'Weekend Boss Entry', price: 7.99, currency: 'USDC', icon: '👹', popular: true, type: 'ticket' },
-    { id: 'ticket_champ', name: 'Championship', description: 'Grand Championship Entry', price: 50.00, currency: 'USDC', icon: '🏆', type: 'ticket' },
+  // Tournament Tickets
+  { id: 'ticket_daily', name: 'Daily Entry', description: 'Daily Tournament Ticket', price: 0.50, currency: 'USDC', icon: '🎫', type: 'ticket' },
+  { id: 'ticket_weekly', name: 'Weekly Entry', description: 'Weekly Tournament Ticket', price: 2.00, currency: 'USDC', icon: '🎟️', type: 'ticket' },
+  { id: 'ticket_boss', name: 'Boss Battle', description: 'Weekend Boss Entry', price: 7.99, currency: 'USDC', icon: '👹', popular: true, type: 'ticket' },
+  { id: 'ticket_champ', name: 'Championship', description: 'Grand Championship Entry', price: 50.00, currency: 'USDC', icon: '🏆', type: 'ticket' },
 ];
 
 const ShopScreen: React.FC<ShopScreenProps> = ({ onBack }) => {
-    const { userStats, purchaseSeasonPass, buyItem } = useGameStore();
-    const { addToast } = useUIStore();
-    const [activeTab, setActiveTab] = useState<Tab>('pass');
-    const [purchaseModal, setPurchaseModal] = useState<ShopItem | null>(null);
-    const [isProcessing, setIsProcessing] = useState(false);
+  const { userStats, purchaseSeasonPass, buyItem } = useGameStore();
+  const { addToast } = useUIStore();
+  const [activeTab, setActiveTab] = useState<Tab>('pass');
+  const [purchaseModal, setPurchaseModal] = useState<ShopItem | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-    const handlePurchase = async (item: ShopItem) => {
-        setIsProcessing(true);
+  const handlePurchase = async (item: ShopItem) => {
+    setIsProcessing(true);
 
-        // Simulate purchase delay
-        await new Promise(r => setTimeout(r, 1000));
+    // Simulate purchase delay
+    await new Promise(r => setTimeout(r, 1000));
 
-        if (item.currency === 'coins') {
-            if (userStats.coins >= item.price) {
-                // Map item type to store-compatible type
-                const storeType = item.type === 'bait' ? 'bait' : 'other' as const;
-                buyItem(item.id, item.price, storeType, item.quantity || 1);
-                addToast(`Purchased ${item.name}!`, 'success');
-            } else {
-                addToast('Not enough coins!', 'error');
-            }
-        } else {
-            // USDC purchase - would trigger wallet transaction
-            addToast(`Processing ${item.name} purchase...`, 'info');
-        }
+    if (item.currency === 'coins') {
+      if (userStats.coins >= item.price) {
+        // Map item type to store-compatible type
+        const storeType = item.type === 'bait' ? 'bait' : 'other' as const;
+        buyItem(item.id, item.price, storeType, item.quantity || 1);
+        addToast(`Purchased ${item.name}!`, 'success');
+      } else {
+        addToast('Not enough coins!', 'error');
+      }
+    } else {
+      // USDC purchase - would trigger wallet transaction
+      addToast(`Processing ${item.name} purchase...`, 'info');
+    }
 
-        setIsProcessing(false);
-        setPurchaseModal(null);
-    };
+    setIsProcessing(false);
+    setPurchaseModal(null);
+  };
 
-    const handleSeasonPassPurchase = async () => {
-        setIsProcessing(true);
-        await new Promise(r => setTimeout(r, 1500));
-        purchaseSeasonPass();
-        addToast('🎉 Season Pass Activated! Enjoy unlimited fishing!', 'success');
-        setIsProcessing(false);
-    };
+  const handleSeasonPassPurchase = async () => {
+    setIsProcessing(true);
+    await new Promise(r => setTimeout(r, 1500));
+    purchaseSeasonPass();
+    addToast('🎉 Season Pass Activated! Enjoy unlimited fishing!', 'success');
+    setIsProcessing(false);
+  };
 
-    const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-        { id: 'pass', label: 'Pass', icon: <Crown size={18} /> },
-        { id: 'bait', label: 'Bait', icon: <span>🪱</span> },
-        { id: 'tickets', label: 'Tickets', icon: <Ticket size={18} /> },
-        { id: 'items', label: 'Items', icon: <Gift size={18} /> },
-    ];
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: 'pass', label: 'Pass', icon: <Crown size={18} /> },
+    { id: 'bait', label: 'Bait', icon: <span>🪱</span> },
+    { id: 'tickets', label: 'Tickets', icon: <Ticket size={18} /> },
+    { id: 'items', label: 'Items', icon: <Gift size={18} /> },
+  ];
 
-    return (
-        <div className="shop-screen">
-            {/* Background */}
-            <div className="shop-bg" />
+  return (
+    <div className="shop-screen">
+      {/* Background */}
+      <div className="shop-bg" />
 
-            {/* Header */}
+      {/* Header */}
+      <motion.div
+        className="shop-header"
+        initial={{ y: -50 }}
+        animate={{ y: 0 }}
+      >
+        <button className="back-btn" onClick={onBack}>
+          <ChevronLeft size={24} />
+        </button>
+        <h1 className="shop-title">TREASURE SHOP</h1>
+        <div className="coins-display">
+          <span className="coin-icon">🪙</span>
+          <span className="coin-amount">{userStats.coins.toLocaleString()}</span>
+        </div>
+      </motion.div>
+
+      {/* Tabs */}
+      <div className="shop-tabs">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            className={`shop-tab ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.icon}
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="shop-content">
+        <AnimatePresence mode="wait">
+          {/* Season Pass Tab */}
+          {activeTab === 'pass' && (
             <motion.div
-                className="shop-header"
-                initial={{ y: -50 }}
-                animate={{ y: 0 }}
+              key="pass"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="pass-section"
             >
-                <button className="back-btn" onClick={onBack}>
-                    <ChevronLeft size={24} />
-                </button>
-                <h1 className="shop-title">TREASURE SHOP</h1>
-                <div className="coins-display">
-                    <span className="coin-icon">🪙</span>
-                    <span className="coin-amount">{userStats.coins.toLocaleString()}</span>
+              {/* Season Pass Card */}
+              <div className={`season-pass-card ${userStats.premium ? 'owned' : ''}`}>
+                <div className="pass-header">
+                  <Crown className="pass-crown" />
+                  <h2>SEASON PASS</h2>
+                  <span className="pass-season">Season 1: Pirates</span>
                 </div>
-            </motion.div>
 
-            {/* Tabs */}
-            <div className="shop-tabs">
-                {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        className={`shop-tab ${activeTab === tab.id ? 'active' : ''}`}
-                        onClick={() => setActiveTab(tab.id)}
-                    >
-                        {tab.icon}
-                        <span>{tab.label}</span>
-                    </button>
-                ))}
-            </div>
+                <div className="pass-benefits">
+                  <div className="benefit-row">
+                    <Check className="check-icon" />
+                    <span>Unlimited Fishing (∞ casts)</span>
+                  </div>
+                  <div className="benefit-row">
+                    <Check className="check-icon" />
+                    <span>2× XP Multiplier</span>
+                  </div>
+                  <div className="benefit-row">
+                    <Check className="check-icon" />
+                    <span>Exclusive 5-Piece Pirate Rod</span>
+                  </div>
+                  <div className="benefit-row">
+                    <Check className="check-icon" />
+                    <span>Premium Daily Rewards</span>
+                  </div>
+                  <div className="benefit-row">
+                    <Check className="check-icon" />
+                    <span>Marketplace Selling Access</span>
+                  </div>
+                  <div className="benefit-row">
+                    <Check className="check-icon" />
+                    <span>1 Free Ad Skip Per Day</span>
+                  </div>
+                  <div className="benefit-row">
+                    <Check className="check-icon" />
+                    <span>Animated Badge & Title</span>
+                  </div>
+                </div>
 
-            {/* Content */}
-            <div className="shop-content">
-                <AnimatePresence mode="wait">
-                    {/* Season Pass Tab */}
-                    {activeTab === 'pass' && (
-                        <motion.div
-                            key="pass"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="pass-section"
-                        >
-                            {/* Season Pass Card */}
-                            <div className={`season-pass-card ${userStats.premium ? 'owned' : ''}`}>
-                                <div className="pass-header">
-                                    <Crown className="pass-crown" />
-                                    <h2>SEASON PASS</h2>
-                                    <span className="pass-season">Season 1: Pirates</span>
-                                </div>
-
-                                <div className="pass-benefits">
-                                    <div className="benefit-row">
-                                        <Check className="check-icon" />
-                                        <span>Unlimited Fishing (∞ casts)</span>
-                                    </div>
-                                    <div className="benefit-row">
-                                        <Check className="check-icon" />
-                                        <span>2× XP Multiplier</span>
-                                    </div>
-                                    <div className="benefit-row">
-                                        <Check className="check-icon" />
-                                        <span>Exclusive 5-Piece Pirate Rod</span>
-                                    </div>
-                                    <div className="benefit-row">
-                                        <Check className="check-icon" />
-                                        <span>Premium Daily Rewards</span>
-                                    </div>
-                                    <div className="benefit-row">
-                                        <Check className="check-icon" />
-                                        <span>Marketplace Selling Access</span>
-                                    </div>
-                                    <div className="benefit-row">
-                                        <Check className="check-icon" />
-                                        <span>1 Free Ad Skip Per Day</span>
-                                    </div>
-                                    <div className="benefit-row">
-                                        <Check className="check-icon" />
-                                        <span>Animated Badge & Title</span>
-                                    </div>
-                                </div>
-
-                                {userStats.premium ? (
-                                    <div className="pass-owned">
-                                        <Sparkles className="sparkle-icon" />
-                                        <span>PASS ACTIVE</span>
-                                        <span className="days-left">54 days remaining</span>
-                                    </div>
-                                ) : (
-                                    <motion.button
-                                        className="purchase-pass-btn"
-                                        onClick={handleSeasonPassPurchase}
-                                        disabled={isProcessing}
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                    >
-                                        {isProcessing ? (
-                                            <span>Processing...</span>
-                                        ) : (
-                                            <>
-                                                <span className="price">$9.99</span>
-                                                <span className="currency">USDC</span>
-                                            </>
-                                        )}
-                                    </motion.button>
-                                )}
-
-                                <div className="pass-value">
-                                    <span>💎 $100+ VALUE</span>
-                                </div>
-                            </div>
-
-                            {/* Rod Preview */}
-                            <div className="rod-preview">
-                                <h3>Exclusive Pirate Rod</h3>
-                                <div className="rod-pieces">
-                                    <div className="rod-piece">
-                                        <span className="piece-emoji">🦑</span>
-                                        <span className="piece-name">Kraken Handle</span>
-                                        <span className="piece-level">Lvl 10</span>
-                                    </div>
-                                    <div className="rod-piece">
-                                        <span className="piece-emoji">⚓</span>
-                                        <span className="piece-name">Barnacle Rod</span>
-                                        <span className="piece-level">Lvl 20</span>
-                                    </div>
-                                    <div className="rod-piece">
-                                        <span className="piece-emoji">🪝</span>
-                                        <span className="piece-name">Anchor Hook</span>
-                                        <span className="piece-level">Lvl 30</span>
-                                    </div>
-                                    <div className="rod-piece">
-                                        <span className="piece-emoji">🔭</span>
-                                        <span className="piece-name">Spyglass Reel</span>
-                                        <span className="piece-level">Lvl 40</span>
-                                    </div>
-                                    <div className="rod-piece special">
-                                        <span className="piece-emoji">🏴‍☠️</span>
-                                        <span className="piece-name">Cannon Ship</span>
-                                        <span className="piece-level">Lvl 50</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
+                {userStats.premium ? (
+                  <div className="pass-owned">
+                    <Sparkles className="sparkle-icon" />
+                    <span>PASS ACTIVE</span>
+                    <span className="days-left">54 days remaining</span>
+                  </div>
+                ) : (
+                  <motion.button
+                    className="purchase-pass-btn"
+                    onClick={handleSeasonPassPurchase}
+                    disabled={isProcessing}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isProcessing ? (
+                      <span>Processing...</span>
+                    ) : (
+                      <>
+                        <span className="price">$9.99</span>
+                        <span className="currency">USDC</span>
+                      </>
                     )}
-
-                    {/* Bait Tab */}
-                    {activeTab === 'bait' && (
-                        <motion.div
-                            key="bait"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="items-grid"
-                        >
-                            {SHOP_ITEMS.filter(i => i.type === 'bait').map(item => (
-                                <motion.div
-                                    key={item.id}
-                                    className={`shop-item-card ${item.popular ? 'popular' : ''} ${item.bestValue ? 'best-value' : ''}`}
-                                    onClick={() => setPurchaseModal(item)}
-                                    whileHover={{ scale: 1.03 }}
-                                    whileTap={{ scale: 0.97 }}
-                                >
-                                    {item.popular && <div className="tag popular-tag">POPULAR</div>}
-                                    {item.bestValue && <div className="tag value-tag">BEST VALUE</div>}
-
-                                    <span className="item-icon">{item.icon}</span>
-                                    <h4 className="item-name">{item.name}</h4>
-                                    <p className="item-desc">{item.description}</p>
-
-                                    <div className="item-price">
-                                        <span className="price-icon">{item.currency === 'coins' ? '🪙' : '💵'}</span>
-                                        <span className="price-amount">{item.price.toLocaleString()}</span>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </motion.div>
-                    )}
-
-                    {/* Tickets Tab */}
-                    {activeTab === 'tickets' && (
-                        <motion.div
-                            key="tickets"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="items-grid tickets"
-                        >
-                            {SHOP_ITEMS.filter(i => i.type === 'ticket').map(item => (
-                                <motion.div
-                                    key={item.id}
-                                    className={`shop-item-card ticket-card ${item.popular ? 'popular' : ''}`}
-                                    onClick={() => setPurchaseModal(item)}
-                                    whileHover={{ scale: 1.03 }}
-                                    whileTap={{ scale: 0.97 }}
-                                >
-                                    {item.popular && <div className="tag popular-tag">🔥 HOT</div>}
-
-                                    <span className="item-icon">{item.icon}</span>
-                                    <h4 className="item-name">{item.name}</h4>
-                                    <p className="item-desc">{item.description}</p>
-
-                                    <div className="item-price usdc">
-                                        <span className="price-amount">${item.price.toFixed(2)}</span>
-                                        <span className="price-currency">USDC</span>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </motion.div>
-                    )}
-
-                    {/* Items Tab */}
-                    {activeTab === 'items' && (
-                        <motion.div
-                            key="items"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="coming-soon"
-                        >
-                            <Gift size={64} className="coming-icon" />
-                            <h3>More Items Coming Soon!</h3>
-                            <p>Cosmetics, Rod Parts, and Special Items</p>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-
-            {/* Purchase Modal */}
-            <AnimatePresence>
-                {purchaseModal && (
-                    <motion.div
-                        className="purchase-modal-overlay"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => !isProcessing && setPurchaseModal(null)}
-                    >
-                        <motion.div
-                            className="purchase-modal"
-                            initial={{ scale: 0.8, y: 50 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.8, y: 50 }}
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <button
-                                className="modal-close"
-                                onClick={() => !isProcessing && setPurchaseModal(null)}
-                            >
-                                <X size={20} />
-                            </button>
-
-                            <span className="modal-icon">{purchaseModal.icon}</span>
-                            <h3>{purchaseModal.name}</h3>
-                            <p>{purchaseModal.description}</p>
-
-                            <div className="modal-price">
-                                {purchaseModal.currency === 'coins' ? (
-                                    <>
-                                        <span>🪙</span>
-                                        <span>{purchaseModal.price.toLocaleString()}</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>${purchaseModal.price.toFixed(2)}</span>
-                                        <span className="usdc-label">USDC</span>
-                                    </>
-                                )}
-                            </div>
-
-                            {purchaseModal.currency === 'coins' && userStats.coins < purchaseModal.price && (
-                                <p className="not-enough">Not enough coins!</p>
-                            )}
-
-                            <motion.button
-                                className="confirm-purchase-btn"
-                                onClick={() => handlePurchase(purchaseModal)}
-                                disabled={isProcessing || (purchaseModal.currency === 'coins' && userStats.coins < purchaseModal.price)}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                {isProcessing ? 'Processing...' : 'PURCHASE'}
-                            </motion.button>
-                        </motion.div>
-                    </motion.div>
+                  </motion.button>
                 )}
-            </AnimatePresence>
 
-            <style>{`
+                <div className="pass-value">
+                  <span>💎 $100+ VALUE</span>
+                </div>
+              </div>
+
+              {/* Rod Preview */}
+              <div className="rod-preview">
+                <h3>Exclusive Pirate Rod</h3>
+                <div className="rod-pieces">
+                  <div className="rod-piece">
+                    <span className="piece-emoji">🦑</span>
+                    <span className="piece-name">Kraken Handle</span>
+                    <span className="piece-level">Lvl 10</span>
+                  </div>
+                  <div className="rod-piece">
+                    <span className="piece-emoji">⚓</span>
+                    <span className="piece-name">Barnacle Rod</span>
+                    <span className="piece-level">Lvl 20</span>
+                  </div>
+                  <div className="rod-piece">
+                    <span className="piece-emoji">🪝</span>
+                    <span className="piece-name">Anchor Hook</span>
+                    <span className="piece-level">Lvl 30</span>
+                  </div>
+                  <div className="rod-piece">
+                    <span className="piece-emoji">🔭</span>
+                    <span className="piece-name">Spyglass Reel</span>
+                    <span className="piece-level">Lvl 40</span>
+                  </div>
+                  <div className="rod-piece special">
+                    <span className="piece-emoji">🏴‍☠️</span>
+                    <span className="piece-name">Cannon Ship</span>
+                    <span className="piece-level">Lvl 50</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Bait Tab */}
+          {activeTab === 'bait' && (
+            <motion.div
+              key="bait"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="items-grid"
+            >
+              {SHOP_ITEMS.filter(i => i.type === 'bait').map(item => (
+                <motion.div
+                  key={item.id}
+                  className={`shop-item-card ${item.popular ? 'popular' : ''} ${item.bestValue ? 'best-value' : ''}`}
+                  onClick={() => setPurchaseModal(item)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  {item.popular && <div className="tag popular-tag">POPULAR</div>}
+                  {item.bestValue && <div className="tag value-tag">BEST VALUE</div>}
+
+                  <div className="item-icon">
+                    {BAIT_IMAGES[item.icon] ? (
+                      <img src={BAIT_IMAGES[item.icon]} alt={item.name} style={{ width: 48, height: 48, objectFit: 'contain' }} />
+                    ) : (
+                      <span>{item.icon}</span>
+                    )}
+                  </div>
+                  <h4 className="item-name">{item.name}</h4>
+                  <p className="item-desc">{item.description}</p>
+
+                  <div className="item-price">
+                    <span className="price-icon">{item.currency === 'coins' ? '🪙' : '💵'}</span>
+                    <span className="price-amount">{item.price.toLocaleString()}</span>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Tickets Tab */}
+          {activeTab === 'tickets' && (
+            <motion.div
+              key="tickets"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="items-grid tickets"
+            >
+              {SHOP_ITEMS.filter(i => i.type === 'ticket').map(item => (
+                <motion.div
+                  key={item.id}
+                  className={`shop-item-card ticket-card ${item.popular ? 'popular' : ''}`}
+                  onClick={() => setPurchaseModal(item)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  {item.popular && <div className="tag popular-tag">🔥 HOT</div>}
+
+                  <span className="item-icon">{item.icon}</span>
+                  <h4 className="item-name">{item.name}</h4>
+                  <p className="item-desc">{item.description}</p>
+
+                  <div className="item-price usdc">
+                    <span className="price-amount">${item.price.toFixed(2)}</span>
+                    <span className="price-currency">USDC</span>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Items Tab */}
+          {activeTab === 'items' && (
+            <motion.div
+              key="items"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="coming-soon"
+            >
+              <Gift size={64} className="coming-icon" />
+              <h3>More Items Coming Soon!</h3>
+              <p>Cosmetics, Rod Parts, and Special Items</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Purchase Modal */}
+      <AnimatePresence>
+        {purchaseModal && (
+          <motion.div
+            className="purchase-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => !isProcessing && setPurchaseModal(null)}
+          >
+            <motion.div
+              className="purchase-modal"
+              initial={{ scale: 0.8, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 50 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                className="modal-close"
+                onClick={() => !isProcessing && setPurchaseModal(null)}
+              >
+                <X size={20} />
+              </button>
+
+              <div className="modal-icon">
+                {BAIT_IMAGES[purchaseModal.icon] ? (
+                  <img src={BAIT_IMAGES[purchaseModal.icon]} alt={purchaseModal.name} style={{ width: 64, height: 64, objectFit: 'contain' }} />
+                ) : (
+                  <span>{purchaseModal.icon}</span>
+                )}
+              </div>
+              <h3>{purchaseModal.name}</h3>
+              <p>{purchaseModal.description}</p>
+
+              <div className="modal-price">
+                {purchaseModal.currency === 'coins' ? (
+                  <>
+                    <span>🪙</span>
+                    <span>{purchaseModal.price.toLocaleString()}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>${purchaseModal.price.toFixed(2)}</span>
+                    <span className="usdc-label">USDC</span>
+                  </>
+                )}
+              </div>
+
+              {purchaseModal.currency === 'coins' && userStats.coins < purchaseModal.price && (
+                <p className="not-enough">Not enough coins!</p>
+              )}
+
+              <motion.button
+                className="confirm-purchase-btn"
+                onClick={() => handlePurchase(purchaseModal)}
+                disabled={isProcessing || (purchaseModal.currency === 'coins' && userStats.coins < purchaseModal.price)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {isProcessing ? 'Processing...' : 'PURCHASE'}
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <style>{`
         .shop-screen {
           width: 100%;
           height: 100%;
@@ -840,8 +861,8 @@ const ShopScreen: React.FC<ShopScreenProps> = ({ onBack }) => {
           box-shadow: none;
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default ShopScreen;

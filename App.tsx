@@ -25,6 +25,10 @@ import { useWakeLock } from './hooks/useWakeLock';
 
 import { WalletConnect } from './components/WalletConnect';
 
+// API Integration hooks
+import { useSyncProfile, useGameState } from './hooks/useGameAPI';
+import { useAuthSetup } from './hooks/useTournamentAPI';
+
 
 const SeaCasterApp: React.FC = () => {
   const [screen, setScreen] = useState<'menu' | 'game' | 'shop'>('menu');
@@ -42,6 +46,14 @@ const SeaCasterApp: React.FC = () => {
 
   // PWA Features: Keep screen on during fishing
   useWakeLock(screen === 'game');
+
+  // API Integration: Sync profile with backend
+  const syncProfileMutation = useSyncProfile();
+  const { user: apiUser, isLoading: apiLoading, refetchUser } = useGameState();
+
+  // Setup auth token (uses Farcaster auth)
+  const authToken = userStats.fid ? `fid:${userStats.fid}` : null;
+  useAuthSetup(authToken);
 
   // Verify Season Pass on wallet connect
   useEffect(() => {
@@ -82,6 +94,13 @@ const SeaCasterApp: React.FC = () => {
         useGameStore.setState(state => ({
           userStats: { ...state.userStats, fid: user.fid, username: user.username }
         }));
+
+        // Sync with backend API (non-blocking)
+        syncProfileMutation.mutate({
+          fid: user.fid,
+          username: user.username || `user_${user.fid}`,
+          pfpUrl: user.pfpUrl,
+        });
       }
 
       // 2. Trigger initial energy calculation (resume from idle)

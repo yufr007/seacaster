@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../hooks/useSound';
 import { Haptics, triggerHaptic } from '../utils/haptics';
 import { ChevronLeft, Zap } from 'lucide-react';
+import { useValidateCatch } from '../hooks/useGameAPI';
 
 interface FishingSceneProps {
   onBack?: () => void;
@@ -30,6 +31,9 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
   const [castPower, setCastPower] = useState(0);
   const [isCasting, setIsCasting] = useState(false);
   const { play } = useSound();
+
+  // API: Validate catches with backend
+  const validateCatchMutation = useValidateCatch();
 
   // Rod animation state
   const [rodAngle, setRodAngle] = useState(0);
@@ -64,6 +68,20 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
       play('success');
     }
   }, [phase, play]);
+
+  // API: Submit catch to backend for validation when catch is successful
+  useEffect(() => {
+    if (phase === GamePhase.REWARD && hookedFish && userStats.fid) {
+      validateCatchMutation.mutate({
+        fishId: hookedFish.id,
+        rarity: hookedFish.rarity,
+        weight: hookedFish.weight,
+        baitUsed: 'worm', // TODO: Get from inventory.activeBaitId
+        reactionTime: 500, // TODO: Track actual reaction time
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, hookedFish, userStats.fid]);
 
   // Rod animation during casting with screen shake
   useEffect(() => {

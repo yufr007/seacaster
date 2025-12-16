@@ -342,7 +342,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     overlay: {
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.95)',
+        backgroundImage: 'url(/assets/backgrounds/boss_kraken.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

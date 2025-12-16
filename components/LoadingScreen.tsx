@@ -140,14 +140,16 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(180deg, #0A3A52 0%, #0D2137 50%, #071422 100%)',
+        backgroundImage: 'url(/assets/backgrounds/loading_underwater.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
         zIndex: 9999,
     },
     background: {
         position: 'absolute',
         inset: 0,
         overflow: 'hidden',
-        opacity: 0.3,
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
     },
     wave1: {
         position: 'absolute',

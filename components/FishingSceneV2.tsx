@@ -7,6 +7,7 @@ import { Haptics, triggerHaptic } from '../utils/haptics';
 import { ChevronLeft, Zap } from 'lucide-react';
 import { useValidateCatch } from '../hooks/useGameAPI';
 import { FISH_TYPES } from '../constants';
+import ReelMiniGame from './ReelMiniGame';
 
 interface FishingSceneV2Props {
     onBack?: () => void;
@@ -35,6 +36,8 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
         phase,
         castLine,
         attemptCatch,
+        startReeling,
+        completeReeling,
         failCatch,
         userStats,
         hookedFish,
@@ -231,8 +234,18 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
     const handleTap = () => {
         if (phase === GamePhase.HOOKED) {
             triggerHaptic(Haptics.success);
-            attemptCatch();
+            // Start the reeling mini-game instead of direct catch
+            startReeling();
         }
+    };
+
+    // Handle reel mini-game completion
+    const handleReelSuccess = () => {
+        completeReeling(true);
+    };
+
+    const handleReelFail = () => {
+        completeReeling(false);
     };
 
     const getRarityColor = (rarity: Rarity) => {
@@ -508,6 +521,16 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Reel Mini-Game */}
+            {phase === GamePhase.REELING && hookedFish && (
+                <ReelMiniGame
+                    fish={hookedFish}
+                    isActive={phase === GamePhase.REELING}
+                    onSuccess={handleReelSuccess}
+                    onFail={handleReelFail}
+                />
+            )}
 
             {/* Bait Display */}
             <div className="bait-display">

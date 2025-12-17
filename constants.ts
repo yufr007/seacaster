@@ -134,11 +134,12 @@ export const BAITS: Record<string, Bait> = {
   'kraken_eye': { id: 'kraken_eye', name: 'Kraken Bait', effect: 'Legendary', bonus: 1.50, icon: '/assets/bait/bait_kraken_eye.png.jpg', rarity: Rarity.LEGENDARY, description: '+50% legendary chance.' },
 };
 
-export const RODS: Record<string, Rod> = {
-  'bamboo': { id: 'bamboo', name: 'Bamboo Pole', rarity: Rarity.COMMON, levelRequired: 1, perk: 'None' },
-  'fiberglass': { id: 'fiberglass', name: 'Fiberglass Rod', rarity: Rarity.UNCOMMON, levelRequired: 10, perk: '+5% XP' },
-  'carbon': { id: 'carbon', name: 'Carbon Fiber', rarity: Rarity.RARE, levelRequired: 20, perk: '+10% XP' },
-  'gold': { id: 'gold', name: 'Golden Rod', rarity: Rarity.LEGENDARY, levelRequired: 50, perk: '+50% XP' },
+export const RODS: Record<string, Rod & { image: string }> = {
+  'bamboo': { id: 'bamboo', name: 'Bamboo Pole', rarity: Rarity.COMMON, levelRequired: 1, perk: 'None', image: '/assets/ui/fishing_rod.png' },
+  'fiberglass': { id: 'fiberglass', name: 'Fiberglass Rod', rarity: Rarity.UNCOMMON, levelRequired: 10, perk: '+5% XP', image: '/assets/ui/fishing_rod.png' },
+  'carbon': { id: 'carbon', name: 'Carbon Fiber', rarity: Rarity.RARE, levelRequired: 20, perk: '+10% XP', image: '/assets/ui/fishing_rod.png' },
+  'gold': { id: 'gold', name: 'Golden Rod', rarity: Rarity.LEGENDARY, levelRequired: 50, perk: '+50% XP', image: '/assets/ui/golden_pirate_rod_1765863136497.png' },
+  'pirate': { id: 'pirate', name: 'Pirate Captain Rod', rarity: Rarity.MYTHIC, levelRequired: 100, perk: '+100% XP', image: '/assets/fish/pirate_rod.png' },
 };
 
 export const RARITY_COLORS: Record<Rarity, string> = {

@@ -3,6 +3,7 @@ export enum GamePhase {
   CASTING = 'CASTING',
   WAITING = 'WAITING',
   HOOKED = 'HOOKED',
+  REELING = 'REELING',     // New: Tug-of-war mini-game phase
   CATCHING = 'CATCHING',
   ANIMATING_CATCH = 'ANIMATING_CATCH',
   REWARD = 'REWARD'

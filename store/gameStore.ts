@@ -20,6 +20,8 @@ interface GameState {
   castLine: () => void;
   triggerBite: () => void;
   attemptCatch: () => void;
+  startReeling: () => void;      // New: Transition to REELING phase
+  completeReeling: (success: boolean) => void;  // New: Handle reel result
   finishCatchAnimation: () => void;
   failCatch: () => void;
   collectReward: () => void;
@@ -430,6 +432,57 @@ export const useGameStore = create<GameState>()(
 
         } else {
           get().failCatch();
+        }
+      },
+
+      // New: Start the reeling mini-game phase
+      startReeling: () => {
+        const { phase, hookedFish } = get();
+        if (phase !== GamePhase.HOOKED || !hookedFish) return;
+
+        triggerHaptic(Haptics.medium);
+        set({ phase: GamePhase.REELING });
+      },
+
+      // New: Complete the reeling mini-game with success/fail result
+      completeReeling: (success: boolean) => {
+        const { hookedFish, history, userStats } = get();
+        if (!hookedFish) return;
+
+        if (success) {
+          const isNew = !history.some(f => f.id === hookedFish.id);
+
+          // Haptic feedback based on rarity
+          if (hookedFish.rarity === Rarity.MYTHIC || hookedFish.rarity === Rarity.LEGENDARY) {
+            triggerHaptic(Haptics.legendaryCatch);
+          } else if (hookedFish.rarity === Rarity.EPIC || hookedFish.rarity === Rarity.RARE) {
+            triggerHaptic(Haptics.rareCatch);
+          } else {
+            triggerHaptic(Haptics.success);
+          }
+
+          // Check for Level 50+ Premium Animation
+          if (userStats.level >= 50 && userStats.premium) {
+            set({
+              phase: GamePhase.ANIMATING_CATCH,
+              lastCatch: hookedFish,
+              isNewCatch: isNew,
+              history: [hookedFish, ...history],
+              hookedFish: null
+            });
+          } else {
+            set({
+              phase: GamePhase.REWARD,
+              lastCatch: hookedFish,
+              isNewCatch: isNew,
+              history: [hookedFish, ...history],
+              hookedFish: null
+            });
+          }
+        } else {
+          // Failed the mini-game
+          triggerHaptic(Haptics.fail);
+          set({ phase: GamePhase.IDLE, hookedFish: null });
         }
       },
 

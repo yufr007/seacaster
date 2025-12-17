@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import FishingScene from './components/FishingScene';
+import FishingScene from './components/FishingSceneV2';
 import GameHUD from './components/GameHUD';
 import FishModal from './components/FishModal';
 import TournamentBoard from './components/TournamentBoard';

@@ -34,6 +34,11 @@ interface GameState {
   openChest: () => string;
   addXP: (amount: number) => void;
   addCasts: (amount: number) => void;
+
+  // Loot & Cosmetics
+  unlockCosmetic: (cosmeticId: string) => boolean;
+  equipCosmetic: (cosmeticId: string, type: 'title' | 'badge' | 'rod_skin' | 'bobber' | 'trail_effect') => void;
+  addBonusDrop: (type: 'coins' | 'xp' | 'bait', quantity: number, baitId?: string) => void;
 }
 
 // XP Calculation Helper
@@ -70,6 +75,13 @@ export const useGameStore = create<GameState>()(
         rods: ['bamboo'],
         activeBaitId: 'worm',
         activeRodId: 'bamboo',
+        // Cosmetics
+        unlockedCosmetics: [],
+        equippedTitle: null,
+        equippedBadge: null,
+        equippedRodSkin: null,
+        equippedBobber: null,
+        equippedTrail: null,
       },
 
       setPhase: (phase) => set({ phase }),
@@ -524,6 +536,56 @@ export const useGameStore = create<GameState>()(
             castsRemaining: newCasts
           }
         }));
+      },
+
+      // Loot & Cosmetics Actions
+      unlockCosmetic: (cosmeticId: string) => {
+        const { inventory } = get();
+        if (inventory.unlockedCosmetics.includes(cosmeticId)) {
+          return false; // Already owned
+        }
+        triggerHaptic(Haptics.success);
+        set(state => ({
+          inventory: {
+            ...state.inventory,
+            unlockedCosmetics: [...state.inventory.unlockedCosmetics, cosmeticId]
+          }
+        }));
+        return true;
+      },
+
+      equipCosmetic: (cosmeticId: string, type: 'title' | 'badge' | 'rod_skin' | 'bobber' | 'trail_effect') => {
+        const { inventory } = get();
+        if (!inventory.unlockedCosmetics.includes(cosmeticId)) return;
+
+        triggerHaptic(Haptics.soft);
+        set(state => {
+          const updates: Partial<typeof state.inventory> = {};
+          switch (type) {
+            case 'title': updates.equippedTitle = cosmeticId; break;
+            case 'badge': updates.equippedBadge = cosmeticId; break;
+            case 'rod_skin': updates.equippedRodSkin = cosmeticId; break;
+            case 'bobber': updates.equippedBobber = cosmeticId; break;
+            case 'trail_effect': updates.equippedTrail = cosmeticId; break;
+          }
+          return { inventory: { ...state.inventory, ...updates } };
+        });
+      },
+
+      addBonusDrop: (type: 'coins' | 'xp' | 'bait', quantity: number, baitId?: string) => {
+        set(state => {
+          if (type === 'coins') {
+            return { userStats: { ...state.userStats, coins: state.userStats.coins + quantity } };
+          } else if (type === 'xp') {
+            const newXp = state.userStats.xp + quantity;
+            return { userStats: { ...state.userStats, xp: newXp } };
+          } else if (type === 'bait' && baitId) {
+            const newBaits = { ...state.inventory.baits };
+            newBaits[baitId] = (newBaits[baitId] || 0) + quantity;
+            return { inventory: { ...state.inventory, baits: newBaits } };
+          }
+          return {};
+        });
       }
     }),
     {

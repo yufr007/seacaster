@@ -51,6 +51,14 @@ export interface Inventory {
   rods: string[]; // IDs of owned rods
   activeBaitId: string;
   activeRodId: string;
+
+  // Cosmetics
+  unlockedCosmetics: string[]; // IDs of unlocked cosmetic items
+  equippedTitle: string | null;
+  equippedBadge: string | null;
+  equippedRodSkin: string | null;
+  equippedBobber: string | null;
+  equippedTrail: string | null;
 }
 
 export interface UserStats {

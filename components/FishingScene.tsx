@@ -555,16 +555,19 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
       {/* Bottom HUD */}
       <div className="fishing-hud">
         <div className="hud-item">
-          <span className="hud-label">Bait</span>
-          <span className="hud-value">🪱</span>
+          <span className="hud-label">BAIT</span>
+          <img src="/assets/bait/bait_worm_1765863155303.png" alt="bait" className="hud-icon" />
         </div>
         <div className="hud-item">
-          <span className="hud-label">Level</span>
+          <span className="hud-label">LEVEL</span>
           <span className="hud-value">{userStats.level}</span>
         </div>
         <div className="hud-item">
-          <span className="hud-label">Streak</span>
-          <span className="hud-value">🔥 {userStats.streak}</span>
+          <span className="hud-label">STREAK</span>
+          <div className="hud-streak">
+            <img src="/assets/fish/kraken.png" alt="streak" className="hud-icon" />
+            <span className="hud-value">{userStats.streak}</span>
+          </div>
         </div>
       </div>
 
@@ -716,6 +719,13 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
           transform-origin: bottom right;
           z-index: 20;
           pointer-events: none;
+        }
+
+        .rod-image {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          object-position: bottom right;
         }
 
         .rod-handle {
@@ -1144,6 +1154,18 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
           font-size: 16px;
           color: white;
           font-weight: 700;
+        }
+
+        .hud-icon {
+          width: 24px;
+          height: 24px;
+          object-fit: contain;
+        }
+
+        .hud-streak {
+          display: flex;
+          align-items: center;
+          gap: 4px;
         }
 
         /* Mobile Optimization */

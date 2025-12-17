@@ -10,11 +10,11 @@ interface RodBuilderProps {
 
 // Blueprint: Level milestones for rod pieces
 const ROD_PIECES = [
-    { id: 'handle', name: 'Kraken Tentacle Handle', level: 10, emoji: '🦑', position: 'bottom' },
-    { id: 'rod', name: 'Barnacle-Encrusted Rod', level: 20, emoji: '🪵', position: 'middle' },
-    { id: 'hook', name: 'Anchor Hook', level: 30, emoji: '⚓', position: 'top' },
-    { id: 'reel', name: 'Brass Spyglass Reel', level: 40, emoji: '🔭', position: 'side' },
-    { id: 'tip', name: 'Complete Pirate Rod', level: 50, emoji: '🏴‍☠️', position: 'complete' },
+    { id: 'handle', name: 'Kraken Tentacle Handle', level: 10, image: '/assets/ui/rod_handle.png.jpg', position: 'bottom' },
+    { id: 'rod', name: 'Barnacle-Encrusted Rod', level: 20, image: '/assets/ui/rod_shaft.png.jpg', position: 'middle' },
+    { id: 'hook', name: 'Anchor Hook', level: 30, image: '/assets/ui/rod_hook.png.jpg', position: 'top' },
+    { id: 'reel', name: 'Brass Spyglass Reel', level: 40, image: '/assets/ui/rod_reel.png.jpg', position: 'side' },
+    { id: 'tip', name: 'Complete Pirate Rod', level: 50, image: '/assets/ui/rod_complete.png.jpg', position: 'complete' },
 ];
 
 const RodBuilder: React.FC<RodBuilderProps> = ({ onClose, compact = false }) => {
@@ -126,85 +126,87 @@ const RodBuilder: React.FC<RodBuilderProps> = ({ onClose, compact = false }) => 
 
                 {/* Rod Preview */}
                 <div className={`rod-preview ${isComplete ? 'complete' : ''} ${isPremium ? 'premium' : ''}`}>
-                    <svg width="150" height="280" viewBox="0 0 150 280">
-                        {/* Handle */}
-                        <motion.g
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                        >
-                            <rect
-                                x="58" y="220" width="34" height="55" rx="5"
-                                fill={userStats.level >= 10 ? (isPremium ? '#DAA520' : '#8B4513') : '#222'}
-                                stroke={userStats.level >= 10 ? '#B7950B' : '#333'}
-                                strokeWidth="2"
-                            />
-                            {userStats.level >= 10 && (
-                                <text x="75" y="250" textAnchor="middle" fontSize="20">🦑</text>
-                            )}
-                        </motion.g>
+                    {isComplete ? (
+                        <motion.img
+                            src="/assets/ui/rod_complete.png.jpg"
+                            alt="Complete Rod"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            style={{ maxWidth: '100%', maxHeight: '250px', filter: 'drop-shadow(0 0 20px rgba(243, 156, 18, 0.5))' }}
+                        />
+                    ) : (
+                        <svg width="150" height="280" viewBox="0 0 150 280">
+                            {/* Handle */}
+                            <motion.g
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                            >
+                                <rect
+                                    x="58" y="220" width="34" height="55" rx="5"
+                                    fill={userStats.level >= 10 ? (isPremium ? '#DAA520' : '#8B4513') : '#222'}
+                                    stroke={userStats.level >= 10 ? '#B7950B' : '#333'}
+                                    strokeWidth="2"
+                                />
+                                {userStats.level >= 10 && (
+                                    <image href="/assets/ui/rod_handle.png.jpg" x="48" y="210" width="54" height="75" />
+                                )}
+                            </motion.g>
 
-                        {/* Reel */}
-                        <motion.g
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.4 }}
-                        >
-                            <circle
-                                cx="45" cy="210" r="22"
-                                fill={userStats.level >= 40 ? (isPremium ? '#B8860B' : '#6B6B6B') : '#222'}
-                                stroke={userStats.level >= 40 ? '#8B6914' : '#333'}
-                                strokeWidth="2"
-                            />
-                            {userStats.level >= 40 && (
-                                <text x="45" y="217" textAnchor="middle" fontSize="18">🔭</text>
-                            )}
-                        </motion.g>
+                            {/* Reel */}
+                            <motion.g
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.4 }}
+                            >
+                                {userStats.level >= 40 ? (
+                                    <image href="/assets/ui/rod_reel.png.jpg" x="20" y="185" width="50" height="50" />
+                                ) : (
+                                    <circle
+                                        cx="45" cy="210" r="22"
+                                        fill="#222"
+                                        stroke="#333"
+                                        strokeWidth="2"
+                                    />
+                                )}
+                            </motion.g>
 
-                        {/* Rod Body */}
-                        <motion.g
-                            initial={{ opacity: 0, scaleY: 0 }}
-                            animate={{ opacity: 1, scaleY: 1 }}
-                            transition={{ delay: 0.2 }}
-                        >
-                            <rect
-                                x="68" y="60" width="14" height="165" rx="3"
-                                fill={userStats.level >= 20 ? (isPremium ? '#8B4513' : '#5C4033') : '#222'}
-                                stroke={userStats.level >= 20 ? '#654321' : '#333'}
-                                strokeWidth="2"
-                            />
-                            {userStats.level >= 20 && (
-                                <text x="75" y="140" textAnchor="middle" fontSize="16">🪵</text>
-                            )}
-                        </motion.g>
+                            {/* Rod Body */}
+                            <motion.g
+                                initial={{ opacity: 0, scaleY: 0 }}
+                                animate={{ opacity: 1, scaleY: 1 }}
+                                transition={{ delay: 0.2 }}
+                            >
+                                <rect
+                                    x="68" y="60" width="14" height="165" rx="3"
+                                    fill={userStats.level >= 20 ? (isPremium ? '#8B4513' : '#5C4033') : '#222'}
+                                    stroke={userStats.level >= 20 ? '#654321' : '#333'}
+                                    strokeWidth="2"
+                                />
+                                {userStats.level >= 20 && (
+                                    <image href="/assets/ui/rod_shaft.png.jpg" x="63" y="55" width="24" height="175" preserveAspectRatio="none" />
+                                )}
+                            </motion.g>
 
-                        {/* Hook */}
-                        <motion.g
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                        >
-                            <path
-                                d="M75 10 L75 60 M65 35 Q55 45 65 55 M85 35 Q95 45 85 55"
-                                stroke={userStats.level >= 30 ? (isPremium ? '#DAA520' : '#C0C0C0') : '#333'}
-                                strokeWidth="4"
-                                fill="none"
-                            />
-                            {userStats.level >= 30 && (
-                                <text x="75" y="30" textAnchor="middle" fontSize="16">⚓</text>
-                            )}
-                        </motion.g>
-
-                        {/* Complete Glow */}
-                        {isComplete && isPremium && (
-                            <motion.circle
-                                cx="75" cy="10" r="10"
-                                fill="#F39C12"
-                                animate={{ opacity: [1, 0.4, 1], scale: [1, 1.2, 1] }}
-                                transition={{ repeat: Infinity, duration: 2 }}
-                            />
-                        )}
-                    </svg>
+                            {/* Hook */}
+                            <motion.g
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                            >
+                                {userStats.level >= 30 ? (
+                                    <image href="/assets/ui/rod_hook.png.jpg" x="60" y="10" width="30" height="40" />
+                                ) : (
+                                    <path
+                                        d="M75 10 L75 60 M65 35 Q55 45 65 55 M85 35 Q95 45 85 55"
+                                        stroke="#333"
+                                        strokeWidth="4"
+                                        fill="none"
+                                    />
+                                )}
+                            </motion.g>
+                        </svg>
+                    )}
 
                     {isComplete && (
                         <motion.div
@@ -231,7 +233,7 @@ const RodBuilder: React.FC<RodBuilderProps> = ({ onClose, compact = false }) => 
                                 transition={{ delay: 0.1 * index }}
                             >
                                 <div className="piece-icon">
-                                    {unlocked ? piece.emoji : <Lock size={16} />}
+                                    {unlocked ? <img src={piece.image} alt={piece.name} className="piece-img" /> : <Lock size={16} />}
                                 </div>
                                 <div className="piece-info">
                                     <span className="piece-name">{piece.name}</span>
@@ -438,6 +440,12 @@ const RodBuilder: React.FC<RodBuilderProps> = ({ onClose, compact = false }) => 
         .close-btn:active {
           transform: translateY(4px);
           box-shadow: none;
+        }
+
+        .piece-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
       `}</style>
         </motion.div>

@@ -5,387 +5,392 @@ import { Gift, X, Zap, Fish, Skull, Award } from 'lucide-react';
 import { triggerHaptic, Haptics } from '../utils/haptics';
 
 interface DailyBaitBoxProps {
-    onClose: () => void;
+  onClose: () => void;
 }
 
 // Reward tables from blueprint
 const FREE_REWARDS = [
-    { day: 1, bait: 2, casts: 3, xp: 25, label: '2× Basic Bait' },
-    { day: 2, bait: 3, casts: 4, xp: 30, label: '3× Basic Bait' },
-    { day: 3, bait: 2, casts: 5, xp: 35, label: '2× Premium Shrimp' },
-    { day: 4, bait: 3, casts: 5, xp: 40, label: '3× Premium Shrimp' },
-    { day: 5, bait: 2, casts: 6, xp: 50, label: '2× Uncommon Lure' },
-    { day: 6, bait: 3, casts: 7, xp: 60, label: '3× Uncommon Lure' },
-    { day: 7, bait: 3, casts: 10, xp: 100, label: '🦈 Streak Chest!' },
+  { day: 1, bait: 2, casts: 3, xp: 25, label: '2× Basic Bait' },
+  { day: 2, bait: 3, casts: 4, xp: 30, label: '3× Basic Bait' },
+  { day: 3, bait: 2, casts: 5, xp: 35, label: '2× Premium Shrimp' },
+  { day: 4, bait: 3, casts: 5, xp: 40, label: '3× Premium Shrimp' },
+  { day: 5, bait: 2, casts: 6, xp: 50, label: '2× Uncommon Lure' },
+  { day: 6, bait: 3, casts: 7, xp: 60, label: '3× Uncommon Lure' },
+  { day: 7, bait: 3, casts: 10, xp: 100, label: 'Streak Chest!', image: '/assets/ui/treasure_chest.png' },
 ];
 
 const PREMIUM_REWARDS = [
-    { day: 1, bait: 4, casts: 5, xp: 50, label: '4× Premium Shrimp' },
-    { day: 2, bait: 5, casts: 6, xp: 60, label: '5× Premium Shrimp' },
-    { day: 3, bait: 4, casts: 8, xp: 75, label: '4× Rare Squid' },
-    { day: 4, bait: 5, casts: 10, xp: 90, label: '5× Rare Squid' },
-    { day: 5, bait: 4, casts: 12, xp: 110, label: '4× Epic Chum' },
-    { day: 6, bait: 5, casts: 15, xp: 140, label: '5× Epic Chum' },
-    { day: 7, bait: 5, casts: 20, xp: 200, usdc: 1, label: '🐋 Premium Chest!' },
+  { day: 1, bait: 4, casts: 5, xp: 50, label: '4× Premium Shrimp' },
+  { day: 2, bait: 5, casts: 6, xp: 60, label: '5× Premium Shrimp' },
+  { day: 3, bait: 4, casts: 8, xp: 75, label: '4× Rare Squid' },
+  { day: 4, bait: 5, casts: 10, xp: 90, label: '5× Rare Squid' },
+  { day: 5, bait: 4, casts: 12, xp: 110, label: '4× Epic Chum' },
+  { day: 6, bait: 5, casts: 15, xp: 140, label: '5× Epic Chum' },
+  { day: 7, bait: 5, casts: 20, xp: 200, usdc: 1, label: 'Premium Chest!', image: '/assets/ui/treasure_chest.png' },
 ];
 
 type KrakenPhase = 'hidden' | 'shaking' | 'emerging' | 'choice' | 'fighting' | 'win' | 'lose';
 
 const DailyBaitBox: React.FC<DailyBaitBoxProps> = ({ onClose }) => {
-    const { userStats, addXP, addCasts } = useGameStore();
+  const { userStats, addXP, addCasts } = useGameStore();
 
-    // Streak state
-    const [currentStreak, setCurrentStreak] = useState(1);
-    const [canClaim, setCanClaim] = useState(true);
-    const [lastClaimDate, setLastClaimDate] = useState<string | null>(null);
-    const [showReward, setShowReward] = useState(false);
-    const [claimedReward, setClaimedReward] = useState<typeof FREE_REWARDS[0] | null>(null);
-    const [streakBroken, setStreakBroken] = useState(false);
+  // Streak state
+  const [currentStreak, setCurrentStreak] = useState(1);
+  const [canClaim, setCanClaim] = useState(true);
+  const [lastClaimDate, setLastClaimDate] = useState<string | null>(null);
+  const [showReward, setShowReward] = useState(false);
+  const [claimedReward, setClaimedReward] = useState<typeof FREE_REWARDS[0] | null>(null);
+  const [streakBroken, setStreakBroken] = useState(false);
 
-    // Kraken mini-game state
-    const [krakenPhase, setKrakenPhase] = useState<KrakenPhase>('hidden');
-    const [tapCount, setTapCount] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(5);
-    const TAP_GOAL = 30;
+  // Kraken mini-game state
+  const [krakenPhase, setKrakenPhase] = useState<KrakenPhase>('hidden');
+  const [tapCount, setTapCount] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(5);
+  const TAP_GOAL = 30;
 
-    // Load streak from localStorage
-    useEffect(() => {
-        const saved = localStorage.getItem('seacaster_streak');
-        if (saved) {
-            const data = JSON.parse(saved);
-            const lastClaim = new Date(data.lastClaimDate);
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
+  // Load streak from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('seacaster_streak');
+    if (saved) {
+      const data = JSON.parse(saved);
+      const lastClaim = new Date(data.lastClaimDate);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
 
-            // Same day = already claimed
-            if (lastClaim.toDateString() === today.toDateString()) {
-                setCanClaim(false);
-                setCurrentStreak(data.streak);
-                setLastClaimDate(data.lastClaimDate);
-            }
-            // Yesterday = continue streak
-            else if (lastClaim.toDateString() === yesterday.toDateString()) {
-                setCurrentStreak(data.streak);
-                setLastClaimDate(data.lastClaimDate);
-            }
-            // Older = streak broken
-            else {
-                setStreakBroken(true);
-                setCurrentStreak(1);
-            }
-        }
-    }, []);
-
-    const rewards = userStats.premium ? PREMIUM_REWARDS : FREE_REWARDS;
-    const todayReward = rewards[(currentStreak - 1) % 7];
-    const isDay7 = currentStreak % 7 === 0 || (canClaim && (currentStreak % 7 === 6 || currentStreak === 7));
-
-    const handleClaim = useCallback(() => {
-        if (!canClaim) return;
-
-        triggerHaptic(Haptics.success);
-
-        // Day 7 triggers Kraken!
-        if ((currentStreak + 1) % 7 === 0 || currentStreak === 6) {
-            setKrakenPhase('shaking');
-            setTimeout(() => setKrakenPhase('emerging'), 1500);
-            setTimeout(() => setKrakenPhase('choice'), 3000);
-            return;
-        }
-
-        // Normal claim
-        completeReward();
-    }, [canClaim, currentStreak]);
-
-    const completeReward = () => {
-        const reward = rewards[currentStreak % 7];
-        const nextStreak = currentStreak >= 7 ? 1 : currentStreak + 1;
-
-        // Apply rewards
-        addXP(reward.xp);
-        addCasts(reward.casts);
-
-        // Save to localStorage
-        const saveData = {
-            streak: nextStreak,
-            lastClaimDate: new Date().toISOString(),
-        };
-        localStorage.setItem('seacaster_streak', JSON.stringify(saveData));
-
-        setClaimedReward(reward);
-        setShowReward(true);
+      // Same day = already claimed
+      if (lastClaim.toDateString() === today.toDateString()) {
         setCanClaim(false);
-        setCurrentStreak(nextStreak);
+        setCurrentStreak(data.streak);
+        setLastClaimDate(data.lastClaimDate);
+      }
+      // Yesterday = continue streak
+      else if (lastClaim.toDateString() === yesterday.toDateString()) {
+        setCurrentStreak(data.streak);
+        setLastClaimDate(data.lastClaimDate);
+      }
+      // Older = streak broken
+      else {
+        setStreakBroken(true);
+        setCurrentStreak(1);
+      }
+    }
+  }, []);
 
-        setTimeout(() => setShowReward(false), 3000);
+  const rewards = userStats.premium ? PREMIUM_REWARDS : FREE_REWARDS;
+  const todayReward = rewards[(currentStreak - 1) % 7];
+  const isDay7 = currentStreak % 7 === 0 || (canClaim && (currentStreak % 7 === 6 || currentStreak === 7));
+
+  const handleClaim = useCallback(() => {
+    if (!canClaim) return;
+
+    triggerHaptic(Haptics.success);
+
+    // Day 7 triggers Kraken!
+    if ((currentStreak + 1) % 7 === 0 || currentStreak === 6) {
+      setKrakenPhase('shaking');
+      setTimeout(() => setKrakenPhase('emerging'), 1500);
+      setTimeout(() => setKrakenPhase('choice'), 3000);
+      return;
+    }
+
+    // Normal claim
+    completeReward();
+  }, [canClaim, currentStreak]);
+
+  const completeReward = () => {
+    const reward = rewards[currentStreak % 7];
+    const nextStreak = currentStreak >= 7 ? 1 : currentStreak + 1;
+
+    // Apply rewards
+    addXP(reward.xp);
+    addCasts(reward.casts);
+
+    // Save to localStorage
+    const saveData = {
+      streak: nextStreak,
+      lastClaimDate: new Date().toISOString(),
     };
+    localStorage.setItem('seacaster_streak', JSON.stringify(saveData));
 
-    // Kraken choice handlers
-    const handleFight = () => {
-        setKrakenPhase('fighting');
-        setTapCount(0);
-        setTimeLeft(5);
-        triggerHaptic(Haptics.hook);
-    };
+    setClaimedReward(reward);
+    setShowReward(true);
+    setCanClaim(false);
+    setCurrentStreak(nextStreak);
 
-    const handleSwim = () => {
-        // Lose 1 bait, skip challenge
-        triggerHaptic(Haptics.fail);
-        setKrakenPhase('lose');
+    setTimeout(() => setShowReward(false), 3000);
+  };
+
+  // Kraken choice handlers
+  const handleFight = () => {
+    setKrakenPhase('fighting');
+    setTapCount(0);
+    setTimeLeft(5);
+    triggerHaptic(Haptics.hook);
+  };
+
+  const handleSwim = () => {
+    // Lose 1 bait, skip challenge
+    triggerHaptic(Haptics.fail);
+    setKrakenPhase('lose');
+    setTimeout(() => {
+      completeReward();
+      setKrakenPhase('hidden');
+    }, 2000);
+  };
+
+  // Kraken tap game
+  const handleTap = () => {
+    if (krakenPhase !== 'fighting') return;
+
+    triggerHaptic(Haptics.soft);
+    setTapCount(prev => {
+      const newCount = prev + 1;
+      if (newCount >= TAP_GOAL) {
+        triggerHaptic(Haptics.success);
+        setKrakenPhase('win');
+        // Bonus legendary bait!
         setTimeout(() => {
-            completeReward();
-            setKrakenPhase('hidden');
-        }, 2000);
-    };
+          completeReward();
+          setKrakenPhase('hidden');
+        }, 2500);
+      }
+      return newCount;
+    });
+  };
 
-    // Kraken tap game
-    const handleTap = () => {
-        if (krakenPhase !== 'fighting') return;
+  // Kraken timer
+  useEffect(() => {
+    if (krakenPhase !== 'fighting') return;
 
-        triggerHaptic(Haptics.soft);
-        setTapCount(prev => {
-            const newCount = prev + 1;
-            if (newCount >= TAP_GOAL) {
-                triggerHaptic(Haptics.success);
-                setKrakenPhase('win');
-                // Bonus legendary bait!
-                setTimeout(() => {
-                    completeReward();
-                    setKrakenPhase('hidden');
-                }, 2500);
-            }
-            return newCount;
-        });
-    };
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          if (tapCount < TAP_GOAL) {
+            setKrakenPhase('lose');
+            triggerHaptic(Haptics.fail);
+            setTimeout(() => {
+              completeReward();
+              setKrakenPhase('hidden');
+            }, 2000);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-    // Kraken timer
-    useEffect(() => {
-        if (krakenPhase !== 'fighting') return;
+    return () => clearInterval(timer);
+  }, [krakenPhase, tapCount]);
 
-        const timer = setInterval(() => {
-            setTimeLeft(prev => {
-                if (prev <= 1) {
-                    clearInterval(timer);
-                    if (tapCount < TAP_GOAL) {
-                        setKrakenPhase('lose');
-                        triggerHaptic(Haptics.fail);
-                        setTimeout(() => {
-                            completeReward();
-                            setKrakenPhase('hidden');
-                        }, 2000);
-                    }
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
+  return (
+    <motion.div
+      className="bait-box-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bait-box-container"
+        initial={{ y: 100, scale: 0.8 }}
+        animate={{ y: 0, scale: 1 }}
+        exit={{ y: 100, scale: 0.8 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button className="close-btn" onClick={onClose}>
+          <X size={24} />
+        </button>
 
-        return () => clearInterval(timer);
-    }, [krakenPhase, tapCount]);
+        {/* Title */}
+        <div className="box-title">
+          <img src="/assets/ui/bait_box.png" className="title-icon-img" alt="Box" />
+          <h2>Daily Bait Box</h2>
+        </div>
 
-    return (
-        <motion.div
-            className="bait-box-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-        >
-            <motion.div
-                className="bait-box-container"
-                initial={{ y: 100, scale: 0.8 }}
-                animate={{ y: 0, scale: 1 }}
-                exit={{ y: 100, scale: 0.8 }}
-                onClick={(e) => e.stopPropagation()}
+        {/* Streak Counter */}
+        <div className="streak-counter">
+          {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+            <div
+              key={day}
+              className={`streak-day ${day <= (currentStreak % 7 || 7) ? 'claimed' : ''} ${day === 7 ? 'special' : ''}`}
             >
-                {/* Close Button */}
-                <button className="close-btn" onClick={onClose}>
-                    <X size={24} />
-                </button>
+              {day === 7 ? '🦈' : day}
+            </div>
+          ))}
+        </div>
 
-                {/* Title */}
-                <div className="box-title">
-                    <Gift className="title-icon" />
-                    <h2>Daily Bait Box</h2>
-                </div>
-
-                {/* Streak Counter */}
-                <div className="streak-counter">
-                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-                        <div
-                            key={day}
-                            className={`streak-day ${day <= (currentStreak % 7 || 7) ? 'claimed' : ''} ${day === 7 ? 'special' : ''}`}
-                        >
-                            {day === 7 ? '🦈' : day}
-                        </div>
-                    ))}
-                </div>
-
-                {/* Streak Broken Warning */}
-                <AnimatePresence>
-                    {streakBroken && (
-                        <motion.div
-                            className="streak-broken"
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                        >
-                            <Skull className="skull-icon" />
-                            <span>Your streak died...</span>
-                            <div className="skeleton-fish">🐟💀</div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Bait Box Visual */}
-                <motion.div
-                    className={`bait-box ${krakenPhase === 'shaking' ? 'shaking' : ''}`}
-                    animate={krakenPhase === 'shaking' ? {
-                        rotate: [-5, 5, -5, 5, 0],
-                        transition: { repeat: Infinity, duration: 0.3 }
-                    } : {}}
-                >
-                    <div className="box-lid" />
-                    <div className="box-body">
-                        <div className="box-lock" />
-                    </div>
-
-                    {/* Kraken Tentacle */}
-                    <AnimatePresence>
-                        {(krakenPhase === 'emerging' || krakenPhase === 'choice' || krakenPhase === 'fighting') && (
-                            <motion.div
-                                className="kraken-tentacle"
-                                initial={{ y: 50, opacity: 0 }}
-                                animate={{ y: -30, opacity: 1 }}
-                                exit={{ y: 50, opacity: 0 }}
-                            >
-                                🦑
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </motion.div>
-
-                {/* Today's Reward Preview */}
-                {krakenPhase === 'hidden' && (
-                    <div className="reward-preview">
-                        <div className="reward-day">Day {currentStreak % 7 || 7}</div>
-                        <div className="reward-label">{todayReward.label}</div>
-                        <div className="reward-details">
-                            <span><Zap size={14} /> +{todayReward.xp} XP</span>
-                            <span><Fish size={14} /> +{todayReward.casts} casts</span>
-                        </div>
-                    </div>
-                )}
-
-                {/* Kraken Choice Modal */}
-                <AnimatePresence>
-                    {krakenPhase === 'choice' && (
-                        <motion.div
-                            className="kraken-choice"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                        >
-                            <h3>🦑 THE KRAKEN APPEARS!</h3>
-                            <p>Will you fight for Legendary Bait?</p>
-                            <div className="choice-buttons">
-                                <button className="btn-fight" onClick={handleFight}>
-                                    ⚔️ FIGHT!
-                                </button>
-                                <button className="btn-swim" onClick={handleSwim}>
-                                    🏊 Swim away
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Kraken Tap Game */}
-                <AnimatePresence>
-                    {krakenPhase === 'fighting' && (
-                        <motion.div
-                            className="kraken-game"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={handleTap}
-                        >
-                            <div className="game-timer">{timeLeft}s</div>
-                            <div className="game-progress">
-                                <motion.div
-                                    className="progress-fill"
-                                    animate={{ width: `${(tapCount / TAP_GOAL) * 100}%` }}
-                                />
-                            </div>
-                            <div className="tap-counter">{tapCount}/{TAP_GOAL}</div>
-                            <motion.div
-                                className="tap-zone"
-                                animate={{ scale: [1, 0.95, 1] }}
-                                transition={{ duration: 0.1, repeat: Infinity }}
-                            >
-                                TAP FAST! 🦑
-                            </motion.div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Win/Lose Results */}
-                <AnimatePresence>
-                    {krakenPhase === 'win' && (
-                        <motion.div
-                            className="result-screen win"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                        >
-                            <Award size={60} />
-                            <h3>VICTORY!</h3>
-                            <p>+1 Legendary Kraken Bait! 🦑</p>
-                        </motion.div>
-                    )}
-                    {krakenPhase === 'lose' && (
-                        <motion.div
-                            className="result-screen lose"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                        >
-                            <Skull size={60} />
-                            <h3>ESCAPED...</h3>
-                            <p>The Kraken retreats... for now</p>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Claim Button */}
-                {krakenPhase === 'hidden' && (
-                    <motion.button
-                        className={`claim-btn ${!canClaim ? 'disabled' : ''} ${userStats.premium ? 'premium' : ''}`}
-                        onClick={handleClaim}
-                        disabled={!canClaim}
-                        whileTap={{ scale: canClaim ? 0.95 : 1 }}
-                    >
-                        {canClaim ? 'OPEN BOX!' : 'Come Back Tomorrow!'}
-                    </motion.button>
-                )}
-
-                {/* Reward Popup */}
-                <AnimatePresence>
-                    {showReward && claimedReward && (
-                        <motion.div
-                            className="reward-popup"
-                            initial={{ y: 50, opacity: 0, scale: 0.5 }}
-                            animate={{ y: 0, opacity: 1, scale: 1 }}
-                            exit={{ y: -50, opacity: 0 }}
-                        >
-                            <div className="reward-icon">🎁</div>
-                            <div className="reward-text">{claimedReward.label}</div>
-                            <div className="reward-xp">+{claimedReward.xp} XP</div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+        {/* Streak Broken Warning */}
+        <AnimatePresence>
+          {streakBroken && (
+            <motion.div
+              className="streak-broken"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <Skull className="skull-icon" />
+              <span>Your streak died...</span>
+              <div className="skeleton-fish">
+                <Skull size={40} className="text-gray-500" />
+              </div>
             </motion.div>
+          )}
+        </AnimatePresence>
 
-            <style>{`
+        {/* Bait Box Visual */}
+        <motion.div
+          className={`bait-box ${krakenPhase === 'shaking' ? 'shaking' : ''}`}
+          animate={krakenPhase === 'shaking' ? {
+            rotate: [-5, 5, -5, 5, 0],
+            transition: { repeat: Infinity, duration: 0.3 }
+          } : {}}
+        >
+          <img src="/assets/ui/bait_box.png" className="bait-box-img" alt="Bait Box" />
+
+          {/* Kraken Tentacle */}
+          <AnimatePresence>
+            {(krakenPhase === 'emerging' || krakenPhase === 'choice' || krakenPhase === 'fighting') && (
+              <motion.div
+                className="kraken-tentacle"
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: -30, opacity: 1 }}
+                exit={{ y: 50, opacity: 0 }}
+              >
+                <img src="/assets/fish/fish_kraken.png.jpeg" className="kraken-img" alt="Kraken" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Today's Reward Preview */}
+        {krakenPhase === 'hidden' && (
+          <div className="reward-preview">
+            <div className="reward-day">Day {currentStreak % 7 || 7}</div>
+            <div className="reward-label">{todayReward.label}</div>
+            <div className="reward-details">
+              <span><Zap size={14} /> +{todayReward.xp} XP</span>
+              <span><Fish size={14} /> +{todayReward.casts} casts</span>
+            </div>
+          </div>
+        )}
+
+        {/* Kraken Choice Modal */}
+        <AnimatePresence>
+          {krakenPhase === 'choice' && (
+            <motion.div
+              className="kraken-choice"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+            >
+              <h3>🦑 THE KRAKEN APPEARS!</h3>
+              <p>Will you fight for Legendary Bait?</p>
+              <div className="choice-buttons">
+                <button className="btn-fight" onClick={handleFight}>
+                  ⚔️ FIGHT!
+                </button>
+                <button className="btn-swim" onClick={handleSwim}>
+                  🏊 Swim away
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Kraken Tap Game */}
+        <AnimatePresence>
+          {krakenPhase === 'fighting' && (
+            <motion.div
+              className="kraken-game"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleTap}
+            >
+              <div className="game-timer">{timeLeft}s</div>
+              <div className="game-progress">
+                <motion.div
+                  className="progress-fill"
+                  animate={{ width: `${(tapCount / TAP_GOAL) * 100}%` }}
+                />
+              </div>
+              <div className="tap-counter">{tapCount}/{TAP_GOAL}</div>
+              <motion.div
+                className="tap-zone"
+                animate={{ scale: [1, 0.95, 1] }}
+                transition={{ duration: 0.1, repeat: Infinity }}
+              >
+                TAP FAST! 🦑
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Win/Lose Results */}
+        <AnimatePresence>
+          {krakenPhase === 'win' && (
+            <motion.div
+              className="result-screen win"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+            >
+              <Award size={60} />
+              <h3>VICTORY!</h3>
+              <p>+1 Legendary Kraken Bait! 🦑</p>
+            </motion.div>
+          )}
+          {krakenPhase === 'lose' && (
+            <motion.div
+              className="result-screen lose"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+            >
+              <Skull size={60} />
+              <h3>ESCAPED...</h3>
+              <p>The Kraken retreats... for now</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Claim Button */}
+        {krakenPhase === 'hidden' && (
+          <motion.button
+            className={`claim-btn ${!canClaim ? 'disabled' : ''} ${userStats.premium ? 'premium' : ''}`}
+            onClick={handleClaim}
+            disabled={!canClaim}
+            whileTap={{ scale: canClaim ? 0.95 : 1 }}
+          >
+            {canClaim ? 'OPEN BOX!' : 'Come Back Tomorrow!'}
+          </motion.button>
+        )}
+
+        {/* Reward Popup */}
+        <AnimatePresence>
+          {showReward && claimedReward && (
+            <motion.div
+              className="reward-popup"
+              initial={{ y: 50, opacity: 0, scale: 0.5 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: -50, opacity: 0 }}
+            >
+              <div className="reward-icon">
+                {(claimedReward as any).image ? (
+                  <img src={(claimedReward as any).image} className="reward-chest-img" alt="Reward" />
+                ) : (
+                  <span className="text-4xl">🎁</span>
+                )}
+              </div>
+              <div className="reward-text">{claimedReward.label}</div>
+              <div className="reward-xp">+{claimedReward.xp} XP</div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      <style>{`
         .bait-box-overlay {
           position: fixed;
           inset: 0;
@@ -441,11 +446,33 @@ const DailyBaitBox: React.FC<DailyBaitBoxProps> = ({ onClose }) => {
           text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
-        .title-icon {
-          color: #F4D03F;
-          width: 28px;
-          height: 28px;
+        .title-icon-img {
+          width: 32px;
+          height: 32px;
+          object-fit: contain;
         }
+
+        .bait-box-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+        }
+
+        .kraken-img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+        }
+
+        .reward-chest-img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px rgba(243, 156, 18, 0.6));
+        }
+
 
         /* Streak Counter */
         .streak-counter {
@@ -827,8 +854,8 @@ const DailyBaitBox: React.FC<DailyBaitBoxProps> = ({ onClose }) => {
           font-weight: 800;
         }
       `}</style>
-        </motion.div>
-    );
+    </motion.div>
+  );
 };
 
 export default DailyBaitBox;

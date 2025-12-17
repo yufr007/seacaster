@@ -19,7 +19,12 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
             case 'tournament':
                 return { emoji: '🏆', title: 'TOURNAMENT', subtitle: 'Loading leaderboards...' };
             default:
-                return { emoji: '🎣', title: 'SEACASTER', subtitle: message };
+                return {
+                    emoji: '🎣',
+                    image: '/assets/ui/pirate_captain_mascot_1765863268112.png',
+                    title: 'SEACASTER',
+                    subtitle: message
+                };
         }
     };
 
@@ -61,7 +66,11 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
                         ease: 'easeInOut',
                     }}
                 >
-                    <span style={styles.emoji}>{content.emoji}</span>
+                    {content.image ? (
+                        <img src={content.image} style={styles.mascotImage} alt="Mascot" />
+                    ) : (
+                        <span style={styles.emoji}>{content.emoji}</span>
+                    )}
                 </motion.div>
 
                 {/* Title */}
@@ -186,6 +195,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     emoji: {
         fontSize: 72,
         display: 'block',
+        filter: 'drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5))',
+    },
+    mascotImage: {
+        width: 120,
+        height: 120,
+        objectFit: 'contain',
         filter: 'drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5))',
     },
     title: {

@@ -1,13 +1,11 @@
-import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import { FISH_TYPES, RARITY_WEIGHTS, BAITS } from '../constants';
-
-const prisma = new PrismaClient();
+import { getPrisma, isMockMode } from '../utils/db';
 
 interface CatchInput {
   fid: number;
   fishId: string;
-  weight: Float;
+  weight: number;
   rarity: string;
   baitUsed: string;
   reactionTime: number; // milliseconds
@@ -24,6 +22,19 @@ interface ValidationResult {
   fishData?: any;
 }
 
+// Mock user for development without database
+const MOCK_USER = {
+  fid: 1,
+  username: 'Angler',
+  premium: true,
+  castsRemaining: 100,
+  maxCasts: 20,
+  xp: 500,
+  level: 5,
+  coins: 1000,
+  streak: 3,
+};
+
 /**
  * Server-side catch validation to prevent cheating
  * Validates timing, RNG, rate limits, and fish data
@@ -33,6 +44,20 @@ export const catchValidationService = {
    * Validate a catch submission from the client
    */
   async validateCatch(input: CatchInput, userId: number): Promise<ValidationResult> {
+    const prisma = getPrisma();
+
+    // If no database, use mock validation (for frontend development)
+    if (!prisma || isMockMode()) {
+      console.log('[CatchValidation] Running in mock mode');
+      const fishData = FISH_TYPES.find(f => f.id === input.fishId);
+      if (!fishData) {
+        return { valid: false, reason: 'Invalid fish ID' };
+      }
+      const xpGained = fishData.xp * (MOCK_USER.premium ? 2 : 1);
+      const coinsGained = Math.floor(input.weight * 10);
+      return { valid: true, xpGained, coinsGained, fishData };
+    }
+
     // 1. Verify user exists and has casts remaining
     const user = await prisma.user.findUnique({ where: { fid: userId } });
 
@@ -86,25 +111,25 @@ export const catchValidationService = {
     }
 
     // 7. Check rate limiting (anti-spam)
-    const recentCatches = await prisma.catch.count({
-      where: {
-        userId,
-        timestamp: {
-          gte: new Date(now - 30000) // Last 30 seconds
+    try {
+      const recentCatches = await prisma.catch.count({
+        where: {
+          userId,
+          timestamp: {
+            gte: new Date(now - 30000) // Last 30 seconds
+          }
         }
-      }
-    });
+      });
 
-    if (recentCatches > 3) {
-      // Max 3 catches per 30 seconds
-      return { valid: false, reason: 'Rate limit exceeded' };
+      if (recentCatches > 3) {
+        // Max 3 catches per 30 seconds
+        return { valid: false, reason: 'Rate limit exceeded' };
+      }
+    } catch (error) {
+      console.warn('[CatchValidation] Rate limit check failed, skipping:', error);
     }
 
-    // 8. Verify RNG seed (optional advanced anti-cheat)
-    // This would require storing server seeds and comparing
-    // For MVP, we can skip this and rely on timing validation
-
-    // 9. Calculate rewards
+    // 8. Calculate rewards
     let xpBase = fishData.xp;
 
     // Apply rod bonus
@@ -121,7 +146,7 @@ export const catchValidationService = {
     // Coins based on weight
     const coinsGained = Math.floor(input.weight * 10);
 
-    // 10. Consume cast (if not premium)
+    // 9. Consume cast (if not premium)
     if (!user.premium) {
       await prisma.user.update({
         where: { fid: userId },
@@ -131,7 +156,7 @@ export const catchValidationService = {
       });
     }
 
-    // 11. Update user XP and level
+    // 10. Update user XP and level
     const newXp = user.xp + xpGained;
     const newLevel = this.calculateLevel(newXp);
 
@@ -144,7 +169,7 @@ export const catchValidationService = {
       }
     });
 
-    // 12. Check for level up rewards
+    // 11. Check for level up rewards
     if (newLevel > user.level) {
       await this.grantLevelRewards(userId, newLevel, user.premium);
     }
@@ -180,6 +205,9 @@ export const catchValidationService = {
    * Grant rewards for leveling up
    */
   async grantLevelRewards(userId: number, level: number, premium: boolean): Promise<void> {
+    const prisma = getPrisma();
+    if (!prisma) return;
+
     const user = await prisma.user.findUnique({
       where: { fid: userId },
       include: { inventory: true }

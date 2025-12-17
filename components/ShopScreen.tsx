@@ -13,9 +13,17 @@ const BAIT_IMAGES: Record<string, string> = {
   '🦐': '/assets/bait/bait_shrimp_1765863173083.png',
   '🦑': '/assets/bait/bait_squid_1765863189969.png',
   '🥩': '/assets/bait/bait_legendary_chum_1765863253233.png',
-  '👁️': '/assets/bait/bait_squid_1765863189969.png', // Kraken eye - use squid for now
+  '👁️': '/assets/bait/bait_kraken_eye.png.jpg',
   '🪱': '/assets/bait/bait_worm_1765863155303.png',
 };
+
+const ROD_PIECES_PREVIEW = [
+  { name: 'Kraken Handle', level: 10, icon: '🦑', image: '/assets/ui/rod_handle.png.jpg' },
+  { name: 'Barnacle Shaft', level: 20, icon: '⚓', image: '/assets/ui/rod_shaft.png.jpg' },
+  { name: 'Anchor Hook', level: 30, icon: '🪝', image: '/assets/ui/rod_hook.png.jpg' },
+  { name: 'Spyglass Reel', level: 40, icon: '🔭', image: '/assets/ui/rod_reel.png.jpg' },
+  { name: 'Pirate Cannon', level: 50, icon: '🏴‍☠️', image: '/assets/ui/rod_complete.png.jpg', special: true },
+];
 
 interface ShopScreenProps {
   onBack: () => void;
@@ -38,12 +46,12 @@ interface ShopItem {
 
 const SHOP_ITEMS: ShopItem[] = [
   // Bait Bundles
-  { id: 'bait_shrimp_5', name: 'Shrimp Pack', description: '5× Premium Shrimp', price: 100, currency: 'coins', icon: '🦐', quantity: 5, type: 'bait' },
-  { id: 'bait_shrimp_20', name: 'Shrimp Bundle', description: '20× Premium Shrimp', price: 350, currency: 'coins', icon: '🦐', quantity: 20, popular: true, type: 'bait' },
-  { id: 'bait_squid_5', name: 'Squid Pack', description: '5× Rare Squid', price: 250, currency: 'coins', icon: '🦑', quantity: 5, type: 'bait' },
-  { id: 'bait_squid_20', name: 'Squid Bundle', description: '20× Rare Squid', price: 850, currency: 'coins', icon: '🦑', quantity: 20, bestValue: true, type: 'bait' },
-  { id: 'bait_chum_3', name: 'Epic Chum', description: '3× Epic Chum', price: 500, currency: 'coins', icon: '🥩', quantity: 3, type: 'bait' },
-  { id: 'bait_kraken_1', name: 'Kraken Bait', description: '1× Legendary Bait', price: 1000, currency: 'coins', icon: '👁️', quantity: 1, type: 'bait' },
+  { id: 'bait_shrimp_5', name: 'Shrimp Pack', description: '5× Premium Shrimp', price: 100, currency: 'coins', icon: '/assets/bait/bait_shrimp_1765863173083.png', quantity: 5, type: 'bait' },
+  { id: 'bait_shrimp_20', name: 'Shrimp Bundle', description: '20× Premium Shrimp', price: 350, currency: 'coins', icon: '/assets/bait/bait_shrimp_1765863173083.png', quantity: 20, popular: true, type: 'bait' },
+  { id: 'bait_squid_5', name: 'Squid Pack', description: '5× Rare Squid', price: 250, currency: 'coins', icon: '/assets/bait/bait_squid_1765863189969.png', quantity: 5, type: 'bait' },
+  { id: 'bait_squid_20', name: 'Squid Bundle', description: '20× Rare Squid', price: 850, currency: 'coins', icon: '/assets/bait/bait_squid_1765863189969.png', quantity: 20, bestValue: true, type: 'bait' },
+  { id: 'bait_chum_3', name: 'Epic Chum', description: '3× Epic Chum', price: 500, currency: 'coins', icon: '/assets/bait/bait_legendary_chum_1765863253233.png', quantity: 3, type: 'bait' },
+  { id: 'bait_kraken_1', name: 'Kraken Bait', description: '1× Legendary Bait', price: 1000, currency: 'coins', icon: '/assets/bait/bait_kraken_eye.png.jpg', quantity: 1, type: 'bait' },
 
   // Tournament Tickets
   { id: 'ticket_daily', name: 'Daily Entry', description: 'Daily Tournament Ticket', price: 0.50, currency: 'USDC', icon: '🎫', type: 'ticket' },
@@ -93,7 +101,7 @@ const ShopScreen: React.FC<ShopScreenProps> = ({ onBack }) => {
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'pass', label: 'Pass', icon: <Crown size={18} /> },
-    { id: 'bait', label: 'Bait', icon: <span>🪱</span> },
+    { id: 'bait', label: 'Bait', icon: <img src="/assets/bait/bait_worm_1765863155303.png" alt="bait" style={{ width: 18, height: 18 }} /> },
     { id: 'tickets', label: 'Tickets', icon: <Ticket size={18} /> },
     { id: 'items', label: 'Items', icon: <Gift size={18} /> },
   ];
@@ -114,7 +122,7 @@ const ShopScreen: React.FC<ShopScreenProps> = ({ onBack }) => {
         </button>
         <h1 className="shop-title">TREASURE SHOP</h1>
         <div className="coins-display">
-          <span className="coin-icon">🪙</span>
+          <img src="/assets/ui/coin_doubloon.png" alt="coins" style={{ width: 20, height: 20 }} />
           <span className="coin-amount">{userStats.coins.toLocaleString()}</span>
         </div>
       </motion.div>
@@ -218,31 +226,24 @@ const ShopScreen: React.FC<ShopScreenProps> = ({ onBack }) => {
               <div className="rod-preview">
                 <h3>Exclusive Pirate Rod</h3>
                 <div className="rod-pieces">
-                  <div className="rod-piece">
-                    <span className="piece-emoji">🦑</span>
-                    <span className="piece-name">Kraken Handle</span>
-                    <span className="piece-level">Lvl 10</span>
-                  </div>
-                  <div className="rod-piece">
-                    <span className="piece-emoji">⚓</span>
-                    <span className="piece-name">Barnacle Rod</span>
-                    <span className="piece-level">Lvl 20</span>
-                  </div>
-                  <div className="rod-piece">
-                    <span className="piece-emoji">🪝</span>
-                    <span className="piece-name">Anchor Hook</span>
-                    <span className="piece-level">Lvl 30</span>
-                  </div>
-                  <div className="rod-piece">
-                    <span className="piece-emoji">🔭</span>
-                    <span className="piece-name">Spyglass Reel</span>
-                    <span className="piece-level">Lvl 40</span>
-                  </div>
-                  <div className="rod-piece special">
-                    <span className="piece-emoji">🏴‍☠️</span>
-                    <span className="piece-name">Cannon Ship</span>
-                    <span className="piece-level">Lvl 50</span>
-                  </div>
+                  {ROD_PIECES_PREVIEW.map((piece) => (
+                    <div key={piece.name} className={`rod-piece ${piece.special ? 'special' : ''}`}>
+                      <div className="piece-icon-wrapper">
+                        <img
+                          src={piece.image}
+                          alt={piece.name}
+                          className="piece-img"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.setAttribute('style', 'display: block');
+                          }}
+                        />
+                        <span className="piece-emoji" style={{ display: 'none' }}>{piece.icon}</span>
+                      </div>
+                      <span className="piece-name">{piece.name}</span>
+                      <span className="piece-level">Lvl {piece.level}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </motion.div>
@@ -269,8 +270,8 @@ const ShopScreen: React.FC<ShopScreenProps> = ({ onBack }) => {
                   {item.bestValue && <div className="tag value-tag">BEST VALUE</div>}
 
                   <div className="item-icon">
-                    {BAIT_IMAGES[item.icon] ? (
-                      <img src={BAIT_IMAGES[item.icon]} alt={item.name} style={{ width: 48, height: 48, objectFit: 'contain' }} />
+                    {item.icon.startsWith('/assets/') ? (
+                      <img src={item.icon} alt={item.name} style={{ width: 48, height: 48, objectFit: 'contain' }} />
                     ) : (
                       <span>{item.icon}</span>
                     )}
@@ -279,7 +280,11 @@ const ShopScreen: React.FC<ShopScreenProps> = ({ onBack }) => {
                   <p className="item-desc">{item.description}</p>
 
                   <div className="item-price">
-                    <span className="price-icon">{item.currency === 'coins' ? '🪙' : '💵'}</span>
+                    {item.currency === 'coins' ? (
+                      <img src="/assets/ui/coin_doubloon.png" alt="coins" style={{ width: 16, height: 16 }} />
+                    ) : (
+                      <span className="price-icon">$</span>
+                    )}
                     <span className="price-amount">{item.price.toLocaleString()}</span>
                   </div>
                 </motion.div>
@@ -662,10 +667,25 @@ const ShopScreen: React.FC<ShopScreenProps> = ({ onBack }) => {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 10px 14px;
+          padding: 8px 12px;
           background: rgba(255,255,255,0.05);
           border-radius: 10px;
           border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .piece-icon-wrapper {
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .piece-img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
         }
 
         .rod-piece.special {

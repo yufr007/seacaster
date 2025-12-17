@@ -26,7 +26,7 @@ class SocketService {
     // Use Vite environment variable for Socket.IO backend URL
     // @ts-expect-error - Vite injects import.meta.env at build time
     this.url = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SOCKET_URL)
-      || 'http://localhost:8080';
+      || 'http://localhost:3002';
   }
 
   connect(): void {

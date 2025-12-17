@@ -98,40 +98,40 @@ export const TOURNAMENT_CONFIG = {
 
 export const FISH_TYPES: Fish[] = [
   // Common (60%)
-  { id: 'f1', name: 'Salty Sardine', rarity: Rarity.COMMON, weight: 0.2, xp: 10, catchWindow: 2.0, image: '/assets/fish/sardine.png', description: 'A common snack for pirates.' },
-  { id: 'f2', name: 'Rusty Mackerel', rarity: Rarity.COMMON, weight: 0.8, xp: 12, catchWindow: 2.0, image: '/assets/fish/mackerel.png', description: 'Tastes like old coins.' },
-  { id: 'f3', name: 'Bilge Seabass', rarity: Rarity.COMMON, weight: 1.5, xp: 15, catchWindow: 2.0, image: '/assets/fish/seabass.png', description: 'Found near the hull.' },
+  { id: 'f1', name: 'Salty Sardine', rarity: Rarity.COMMON, weight: 0.2, xp: 10, catchWindow: 2.0, image: '/assets/fish/fish_sardine_1765867153685.png', description: 'A common snack for pirates.' },
+  { id: 'f2', name: 'Rusty Mackerel', rarity: Rarity.COMMON, weight: 0.8, xp: 12, catchWindow: 2.0, image: '/assets/fish/fish_mackerel_1765867171477.png', description: 'Tastes like old coins.' },
+  { id: 'f3', name: 'Bilge Seabass', rarity: Rarity.COMMON, weight: 1.5, xp: 15, catchWindow: 2.0, image: '/assets/fish/fish_seabass_1765867191115.png', description: 'Found near the hull.' },
 
   // Uncommon (25%)
-  { id: 'f4', name: 'Crimson Snapper', rarity: Rarity.UNCOMMON, weight: 4.0, xp: 25, catchWindow: 1.5, image: '/assets/fish/snapper.png', description: 'Red as a sunset.' },
-  { id: 'f5', name: 'Grog Grouper', rarity: Rarity.UNCOMMON, weight: 12.0, xp: 30, catchWindow: 1.5, image: '/assets/fish/grouper.png', description: 'Looks grumpy.' },
-  { id: 'f6', name: 'Corsair Cod', rarity: Rarity.UNCOMMON, weight: 8.0, xp: 28, catchWindow: 1.5, image: '/assets/fish/cod.png', description: 'Swims in formation.' },
+  { id: 'f4', name: 'Crimson Snapper', rarity: Rarity.UNCOMMON, weight: 4.0, xp: 25, catchWindow: 1.5, image: '/assets/fish/fish_snapper_1765867209066.png', description: 'Red as a sunset.' },
+  { id: 'f5', name: 'Grog Grouper', rarity: Rarity.UNCOMMON, weight: 12.0, xp: 30, catchWindow: 1.5, image: '/assets/fish/fish_grouper_1765867240237.png', description: 'Looks grumpy.' },
+  { id: 'f6', name: 'Corsair Cod', rarity: Rarity.UNCOMMON, weight: 8.0, xp: 28, catchWindow: 1.5, image: '/assets/fish/fish_cod.png.jpeg', description: 'Swims in formation.' },
 
   // Rare (10%)
-  { id: 'f7', name: 'Treasure Tuna', rarity: Rarity.RARE, weight: 60.0, xp: 50, catchWindow: 1.0, image: '/assets/fish/tuna.png', description: 'Scales shine like doubloons.' },
-  { id: 'f8', name: 'Cutlass Swordfish', rarity: Rarity.RARE, weight: 45.0, xp: 55, catchWindow: 1.0, image: '/assets/fish/swordfish.png', description: 'Sharp enough to shave with.' },
-  { id: 'f9', name: 'Mahi Mahi', rarity: Rarity.RARE, weight: 25.0, xp: 60, catchWindow: 1.0, image: '/assets/fish/mahi.png', description: 'The dorado of the deep.' },
+  { id: 'f7', name: 'Treasure Tuna', rarity: Rarity.RARE, weight: 60.0, xp: 50, catchWindow: 1.0, image: '/assets/fish/fish_tuna.png.jpeg', description: 'Scales shine like doubloons.' },
+  { id: 'f8', name: 'Cutlass Swordfish', rarity: Rarity.RARE, weight: 45.0, xp: 55, catchWindow: 1.0, image: '/assets/fish/fish_swordfish.png.jpeg', description: 'Sharp enough to shave with.' },
+  { id: 'f9', name: 'Mahi Mahi', rarity: Rarity.RARE, weight: 25.0, xp: 60, catchWindow: 1.0, image: '/assets/fish/fish_mahi.png.jpeg', description: 'The dorado of the deep.' },
 
   // Epic (4%)
-  { id: 'f10', name: 'Ironclad Marlin', rarity: Rarity.EPIC, weight: 150.0, xp: 100, catchWindow: 0.75, image: '/assets/fish/marlin.png', description: 'Breaks weak lines easily.' },
-  { id: 'f11', name: 'Storm Sailfish', rarity: Rarity.EPIC, weight: 120.0, xp: 110, catchWindow: 0.75, image: '/assets/fish/sailfish.png', description: 'Fast as lightning.' },
-  { id: 'f12', name: 'Giant Bluefin', rarity: Rarity.EPIC, weight: 400.0, xp: 120, catchWindow: 0.75, image: '/assets/fish/bluefin.png', description: 'The king of tunas.' },
+  { id: 'f10', name: 'Ironclad Marlin', rarity: Rarity.EPIC, weight: 150.0, xp: 100, catchWindow: 0.75, image: '/assets/fish/fish_marlin.png.jpeg', description: 'Breaks weak lines easily.' },
+  { id: 'f11', name: 'Storm Sailfish', rarity: Rarity.EPIC, weight: 120.0, xp: 110, catchWindow: 0.75, image: '/assets/fish/fish_sailfish.png.jpeg', description: 'Fast as lightning.' },
+  { id: 'f12', name: 'Giant Bluefin', rarity: Rarity.EPIC, weight: 400.0, xp: 120, catchWindow: 0.75, image: '/assets/fish/fish_bluefin.png.jpeg', description: 'The king of tunas.' },
 
   // Legendary (0.9%)
-  { id: 'f13', name: 'Ghost Megalodon', rarity: Rarity.LEGENDARY, weight: 800.0, xp: 250, catchWindow: 0.5, image: '/assets/fish/megalodon.png', description: 'Thought to be extinct...' },
-  { id: 'f14', name: 'Kraken Tentacle', rarity: Rarity.LEGENDARY, weight: 500.0, xp: 300, catchWindow: 0.5, image: '/assets/fish/kraken.png', description: 'Just a piece of the beast.' },
+  { id: 'f13', name: 'Ghost Megalodon', rarity: Rarity.LEGENDARY, weight: 800.0, xp: 250, catchWindow: 0.5, image: '/assets/fish/fish_megalodon.jpeg', description: 'Thought to be extinct...' },
+  { id: 'f14', name: 'Kraken Tentacle', rarity: Rarity.LEGENDARY, weight: 500.0, xp: 300, catchWindow: 0.5, image: '/assets/fish/fish_kraken.png.jpeg', description: 'Just a piece of the beast.' },
 
   // Mythic (0.1%)
-  { id: 'f15', name: 'Ghost Ship Leviathan', rarity: Rarity.MYTHIC, weight: 2000.0, xp: 500, catchWindow: 0.5, image: '/assets/fish/leviathan.png', description: 'The Flying Dutchman itself.' },
+  { id: 'f15', name: 'Ghost Ship Leviathan', rarity: Rarity.MYTHIC, weight: 2000.0, xp: 500, catchWindow: 0.5, image: '/assets/fish/fish_leviathan.png.jpeg', description: 'The Flying Dutchman itself.' },
 ];
 
 export const BAITS: Record<string, Bait> = {
-  'worm': { id: 'worm', name: 'Basic Worm', effect: 'None', bonus: 1, icon: '🪱', rarity: Rarity.COMMON, description: 'Standard catch rates.' },
-  'shrimp': { id: 'shrimp', name: 'Premium Shrimp', effect: 'Speed', bonus: 1.15, icon: '🦐', rarity: Rarity.UNCOMMON, description: '+15% bite speed.' },
-  'lure': { id: 'lure', name: 'Uncommon Lure', effect: 'Rare+', bonus: 1.10, icon: '✨', rarity: Rarity.UNCOMMON, description: '+10% rare chance.' },
-  'squid': { id: 'squid', name: 'Rare Squid', effect: 'Rare++', bonus: 1.15, icon: '🦑', rarity: Rarity.RARE, description: '+15% rare chance.' },
-  'chum': { id: 'chum', name: 'Epic Chum', effect: 'Epic+', bonus: 1.25, icon: '🥩', rarity: Rarity.EPIC, description: '+25% epic+ chance.' },
-  'kraken_eye': { id: 'kraken_eye', name: 'Kraken Bait', effect: 'Legendary', bonus: 1.50, icon: '👁️', rarity: Rarity.LEGENDARY, description: '+50% legendary chance.' },
+  'worm': { id: 'worm', name: 'Basic Worm', effect: 'None', bonus: 1, icon: '/assets/bait/bait_worm_1765863155303.png', rarity: Rarity.COMMON, description: 'Standard catch rates.' },
+  'shrimp': { id: 'shrimp', name: 'Premium Shrimp', effect: 'Speed', bonus: 1.15, icon: '/assets/bait/bait_shrimp_1765863173083.png', rarity: Rarity.UNCOMMON, description: '+15% bite speed.' },
+  'lure': { id: 'lure', name: 'Uncommon Lure', effect: 'Rare+', bonus: 1.10, icon: '/assets/bait/bait_minnow_1765863236305.png', rarity: Rarity.UNCOMMON, description: '+10% rare chance.' },
+  'squid': { id: 'squid', name: 'Rare Squid', effect: 'Rare++', bonus: 1.15, icon: '/assets/bait/bait_squid_1765863189969.png', rarity: Rarity.RARE, description: '+15% rare chance.' },
+  'chum': { id: 'chum', name: 'Epic Chum', effect: 'Epic+', bonus: 1.25, icon: '/assets/bait/bait_legendary_chum_1765863253233.png', rarity: Rarity.EPIC, description: '+25% epic+ chance.' },
+  'kraken_eye': { id: 'kraken_eye', name: 'Kraken Bait', effect: 'Legendary', bonus: 1.50, icon: '/assets/bait/bait_kraken_eye.png.jpg', rarity: Rarity.LEGENDARY, description: '+50% legendary chance.' },
 };
 
 export const RODS: Record<string, Rod> = {

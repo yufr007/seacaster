@@ -73,7 +73,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                     {/* Resources */}
                     <div className="resources">
                         <div className="resource-pill coins">
-                            <span className="resource-icon">🪙</span>
+                            <img src="/assets/ui/coin_doubloon.png" alt="coins" className="coin-icon" style={{ width: 18, height: 18 }} />
                             <span className="resource-val">{coins}</span>
                             <button className="add-btn">+</button>
                         </div>
@@ -113,7 +113,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2 }}
                 >
-                    <div className="logo-icon">🎣</div>
+                    <img src="/assets/ui/fishing_rod.png" alt="SeaCaster" className="logo-icon-img" style={{ width: 48, height: 48 }} />
                     <h1 className="logo-title">SEACASTER</h1>
                     <p className="logo-tagline">Fish • Compete • Win USDC</p>
                 </motion.div>
@@ -130,7 +130,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                     transition={{ delay: 0.3, type: 'spring', bounce: 0.4 }}
                     whileTap={{ scale: 0.95 }}
                 >
-                    <span className="cast-icon">🐟</span>
+                    <img src="/assets/fish/sardine.png" alt="fish" style={{ width: 28, height: 28 }} />
                     <span className="cast-text">CAST LINE</span>
                 </motion.button>
 
@@ -142,21 +142,23 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                     transition={{ delay: 0.4 }}
                 >
                     <div className="stat-item">
-                        <span className="stat-icon">🔥</span>
+                        <img src="/assets/fish/kraken.png" alt="" style={{ width: 20, height: 20 }} />
                         <span className="stat-value">{userStats.streak}</span>
                         <span className="stat-label">STREAK</span>
                     </div>
                     <div className="stat-divider" />
                     <div className="stat-item">
-                        <span className="stat-icon">🐠</span>
+                        <img src="/assets/fish/mackerel.png" alt="" style={{ width: 20, height: 20 }} />
                         <span className="stat-value">{userStats.level * 3}</span>
                         <span className="stat-label">FISH</span>
                     </div>
                     <div className="stat-divider" />
                     <div className="stat-item">
-                        <span className="stat-icon">🏆</span>
-                        <span className="stat-value">--</span>
-                        <span className="stat-label">RANK</span>
+                        <span className="stat-label">COINS</span>
+                        <div className="stat-value-container">
+                            <img src="/assets/ui/coin_doubloon.png" alt="Coins" className="stat-icon-img" />
+                            <span className="stat-value">{coins.toLocaleString()}</span>
+                        </div>
                     </div>
                 </motion.div>
 
@@ -551,11 +553,18 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                 }
 
                 .stat-icon {
-                    font-size: 18px;
-                }
+            font-size: 20px;
+        }
 
-                .stat-value {
-                    font-size: 16px;
+        .stat-icon-img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+        }
+
+        .stat-value {
+            font-size: 18px;
                     font-weight: 900;
                     color: white;
                 }

@@ -1,51 +1,51 @@
 // services/api.ts - GraphQL API Client for SeaCaster
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 const GRAPHQL_URL = `${API_URL}/graphql`;
 
 // Auth token management
 let authToken: string | null = null;
 
 export function setAuthToken(token: string | null) {
-    authToken = token;
+  authToken = token;
 }
 
 export function getAuthToken(): string | null {
-    return authToken;
+  return authToken;
 }
 
 // GraphQL request helper
 export async function graphqlRequest<T>(
-    query: string,
-    variables?: Record<string, any>
+  query: string,
+  variables?: Record<string, any>
 ): Promise<T> {
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
 
-    if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-    }
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
 
-    const response = await fetch(GRAPHQL_URL, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ query, variables }),
-        credentials: 'include',
-    });
+  const response = await fetch(GRAPHQL_URL, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ query, variables }),
+    credentials: 'include',
+  });
 
-    if (!response.ok) {
-        throw new Error(`GraphQL request failed: ${response.status}`);
-    }
+  if (!response.ok) {
+    throw new Error(`GraphQL request failed: ${response.status}`);
+  }
 
-    const json = await response.json();
+  const json = await response.json();
 
-    if (json.errors?.length) {
-        const errorMessage = json.errors.map((e: any) => e.message).join(', ');
-        throw new Error(errorMessage);
-    }
+  if (json.errors?.length) {
+    const errorMessage = json.errors.map((e: any) => e.message).join(', ');
+    throw new Error(errorMessage);
+  }
 
-    return json.data as T;
+  return json.data as T;
 }
 
 // ============================================
@@ -53,7 +53,7 @@ export async function graphqlRequest<T>(
 // ============================================
 
 export const QUERIES = {
-    ME: `
+  ME: `
     query Me {
       me {
         fid
@@ -80,7 +80,7 @@ export const QUERIES = {
     }
   `,
 
-    ACTIVE_TOURNAMENTS: `
+  ACTIVE_TOURNAMENTS: `
     query ActiveTournaments {
       activeTournaments {
         id
@@ -99,7 +99,7 @@ export const QUERIES = {
     }
   `,
 
-    TOURNAMENT: `
+  TOURNAMENT: `
     query Tournament($id: ID!) {
       tournament(id: $id) {
         id
@@ -128,7 +128,7 @@ export const QUERIES = {
     }
   `,
 
-    TOURNAMENT_LEADERBOARD: `
+  TOURNAMENT_LEADERBOARD: `
     query TournamentLeaderboard($tournamentId: ID!, $limit: Int) {
       tournamentLeaderboard(tournamentId: $tournamentId, limit: $limit) {
         userId
@@ -144,7 +144,7 @@ export const QUERIES = {
     }
   `,
 
-    MY_TOURNAMENTS: `
+  MY_TOURNAMENTS: `
     query MyTournaments {
       myTournaments {
         id
@@ -162,7 +162,7 @@ export const QUERIES = {
     }
   `,
 
-    MARKETPLACE_LISTINGS: `
+  MARKETPLACE_LISTINGS: `
     query MarketplaceListings($itemType: String, $limit: Int, $offset: Int) {
       marketplaceListings(itemType: $itemType, limit: $limit, offset: $offset) {
         listings {
@@ -182,7 +182,7 @@ export const QUERIES = {
     }
   `,
 
-    LEADERBOARD: `
+  LEADERBOARD: `
     query Leaderboard($type: String, $limit: Int) {
       leaderboard(type: $type, limit: $limit) {
         user {
@@ -198,7 +198,7 @@ export const QUERIES = {
     }
   `,
 
-    CATCH_HISTORY: `
+  CATCH_HISTORY: `
     query CatchHistory($limit: Int) {
       catchHistory(limit: $limit) {
         id
@@ -219,7 +219,7 @@ export const QUERIES = {
 // ============================================
 
 export const MUTATIONS = {
-    SYNC_USER_PROFILE: `
+  SYNC_USER_PROFILE: `
     mutation SyncUserProfile($input: SyncUserInput!) {
       syncUserProfile(input: $input) {
         fid
@@ -233,7 +233,7 @@ export const MUTATIONS = {
     }
   `,
 
-    ENTER_TOURNAMENT: `
+  ENTER_TOURNAMENT: `
     mutation EnterTournament($tournamentId: ID!, $entryMethod: String!) {
       enterTournament(tournamentId: $tournamentId, entryMethod: $entryMethod) {
         id
@@ -249,7 +249,7 @@ export const MUTATIONS = {
     }
   `,
 
-    VALIDATE_CATCH: `
+  VALIDATE_CATCH: `
     mutation ValidateCatch($input: CatchInput!) {
       validateCatch(input: $input) {
         valid
@@ -267,7 +267,7 @@ export const MUTATIONS = {
     }
   `,
 
-    CLAIM_DAILY_REWARD: `
+  CLAIM_DAILY_REWARD: `
     mutation ClaimDailyReward {
       claimDailyReward {
         success
@@ -279,7 +279,7 @@ export const MUTATIONS = {
     }
   `,
 
-    CREATE_LISTING: `
+  CREATE_LISTING: `
     mutation CreateListing($input: CreateListingInput!) {
       createListing(input: $input) {
         id
@@ -291,7 +291,7 @@ export const MUTATIONS = {
     }
   `,
 
-    BUY_LISTING: `
+  BUY_LISTING: `
     mutation BuyListing($listingId: ID!) {
       buyListing(listingId: $listingId) {
         success
@@ -304,7 +304,7 @@ export const MUTATIONS = {
     }
   `,
 
-    CANCEL_LISTING: `
+  CANCEL_LISTING: `
     mutation CancelListing($listingId: ID!) {
       cancelListing(listingId: $listingId) {
         id
@@ -320,65 +320,65 @@ export const MUTATIONS = {
 
 // User API
 export const userAPI = {
-    getMe: () => graphqlRequest<{ me: any }>(QUERIES.ME),
+  getMe: () => graphqlRequest<{ me: any }>(QUERIES.ME),
 
-    syncProfile: (input: { fid: number; username: string; walletAddress?: string; pfpUrl?: string }) =>
-        graphqlRequest<{ syncUserProfile: any }>(MUTATIONS.SYNC_USER_PROFILE, { input }),
+  syncProfile: (input: { fid: number; username: string; walletAddress?: string; pfpUrl?: string }) =>
+    graphqlRequest<{ syncUserProfile: any }>(MUTATIONS.SYNC_USER_PROFILE, { input }),
 
-    claimDailyReward: () =>
-        graphqlRequest<{ claimDailyReward: any }>(MUTATIONS.CLAIM_DAILY_REWARD),
+  claimDailyReward: () =>
+    graphqlRequest<{ claimDailyReward: any }>(MUTATIONS.CLAIM_DAILY_REWARD),
 };
 
 // Tournament API
 export const tournamentAPI = {
-    getActive: () =>
-        graphqlRequest<{ activeTournaments: any[] }>(QUERIES.ACTIVE_TOURNAMENTS),
+  getActive: () =>
+    graphqlRequest<{ activeTournaments: any[] }>(QUERIES.ACTIVE_TOURNAMENTS),
 
-    getById: (id: string) =>
-        graphqlRequest<{ tournament: any }>(QUERIES.TOURNAMENT, { id }),
+  getById: (id: string) =>
+    graphqlRequest<{ tournament: any }>(QUERIES.TOURNAMENT, { id }),
 
-    getLeaderboard: (tournamentId: string, limit = 50) =>
-        graphqlRequest<{ tournamentLeaderboard: any[] }>(QUERIES.TOURNAMENT_LEADERBOARD, { tournamentId, limit }),
+  getLeaderboard: (tournamentId: string, limit = 50) =>
+    graphqlRequest<{ tournamentLeaderboard: any[] }>(QUERIES.TOURNAMENT_LEADERBOARD, { tournamentId, limit }),
 
-    getMyEntries: () =>
-        graphqlRequest<{ myTournaments: any[] }>(QUERIES.MY_TOURNAMENTS),
+  getMyEntries: () =>
+    graphqlRequest<{ myTournaments: any[] }>(QUERIES.MY_TOURNAMENTS),
 
-    enter: (tournamentId: string, entryMethod: 'USDC' | 'TICKET') =>
-        graphqlRequest<{ enterTournament: any }>(MUTATIONS.ENTER_TOURNAMENT, { tournamentId, entryMethod }),
+  enter: (tournamentId: string, entryMethod: 'USDC' | 'TICKET') =>
+    graphqlRequest<{ enterTournament: any }>(MUTATIONS.ENTER_TOURNAMENT, { tournamentId, entryMethod }),
 };
 
 // Game API
 export const gameAPI = {
-    validateCatch: (input: {
-        fishId: string;
-        rarity: string;
-        weight: number;
-        baitUsed: string;
-        reactionTime: number;
-        tournamentId?: string;
-    }) => graphqlRequest<{ validateCatch: any }>(MUTATIONS.VALIDATE_CATCH, { input }),
+  validateCatch: (input: {
+    fishId: string;
+    rarity: string;
+    weight: number;
+    baitUsed: string;
+    reactionTime: number;
+    tournamentId?: string;
+  }) => graphqlRequest<{ validateCatch: any }>(MUTATIONS.VALIDATE_CATCH, { input }),
 
-    getCatchHistory: (limit = 50) =>
-        graphqlRequest<{ catchHistory: any[] }>(QUERIES.CATCH_HISTORY, { limit }),
+  getCatchHistory: (limit = 50) =>
+    graphqlRequest<{ catchHistory: any[] }>(QUERIES.CATCH_HISTORY, { limit }),
 };
 
 // Marketplace API
 export const marketplaceAPI = {
-    getListings: (itemType?: string, limit = 50, offset = 0) =>
-        graphqlRequest<{ marketplaceListings: any }>(QUERIES.MARKETPLACE_LISTINGS, { itemType, limit, offset }),
+  getListings: (itemType?: string, limit = 50, offset = 0) =>
+    graphqlRequest<{ marketplaceListings: any }>(QUERIES.MARKETPLACE_LISTINGS, { itemType, limit, offset }),
 
-    createListing: (input: { itemType: string; itemId: string; price: number }) =>
-        graphqlRequest<{ createListing: any }>(MUTATIONS.CREATE_LISTING, { input }),
+  createListing: (input: { itemType: string; itemId: string; price: number }) =>
+    graphqlRequest<{ createListing: any }>(MUTATIONS.CREATE_LISTING, { input }),
 
-    buyListing: (listingId: string) =>
-        graphqlRequest<{ buyListing: any }>(MUTATIONS.BUY_LISTING, { listingId }),
+  buyListing: (listingId: string) =>
+    graphqlRequest<{ buyListing: any }>(MUTATIONS.BUY_LISTING, { listingId }),
 
-    cancelListing: (listingId: string) =>
-        graphqlRequest<{ cancelListing: any }>(MUTATIONS.CANCEL_LISTING, { listingId }),
+  cancelListing: (listingId: string) =>
+    graphqlRequest<{ cancelListing: any }>(MUTATIONS.CANCEL_LISTING, { listingId }),
 };
 
 // Leaderboard API
 export const leaderboardAPI = {
-    getGlobal: (type?: string, limit = 100) =>
-        graphqlRequest<{ leaderboard: any[] }>(QUERIES.LEADERBOARD, { type, limit }),
+  getGlobal: (type?: string, limit = 100) =>
+    graphqlRequest<{ leaderboard: any[] }>(QUERIES.LEADERBOARD, { type, limit }),
 };

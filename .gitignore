@@ -44,3 +44,5 @@ contracts/cache
 contracts/artifacts
 contracts/deployments/*.json
 !contracts/deployments/README.md
+
+.vercel

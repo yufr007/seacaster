@@ -339,18 +339,18 @@ const FishingScene: React.FC<FishingSceneProps> = ({ onBack }) => {
           animate={{ rotate: rodAngle }}
           transition={{ type: 'spring', stiffness: 120, damping: 20 }}
         >
-          {/* Rod Handle */}
-          <div className="rod-handle">
-            <div className="handle-grip" />
-            <div className="reel">
-              <div className="reel-inner" />
-            </div>
-          </div>
-
-          {/* Rod Shaft */}
-          <div className="rod-shaft">
-            <div className="rod-tip" />
-          </div>
+          {/* Premium Rod Image */}
+          <img
+            src={userStats.premium ? "/assets/fish/pirate_rod.png" : "/assets/ui/fishing_rod.png"}
+            alt="Fishing Rod"
+            className="rod-image"
+            style={{
+              width: 80,
+              height: 300,
+              objectFit: 'contain',
+              filter: userStats.premium ? 'drop-shadow(0 0 8px gold)' : 'none'
+            }}
+          />
 
           {/* Fishing Line */}
           {phase !== GamePhase.IDLE && (

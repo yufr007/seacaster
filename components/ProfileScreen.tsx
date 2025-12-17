@@ -10,11 +10,11 @@ interface ProfileScreenProps {
 
 // Rod pieces unlock at specific levels
 const ROD_PIECES = [
-    { id: 1, name: 'Kraken Handle', icon: '🦑', level: 10, description: 'Grip of the deep' },
-    { id: 2, name: 'Barnacle Rod', icon: '⚓', level: 20, description: 'Encrusted strength' },
-    { id: 3, name: 'Anchor Hook', icon: '🪝', level: 30, description: 'Never lets go' },
-    { id: 4, name: 'Spyglass Reel', icon: '🔭', level: 40, description: 'See the catch coming' },
-    { id: 5, name: 'Pirate Cannon', icon: '🏴‍☠️', level: 50, description: 'Ultimate power!' },
+    { id: 1, name: 'Kraken Handle', icon: '🦑', image: '/assets/ui/rod_handle.png.jpg', level: 10, description: 'Grip of the deep' },
+    { id: 2, name: 'Barnacle Shaft', icon: '⚓', image: '/assets/ui/rod_shaft.png.jpg', level: 20, description: 'Encrusted strength' },
+    { id: 3, name: 'Anchor Hook', icon: '🪝', image: '/assets/ui/rod_hook.png.jpg', level: 30, description: 'Never lets go' },
+    { id: 4, name: 'Spyglass Reel', icon: '🔭', image: '/assets/ui/rod_reel.png.jpg', level: 40, description: 'See the catch coming' },
+    { id: 5, name: 'Pirate Cannon', icon: '🏴‍☠️', image: '/assets/ui/rod_complete.png.jpg', level: 50, description: 'Ultimate power!' },
 ];
 
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ isOpen, onClose }) => {
@@ -144,7 +144,18 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ isOpen, onClose }) => {
                                     animate={isCurrent ? { scale: [1, 1.05, 1] } : {}}
                                     transition={{ duration: 2, repeat: Infinity }}
                                 >
-                                    <span style={styles.pieceIcon}>{piece.icon}</span>
+                                    <div style={styles.pieceIconContainer}>
+                                        <img
+                                            src={piece.image}
+                                            alt={piece.name}
+                                            style={styles.pieceImage}
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                e.currentTarget.nextElementSibling?.setAttribute('style', 'display: block');
+                                            }}
+                                        />
+                                        <span style={{ ...styles.pieceIcon, display: 'none' }}>{piece.icon}</span>
+                                    </div>
                                     <div style={styles.pieceInfo}>
                                         <span style={styles.pieceName}>{piece.name}</span>
                                         <span style={styles.pieceLevel}>
@@ -360,6 +371,19 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     pieceIcon: {
         fontSize: 28,
+    },
+    pieceIconContainer: {
+        width: 40,
+        height: 40,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    pieceImage: {
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain',
+        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
     },
     pieceInfo: {
         flex: 1,

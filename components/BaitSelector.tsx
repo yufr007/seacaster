@@ -51,7 +51,7 @@ const BAIT_IMAGES: Record<string, string> = {
   'squid': '/assets/bait/bait_squid_1765863189969.png',
   'lure': '/assets/bait/bait_minnow_1765863236305.png', // Using minnow for lure
   'chum': '/assets/bait/bait_legendary_chum_1765863253233.png',
-  'kraken_eye': '/assets/bait/bait_squid_1765863189969.png', // Kraken uses squid visual
+  'kraken_eye': '/assets/bait/bait_kraken_eye.png.jpg',
 };
 
 

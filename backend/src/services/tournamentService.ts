@@ -1,7 +1,6 @@
-import { PrismaClient, Tournament, TournamentEntry } from '@prisma/client';
+import { Tournament, TournamentEntry } from '@prisma/client';
 import { broadcastTournamentUpdate } from '../sockets/tournamentSocket';
-
-const prisma = new PrismaClient();
+import { getPrisma, isMockMode, MOCK_TOURNAMENTS, MOCK_LEADERBOARD } from '../utils/db';
 
 // Payout distribution percentages
 const PAYOUT_STRUCTURE: Record<string, number[]> = {
@@ -16,20 +15,88 @@ export const tournamentService = {
    * Get all active tournaments (OPEN or LIVE status)
    */
   async getActiveTournaments(): Promise<Tournament[]> {
-    return await prisma.tournament.findMany({
-      where: {
-        endTime: { gt: new Date() },
-        status: { in: ['OPEN', 'LIVE'] }
-      },
-      orderBy: { endTime: 'asc' },
-      include: {
-        entries: {
-          include: { user: true },
-          orderBy: { score: 'desc' },
-          take: 10 // Top 10 for preview
+    // Return mock data if no database configured
+    if (isMockMode()) {
+      console.log('[TournamentService] Using mock tournaments');
+      return MOCK_TOURNAMENTS as unknown as Tournament[];
+    }
+
+    const prisma = getPrisma();
+    if (!prisma) return [];
+
+    try {
+      return await prisma.tournament.findMany({
+        where: {
+          endTime: { gt: new Date() },
+          status: { in: ['OPEN', 'LIVE'] }
+        },
+        orderBy: { endTime: 'asc' },
+        include: {
+          entries: {
+            include: { user: true },
+            orderBy: { score: 'desc' },
+            take: 10 // Top 10 for preview
+          }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.warn('[TournamentService] DB Error in getActiveTournaments:', error);
+      return MOCK_TOURNAMENTS as unknown as Tournament[];
+    }
+  },
+
+  /**
+   * Get Leaderboard for a tournament
+   */
+  async getLeaderboard(tournamentId: string, limit = 50): Promise<any[]> {
+    if (isMockMode()) {
+      return MOCK_LEADERBOARD;
+    }
+
+    const prisma = getPrisma();
+    if (!prisma) return MOCK_LEADERBOARD;
+
+    try {
+      return await prisma.tournamentEntry.findMany({
+        where: { tournamentId },
+        orderBy: { score: 'desc' },
+        take: limit,
+        include: {
+          user: {
+            select: {
+              fid: true,
+              username: true,
+              pfpUrl: true,
+              level: true
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.warn(`[TournamentService] DB Error in getLeaderboard for ${tournamentId}:`, error);
+      return MOCK_LEADERBOARD;
+    }
+  },
+
+  /**
+   * Get Tournament by ID
+   */
+  async getTournamentById(id: string): Promise<Tournament | null> {
+    if (isMockMode()) {
+      return MOCK_TOURNAMENTS.find(t => t.id === id) as unknown as Tournament || null;
+    }
+
+    const prisma = getPrisma();
+    if (!prisma) return null;
+
+    try {
+      return await prisma.tournament.findUnique({
+        where: { id }
+      });
+    } catch (error) {
+      console.warn(`[TournamentService] DB Error in getTournamentById for ${id}:`, error);
+      return null;
+    }
   },
 
   /**
@@ -43,6 +110,11 @@ export const tournamentService = {
     maxParticipants: number;
     durationMinutes: number;
   }): Promise<Tournament> {
+    const prisma = getPrisma();
+    if (!prisma) {
+      throw new Error('Database not configured for write operations');
+    }
+
     const houseCutPercent = input.type === 'Boss' || input.type === 'Championship' ? 20 : 10;
 
     const startTime = new Date();
@@ -72,6 +144,11 @@ export const tournamentService = {
    * Updates score if higher, creates entry if new
    */
   async submitScore(tournamentId: string, fid: number, score: number): Promise<TournamentEntry> {
+    const prisma = getPrisma();
+    if (!prisma) {
+      throw new Error('Database not configured for write operations');
+    }
+
     const tournament = await prisma.tournament.findUnique({ where: { id: tournamentId } });
 
     if (!tournament || tournament.status === 'ENDED') {
@@ -105,7 +182,7 @@ export const tournamentService = {
       return existingEntry;
     } else {
       // New entry - must be within transaction to handle participant count
-      const entry = await prisma.$transaction(async (tx) => {
+      const entry = await prisma.$transaction(async (tx: any) => {
         const newEntry = await tx.tournamentEntry.create({
           data: {
             tournamentId,
@@ -135,6 +212,9 @@ export const tournamentService = {
    * Recalculate ranks for all entries in a tournament
    */
   async recalculateRanks(tournamentId: string): Promise<void> {
+    const prisma = getPrisma();
+    if (!prisma) return;
+
     const entries = await prisma.tournamentEntry.findMany({
       where: { tournamentId },
       orderBy: { score: 'desc' }
@@ -142,7 +222,7 @@ export const tournamentService = {
 
     // Update ranks in batch
     await Promise.all(
-      entries.map((entry, index) =>
+      entries.map((entry: TournamentEntry, index: number) =>
         prisma.tournamentEntry.update({
           where: { id: entry.id },
           data: { rank: index + 1 }
@@ -167,6 +247,11 @@ export const tournamentService = {
       address: string;
     }>;
   }> {
+    const prisma = getPrisma();
+    if (!prisma) {
+      throw new Error('Database not configured for write operations');
+    }
+
     const tournament = await prisma.tournament.findUnique({
       where: { id: tournamentId },
       include: {
@@ -273,6 +358,12 @@ export const tournamentService = {
    * Called by cron scheduler
    */
   async autoCreateTournaments(): Promise<void> {
+    const prisma = getPrisma();
+    if (!prisma) {
+      console.log('[Auto-Create] Skipping - no database configured');
+      return;
+    }
+
     const now = new Date();
 
     // Check for Daily tournaments
@@ -327,19 +418,26 @@ export const tournamentService = {
    * Called by cron every 5 minutes
    */
   async checkAndSettleEndedTournaments(): Promise<void> {
-    const endedTournaments = await prisma.tournament.findMany({
-      where: {
-        status: { in: ['OPEN', 'LIVE'] },
-        endTime: { lte: new Date() }
-      }
-    });
+    const prisma = getPrisma();
+    if (!prisma) return;
 
-    for (const tournament of endedTournaments) {
-      try {
-        await this.settleTournament(tournament.id);
-      } catch (error) {
-        console.error(`[Settlement Error] Failed to settle ${tournament.id}:`, error);
+    try {
+      const endedTournaments = await prisma.tournament.findMany({
+        where: {
+          status: { in: ['OPEN', 'LIVE'] },
+          endTime: { lte: new Date() }
+        }
+      });
+
+      for (const tournament of endedTournaments) {
+        try {
+          await this.settleTournament(tournament.id);
+        } catch (error) {
+          console.error(`[Settlement Error] Failed to settle ${tournament.id}:`, error);
+        }
       }
+    } catch (error) {
+      console.warn('[TournamentService] Error checking ended tournaments:', error);
     }
   }
 };

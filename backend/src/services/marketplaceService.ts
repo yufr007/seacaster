@@ -1,6 +1,5 @@
-import { PrismaClient, MarketplaceListing, MarketplacePurchase } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { MarketplaceListing, MarketplacePurchase } from '@prisma/client';
+import { getPrisma, isMockMode } from '../utils/db';
 
 const MARKETPLACE_FEE_PERCENT = 0.10; // 10% fee
 
@@ -14,9 +13,14 @@ export const marketplaceService = {
       itemType: 'BAIT' | 'ROD' | 'TICKET' | 'LOOT' | 'FISH';
       itemId: string;
       quantity: number;
-      priceCoins: int;
+      priceCoins: number;
     }
   ): Promise<MarketplaceListing> {
+    const prisma = getPrisma();
+    if (!prisma) {
+      throw new Error('Database not configured for marketplace operations');
+    }
+
     // 1. Verify seller has the item in inventory
     const seller = await prisma.user.findUnique({
       where: { fid: sellerId },
@@ -93,6 +97,11 @@ export const marketplaceService = {
    * Purchase a marketplace listing
    */
   async buyListing(listingId: string, buyerId: number): Promise<MarketplacePurchase> {
+    const prisma = getPrisma();
+    if (!prisma) {
+      throw new Error('Database not configured for marketplace operations');
+    }
+
     // 1. Get listing
     const listing = await prisma.marketplaceListing.findUnique({
       where: { id: listingId },
@@ -139,7 +148,7 @@ export const marketplaceService = {
     const sellerProceeds = listing.priceCoins - marketplaceFee;
 
     // 5. Execute transaction
-    const purchase = await prisma.$transaction(async (tx) => {
+    const purchase = await prisma.$transaction(async (tx: any) => {
       // Deduct coins from buyer
       await tx.user.update({
         where: { fid: buyerId },
@@ -219,6 +228,11 @@ export const marketplaceService = {
    * Cancel a marketplace listing
    */
   async cancelListing(listingId: string, userId: number): Promise<MarketplaceListing> {
+    const prisma = getPrisma();
+    if (!prisma) {
+      throw new Error('Database not configured for marketplace operations');
+    }
+
     const listing = await prisma.marketplaceListing.findUnique({
       where: { id: listingId },
       include: { seller: true }
@@ -280,47 +294,57 @@ export const marketplaceService = {
    * Expire old listings (called by cron)
    */
   async expireOldListings(): Promise<void> {
-    const expiredListings = await prisma.marketplaceListing.findMany({
-      where: {
-        status: 'ACTIVE',
-        expiresAt: { lte: new Date() }
-      },
-      include: { seller: { include: { inventory: true } } }
-    });
+    const prisma = getPrisma();
+    if (!prisma) {
+      console.log('[Marketplace] Skipping expire - no database configured');
+      return;
+    }
 
-    for (const listing of expiredListings) {
-      try {
-        // Return items to seller
-        if (listing.seller.inventory) {
-          if (listing.itemType === 'BAIT') {
-            const baits = listing.seller.inventory.baits as any;
-            baits[listing.itemId] = (baits[listing.itemId] || 0) + listing.quantity;
+    try {
+      const expiredListings = await prisma.marketplaceListing.findMany({
+        where: {
+          status: 'ACTIVE',
+          expiresAt: { lte: new Date() }
+        },
+        include: { seller: { include: { inventory: true } } }
+      });
 
-            await prisma.inventory.update({
-              where: { userId: listing.sellerId },
-              data: { baits }
-            });
-          } else if (listing.itemType === 'ROD') {
-            const rods = listing.seller.inventory.rods as string[];
-            rods.push(listing.itemId);
+      for (const listing of expiredListings) {
+        try {
+          // Return items to seller
+          if (listing.seller.inventory) {
+            if (listing.itemType === 'BAIT') {
+              const baits = listing.seller.inventory.baits as any;
+              baits[listing.itemId] = (baits[listing.itemId] || 0) + listing.quantity;
 
-            await prisma.inventory.update({
-              where: { userId: listing.sellerId },
-              data: { rods }
-            });
+              await prisma.inventory.update({
+                where: { userId: listing.sellerId },
+                data: { baits }
+              });
+            } else if (listing.itemType === 'ROD') {
+              const rods = listing.seller.inventory.rods as string[];
+              rods.push(listing.itemId);
+
+              await prisma.inventory.update({
+                where: { userId: listing.sellerId },
+                data: { rods }
+              });
+            }
           }
+
+          // Mark as expired
+          await prisma.marketplaceListing.update({
+            where: { id: listing.id },
+            data: { status: 'EXPIRED' }
+          });
+
+          console.log(`[Marketplace] Expired listing ${listing.id}`);
+        } catch (error) {
+          console.error(`[Marketplace] Error expiring listing ${listing.id}:`, error);
         }
-
-        // Mark as expired
-        await prisma.marketplaceListing.update({
-          where: { id: listing.id },
-          data: { status: 'EXPIRED' }
-        });
-
-        console.log(`[Marketplace] Expired listing ${listing.id}`);
-      } catch (error) {
-        console.error(`[Marketplace] Error expiring listing ${listing.id}:`, error);
       }
+    } catch (error) {
+      console.warn('[Marketplace] Error in expireOldListings:', error);
     }
   }
 };

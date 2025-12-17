@@ -208,14 +208,14 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
             >
                 <button className="nav-item" onClick={() => { triggerHaptic(Haptics.soft); onTrophyRoom(); }}>
                     <div className="nav-icon trophy-icon">
-                        <Trophy size={22} />
+                        <img src="/assets/badges/leaderboard_badge_gold_1765863298734.png" alt="Trophies" style={{ width: 24, height: 24 }} />
                     </div>
                     <span className="nav-label">Trophies</span>
                 </button>
 
                 <button className="nav-item" onClick={() => { triggerHaptic(Haptics.soft); onLeaderboard(); }}>
                     <div className="nav-icon leaderboard-icon">
-                        <Fish size={22} />
+                        <img src="/assets/fish/bluefin.png" alt="Leaderboard" style={{ width: 24, height: 24 }} />
                     </div>
                     <span className="nav-label">Leaderboard</span>
                 </button>
@@ -223,21 +223,21 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                 {/* Center - Big Fish button */}
                 <button className="nav-item center-item" onClick={() => { triggerHaptic(Haptics.medium); onCompete(); }}>
                     <div className="center-icon">
-                        <span>🐠</span>
+                        <img src="/assets/fish/sardine.png" alt="Fish" style={{ width: 36, height: 36 }} />
                     </div>
                     <span className="nav-label">Fish</span>
                 </button>
 
                 <button className="nav-item" onClick={() => { triggerHaptic(Haptics.soft); onShop(); }}>
                     <div className="nav-icon shop-icon">
-                        <ShoppingBag size={22} />
+                        <img src="/assets/ui/treasure_chest.png" alt="Shop" style={{ width: 24, height: 24 }} />
                     </div>
                     <span className="nav-label">Shop</span>
                 </button>
 
                 <button className="nav-item" onClick={() => { triggerHaptic(Haptics.soft); onConnect(); }}>
                     <div className="nav-icon social-icon">
-                        <Crown size={22} />
+                        <img src="/assets/ui/pirate_captain_mascot_1765863268112.png" alt="Profile" style={{ width: 24, height: 24 }} />
                     </div>
                     <span className="nav-label">Profile</span>
                 </button>

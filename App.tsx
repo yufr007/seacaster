@@ -145,9 +145,8 @@ const SeaCasterApp: React.FC = () => {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
-        // @ts-ignore - dvh fallback
         height: '100dvh',
+        minHeight: '100vh',
         width: '100%',
         maxWidth: '480px',
         margin: '0 auto',

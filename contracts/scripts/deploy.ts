@@ -1,92 +1,146 @@
 // scripts/deploy.ts
-import { ethers } from "hardhat";
-import * as fs from "fs";
+// Production deployment script for SeaCaster smart contracts
+// Run with: npx hardhat run scripts/deploy.ts --network base
+
+import { ethers, run } from "hardhat";
+
+// Network-specific USDC addresses
+const USDC_ADDRESSES: Record<string, string> = {
+    base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",       // Base Mainnet
+    baseSepolia: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // Base Sepolia
+    localhost: "0x0000000000000000000000000000000000000000",   // Local mock
+};
 
 async function main() {
-    console.log("🎣 Deploying SeaCaster Contracts to Base Sepolia...\n");
-
-    // Get deployer from Hardhat (uses PRIVATE_KEY from env)
     const [deployer] = await ethers.getSigners();
-    console.log(`Deployer: ${deployer.address}`);
+    const network = await ethers.provider.getNetwork();
+    const networkName = network.name === "unknown" ? "localhost" : network.name;
+
+    console.log("╔══════════════════════════════════════════════════════════╗");
+    console.log("║         SeaCaster Smart Contract Deployment              ║");
+    console.log("╚══════════════════════════════════════════════════════════╝");
+    console.log("");
+    console.log(`🌐 Network: ${networkName} (Chain ID: ${network.chainId})`);
+    console.log(`👤 Deployer: ${deployer.address}`);
 
     const balance = await ethers.provider.getBalance(deployer.address);
-    console.log(`Balance: ${ethers.formatEther(balance)} ETH\n`);
+    console.log(`💰 Balance: ${ethers.formatEther(balance)} ETH`);
+    console.log("");
 
-    if (balance < ethers.parseEther("0.005")) {
-        throw new Error("❌ Insufficient ETH. Need at least 0.005 ETH for deployment");
+    // Get USDC address for network
+    const usdcAddress = USDC_ADDRESSES[networkName];
+    if (!usdcAddress || usdcAddress === "0x0000000000000000000000000000000000000000") {
+        console.log("⚠️  Warning: Using zero address for USDC (local testing only)");
     }
+    console.log(`💵 USDC: ${usdcAddress}`);
+    console.log("");
 
-    // Deploy MockUSDC
-    console.log("1/4 Deploying MockUSDC...");
-    const MockUSDC = await ethers.getContractFactory("MockUSDC");
-    const mockUSDC = await MockUSDC.deploy();
-    await mockUSDC.waitForDeployment();
-    const usdcAddress = await mockUSDC.getAddress();
-    console.log(`   ✅ MockUSDC: ${usdcAddress}`);
-
-    // Deploy SeaCasterPass
-    console.log("2/4 Deploying SeaCasterPass...");
+    // ─────────────────────────────────────────────────────────────────
+    // 1. Deploy SeaCasterPass
+    // ─────────────────────────────────────────────────────────────────
+    console.log("📦 Deploying SeaCasterPass...");
     const SeaCasterPass = await ethers.getContractFactory("SeaCasterPass");
     const seaCasterPass = await SeaCasterPass.deploy(usdcAddress);
     await seaCasterPass.waitForDeployment();
-    const seaCasterPassAddress = await seaCasterPass.getAddress();
-    console.log(`   ✅ SeaCasterPass: ${seaCasterPassAddress}`);
+    const passAddress = await seaCasterPass.getAddress();
+    console.log(`   ✅ SeaCasterPass: ${passAddress}`);
 
-    // Deploy TournamentEscrow
-    console.log("3/4 Deploying TournamentEscrow...");
+    // ─────────────────────────────────────────────────────────────────
+    // 2. Deploy TournamentEscrow
+    // ─────────────────────────────────────────────────────────────────
+    console.log("📦 Deploying TournamentEscrow...");
     const TournamentEscrow = await ethers.getContractFactory("TournamentEscrow");
-    const tournamentEscrow = await TournamentEscrow.deploy(usdcAddress, seaCasterPassAddress);
+    const tournamentEscrow = await TournamentEscrow.deploy(usdcAddress, passAddress);
     await tournamentEscrow.waitForDeployment();
-    const tournamentEscrowAddress = await tournamentEscrow.getAddress();
-    console.log(`   ✅ TournamentEscrow: ${tournamentEscrowAddress}`);
+    const escrowAddress = await tournamentEscrow.getAddress();
+    console.log(`   ✅ TournamentEscrow: ${escrowAddress}`);
 
-    // Deploy Marketplace
-    console.log("4/4 Deploying Marketplace...");
+    // ─────────────────────────────────────────────────────────────────
+    // 3. Deploy Marketplace
+    // ─────────────────────────────────────────────────────────────────
+    console.log("📦 Deploying Marketplace...");
     const Marketplace = await ethers.getContractFactory("Marketplace");
-    const marketplace = await Marketplace.deploy(seaCasterPassAddress, usdcAddress);
+    const marketplace = await Marketplace.deploy(passAddress, usdcAddress);
     await marketplace.waitForDeployment();
     const marketplaceAddress = await marketplace.getAddress();
     console.log(`   ✅ Marketplace: ${marketplaceAddress}`);
 
-    // Summary
-    const deployment = {
-        network: "base-sepolia",
-        chainId: 84532,
-        deployer: deployer.address,
-        timestamp: new Date().toISOString(),
-        contracts: {
-            MockUSDC: usdcAddress,
-            SeaCasterPass: seaCasterPassAddress,
-            TournamentEscrow: tournamentEscrowAddress,
-            Marketplace: marketplaceAddress
+    console.log("");
+    console.log("─────────────────────────────────────────────────────────────");
+    console.log("📋 DEPLOYMENT SUMMARY");
+    console.log("─────────────────────────────────────────────────────────────");
+    console.log(`   SeaCasterPass:    ${passAddress}`);
+    console.log(`   TournamentEscrow: ${escrowAddress}`);
+    console.log(`   Marketplace:      ${marketplaceAddress}`);
+    console.log("─────────────────────────────────────────────────────────────");
+    console.log("");
+
+    // ─────────────────────────────────────────────────────────────────
+    // 4. Verify on Block Explorer (skip for localhost)
+    // ─────────────────────────────────────────────────────────────────
+    if (networkName !== "localhost" && networkName !== "hardhat") {
+        console.log("🔍 Verifying contracts on BaseScan...");
+        console.log("   (waiting 30s for block explorer indexing...)");
+        await new Promise((r) => setTimeout(r, 30000));
+
+        try {
+            await run("verify:verify", {
+                address: passAddress,
+                constructorArguments: [usdcAddress],
+            });
+            console.log("   ✅ SeaCasterPass verified");
+        } catch (e: any) {
+            console.log(`   ⚠️  SeaCasterPass: ${e.message.substring(0, 60)}...`);
         }
+
+        try {
+            await run("verify:verify", {
+                address: escrowAddress,
+                constructorArguments: [usdcAddress, passAddress],
+            });
+            console.log("   ✅ TournamentEscrow verified");
+        } catch (e: any) {
+            console.log(`   ⚠️  TournamentEscrow: ${e.message.substring(0, 60)}...`);
+        }
+
+        try {
+            await run("verify:verify", {
+                address: marketplaceAddress,
+                constructorArguments: [passAddress, usdcAddress],
+            });
+            console.log("   ✅ Marketplace verified");
+        } catch (e: any) {
+            console.log(`   ⚠️  Marketplace: ${e.message.substring(0, 60)}...`);
+        }
+    }
+
+    console.log("");
+    console.log("╔══════════════════════════════════════════════════════════╗");
+    console.log("║             🎉 DEPLOYMENT COMPLETE! 🎉                   ║");
+    console.log("╚══════════════════════════════════════════════════════════╝");
+    console.log("");
+
+    // Output addresses as JSON for easy frontend integration
+    const addresses = {
+        network: networkName,
+        chainId: Number(network.chainId),
+        usdc: usdcAddress,
+        seaCasterPass: passAddress,
+        tournamentEscrow: escrowAddress,
+        marketplace: marketplaceAddress,
+        deployedAt: new Date().toISOString(),
+        deployer: deployer.address,
     };
 
-    console.log("\n📄 DEPLOYMENT SUMMARY:");
-    console.log("─".repeat(50));
-    console.log(JSON.stringify(deployment, null, 2));
-    console.log("─".repeat(50));
+    console.log("📄 Contract Addresses (JSON):");
+    console.log(JSON.stringify(addresses, null, 2));
 
-    // Save to file
-    const deploymentsDir = "./deployments";
-    if (!fs.existsSync(deploymentsDir)) {
-        fs.mkdirSync(deploymentsDir);
-    }
-    fs.writeFileSync(
-        `${deploymentsDir}/base-sepolia.json`,
-        JSON.stringify(deployment, null, 2)
-    );
-    console.log("\n✅ Saved to deployments/base-sepolia.json");
-
-    // Verification commands
-    console.log("\n📋 VERIFY COMMANDS (wait 30 seconds then run):");
-    console.log(`npx hardhat verify --network base-sepolia ${usdcAddress}`);
-    console.log(`npx hardhat verify --network base-sepolia ${seaCasterPassAddress} "${usdcAddress}"`);
-    console.log(`npx hardhat verify --network base-sepolia ${tournamentEscrowAddress} "${usdcAddress}" "${seaCasterPassAddress}"`);
-    console.log(`npx hardhat verify --network base-sepolia ${marketplaceAddress} "${seaCasterPassAddress}" "${usdcAddress}"`);
+    return addresses;
 }
 
-main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-});
+main()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error("❌ Deployment failed:", error);
+        process.exit(1);
+    });

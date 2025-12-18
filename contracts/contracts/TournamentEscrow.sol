@@ -14,15 +14,18 @@ interface ISeaCasterPass {
 
 /**
  * @title TournamentEscrow
+ * @author SeaCaster Team
  * @notice Holds tournament entry fees (USDC) and distributes prizes.
  *
  * Entry modes:
  * - Ticket: Burn a tournament ticket (no USDC spent)
  * - USDC: Pay entry fee (split between prize pool and house)
  *
- * NOTE:
- * - Economics (0.50 / 2.00 / 7.99 / 50.00, 90/10 or 80/20) are enforced by backend
- *   via `entryFee` + `houseCutBps` and off-chain schedule/type.
+ * Features (Post-Audit Enhancements):
+ * - maxParticipants limit per tournament (prevents gas issues)
+ * - Batch prize distribution for large tournaments
+ * - SafeERC20 for all USDC transfers
+ * - Pausable emergency controls
  */
 contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
@@ -38,6 +41,9 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
     uint256 public constant MAX_HOUSE_CUT_BPS = 2000;
     uint256 private constant BPS_DENOMINATOR = 10_000;
 
+    // Maximum participants per tournament (gas limit protection)
+    uint256 public constant MAX_PARTICIPANTS_LIMIT = 500;
+
     enum TournamentType {
         Daily,
         Weekly,
@@ -51,6 +57,7 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
         uint256 ticketId;
         uint256 startTime;
         uint256 endTime;
+        uint256 maxParticipants;
         bool finalized;
         TournamentType tType;
         address[] participants;
@@ -67,13 +74,29 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
         TournamentType indexed tType,
         uint256 ticketId,
         uint256 startTime,
-        uint256 endTime
+        uint256 endTime,
+        uint256 maxParticipants
     );
     event PlayerEntered(uint256 indexed tournamentId, address indexed player, bool usedTicket);
     event PrizeDistributed(uint256 indexed tournamentId, address indexed winner, uint256 amount);
+    event PrizeBatchDistributed(uint256 indexed tournamentId, uint256 winnersCount, uint256 totalAmount);
     event TournamentFinalized(uint256 indexed tournamentId, uint256 remainingPrizePool, uint256 houseCut);
     event EntryFeeUpdated(uint256 oldFee, uint256 newFee);
     event HouseCutUpdated(uint256 oldCut, uint256 newCut);
+
+    // Custom errors (gas efficient)
+    error InvalidDuration();
+    error InvalidMaxParticipants();
+    error TournamentEnded();
+    error TournamentNotEnded();
+    error AlreadyFinalized();
+    error AlreadyEntered();
+    error NoTicket();
+    error TournamentFull();
+    error InvalidAmount();
+    error InsufficientPool();
+    error NotInTournament();
+    error LengthMismatch();
 
     constructor(address _usdc, address _seaCasterPass) Ownable(msg.sender) {
         require(_usdc != address(0), "Invalid USDC");
@@ -84,12 +107,21 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
 
     // ───────────────────── Tournament Lifecycle ─────────────────────
 
+    /// @notice Create a new tournament with participant limit
+    /// @param ticketId The ticket token ID required for free entry
+    /// @param durationSeconds How long the tournament runs
+    /// @param tType Tournament type (Daily/Weekly/Boss/Championship)
+    /// @param maxParticipants Maximum number of players (1-500)
     function createTournament(
         uint256 ticketId,
         uint256 durationSeconds,
-        TournamentType tType
+        TournamentType tType,
+        uint256 maxParticipants
     ) external onlyOwner whenNotPaused returns (uint256 tournamentId) {
-        require(durationSeconds > 0, "Invalid duration");
+        if (durationSeconds == 0) revert InvalidDuration();
+        if (maxParticipants == 0 || maxParticipants > MAX_PARTICIPANTS_LIMIT) {
+            revert InvalidMaxParticipants();
+        }
 
         tournamentId = nextTournamentId++;
 
@@ -102,23 +134,26 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
             ticketId: ticketId,
             startTime: start,
             endTime: end,
+            maxParticipants: maxParticipants,
             finalized: false,
             tType: tType,
             participants: new address[](0)
         });
 
-        emit TournamentCreated(tournamentId, tType, ticketId, start, end);
+        emit TournamentCreated(tournamentId, tType, ticketId, start, end, maxParticipants);
     }
 
     // ───────────────────── Entry ─────────────────────
 
-    /// @notice Enter tournament with ticket (free entry)
+    /// @notice Enter tournament with ticket (free entry, ticket burned)
     function enterWithTicket(uint256 tournamentId) external nonReentrant whenNotPaused {
         Tournament storage t = tournaments[tournamentId];
-        require(block.timestamp < t.endTime, "Tournament ended");
-        require(!t.finalized, "Finalized");
-        require(!hasEntered[tournamentId][msg.sender], "Already entered");
-        require(seaCasterPass.balanceOf(msg.sender, t.ticketId) > 0, "No ticket");
+        
+        if (block.timestamp >= t.endTime) revert TournamentEnded();
+        if (t.finalized) revert AlreadyFinalized();
+        if (hasEntered[tournamentId][msg.sender]) revert AlreadyEntered();
+        if (seaCasterPass.balanceOf(msg.sender, t.ticketId) == 0) revert NoTicket();
+        if (t.participants.length >= t.maxParticipants) revert TournamentFull();
 
         // Burn the ticket
         seaCasterPass.burnTicket(msg.sender, t.ticketId);
@@ -132,9 +167,11 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
     /// @notice Enter tournament with USDC
     function enterWithUSDC(uint256 tournamentId) external nonReentrant whenNotPaused {
         Tournament storage t = tournaments[tournamentId];
-        require(block.timestamp < t.endTime, "Tournament ended");
-        require(!t.finalized, "Finalized");
-        require(!hasEntered[tournamentId][msg.sender], "Already entered");
+        
+        if (block.timestamp >= t.endTime) revert TournamentEnded();
+        if (t.finalized) revert AlreadyFinalized();
+        if (hasEntered[tournamentId][msg.sender]) revert AlreadyEntered();
+        if (t.participants.length >= t.maxParticipants) revert TournamentFull();
 
         // Transfer USDC from player to escrow
         usdc.safeTransferFrom(msg.sender, address(this), entryFee);
@@ -154,7 +191,7 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
 
     // ───────────────────── Prize Distribution ─────────────────────
 
-    /// @notice Distribute prize to a single winner (backend decides amounts)
+    /// @notice Distribute prize to a single winner
     /// @dev Can be called multiple times until prizePool is fully distributed.
     function distributePrize(
         uint256 tournamentId,
@@ -162,10 +199,11 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
         uint256 amount
     ) external onlyOwner nonReentrant whenNotPaused {
         Tournament storage t = tournaments[tournamentId];
-        require(!t.finalized, "Finalized");
-        require(amount > 0, "Invalid amount");
-        require(amount <= t.prizePool, "Insufficient pool");
-        require(hasEntered[tournamentId][winner], "Not in tournament");
+        
+        if (t.finalized) revert AlreadyFinalized();
+        if (amount == 0) revert InvalidAmount();
+        if (amount > t.prizePool) revert InsufficientPool();
+        if (!hasEntered[tournamentId][winner]) revert NotInTournament();
 
         t.prizePool -= amount;
         usdc.safeTransfer(winner, amount);
@@ -173,12 +211,50 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
         emit PrizeDistributed(tournamentId, winner, amount);
     }
 
+    /// @notice Distribute prizes to multiple winners at once (gas efficient for large tournaments)
+    /// @param tournamentId The tournament ID
+    /// @param winners Array of winner addresses
+    /// @param amounts Array of prize amounts for each winner
+    function distributePrizeBatch(
+        uint256 tournamentId,
+        address[] calldata winners,
+        uint256[] calldata amounts
+    ) external onlyOwner nonReentrant whenNotPaused {
+        if (winners.length != amounts.length) revert LengthMismatch();
+        if (winners.length == 0) revert InvalidAmount();
+
+        Tournament storage t = tournaments[tournamentId];
+        if (t.finalized) revert AlreadyFinalized();
+
+        // Calculate total and validate all winners
+        uint256 totalDistribution = 0;
+        for (uint256 i = 0; i < winners.length; i++) {
+            if (!hasEntered[tournamentId][winners[i]]) revert NotInTournament();
+            if (amounts[i] == 0) revert InvalidAmount();
+            totalDistribution += amounts[i];
+        }
+
+        if (totalDistribution > t.prizePool) revert InsufficientPool();
+
+        // Update state before transfers (CEI pattern)
+        t.prizePool -= totalDistribution;
+
+        // Transfer to all winners
+        for (uint256 i = 0; i < winners.length; i++) {
+            usdc.safeTransfer(winners[i], amounts[i]);
+            emit PrizeDistributed(tournamentId, winners[i], amounts[i]);
+        }
+
+        emit PrizeBatchDistributed(tournamentId, winners.length, totalDistribution);
+    }
+
     /// @notice Finalize tournament and withdraw remaining funds to owner
     /// @dev Any undistributed prizePool and houseCut go to owner (house).
     function finalizeTournament(uint256 tournamentId) external onlyOwner nonReentrant {
         Tournament storage t = tournaments[tournamentId];
-        require(!t.finalized, "Already finalized");
-        require(block.timestamp >= t.endTime, "Not ended");
+        
+        if (t.finalized) revert AlreadyFinalized();
+        if (block.timestamp < t.endTime) revert TournamentNotEnded();
 
         t.finalized = true;
 
@@ -207,6 +283,7 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
             uint256 ticketId,
             uint256 startTime,
             uint256 endTime,
+            uint256 maxParticipants,
             bool finalized,
             TournamentType tType,
             uint256 participantCount
@@ -219,6 +296,7 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
             t.ticketId,
             t.startTime,
             t.endTime,
+            t.maxParticipants,
             t.finalized,
             t.tType,
             t.participants.length
@@ -227,6 +305,19 @@ contract TournamentEscrow is Ownable, ReentrancyGuard, Pausable {
 
     function getParticipants(uint256 tournamentId) external view returns (address[] memory) {
         return tournaments[tournamentId].participants;
+    }
+
+    /// @notice Check if a tournament is full
+    function isTournamentFull(uint256 tournamentId) external view returns (bool) {
+        Tournament storage t = tournaments[tournamentId];
+        return t.participants.length >= t.maxParticipants;
+    }
+
+    /// @notice Get remaining spots in a tournament
+    function getRemainingSpots(uint256 tournamentId) external view returns (uint256) {
+        Tournament storage t = tournaments[tournamentId];
+        if (t.participants.length >= t.maxParticipants) return 0;
+        return t.maxParticipants - t.participants.length;
     }
 
     // ───────────────────── Admin Config ─────────────────────

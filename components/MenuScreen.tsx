@@ -276,6 +276,9 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                     position: absolute;
                     inset: 0;
                     z-index: 0;
+                    background-image: url('/assets/backgrounds/menu_bg.jpg');
+                    background-size: cover;
+                    background-position: center;
                 }
 
                 .sky {
@@ -284,7 +287,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                     left: 0;
                     right: 0;
                     height: 50%;
-                    background: linear-gradient(180deg, #1A365D 0%, #2C5282 50%, #3182CE 100%);
+                    background: linear-gradient(180deg, rgba(26, 54, 93, 0.4) 0%, rgba(44, 82, 130, 0.3) 50%, transparent 100%);
                 }
 
                 .ocean {
@@ -293,7 +296,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                     left: 0;
                     right: 0;
                     height: 55%;
-                    background: linear-gradient(180deg, #1E4E8C 0%, #0D3B66 50%, #051F40 100%);
+                    background: linear-gradient(180deg, transparent 0%, rgba(13, 59, 102, 0.6) 50%, rgba(5, 31, 64, 0.8) 100%);
                 }
 
                 .waves {
@@ -302,7 +305,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                     left: 0;
                     right: 0;
                     height: 40px;
-                    background: linear-gradient(180deg, rgba(30, 78, 140, 0) 0%, rgba(30, 78, 140, 0.6) 50%, #1E4E8C 100%);
+                    background: linear-gradient(180deg, rgba(30, 78, 140, 0) 0%, rgba(30, 78, 140, 0.4) 50%, rgba(30, 78, 140, 0.6) 100%);
                     border-radius: 50% 50% 0 0;
                 }
 

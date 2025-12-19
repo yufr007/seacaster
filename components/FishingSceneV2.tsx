@@ -555,12 +555,10 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
           overflow: hidden;
           touch-action: none;
           user-select: none;
-          background: linear-gradient(180deg, 
-            #87CEEB 0%, 
-            #1E90FF 30%, 
-            #0066CC 50%, 
-            #003366 100%
-          );
+          background-image: url('/assets/backgrounds/underwater_fishing.png');
+          background-size: cover;
+          background-position: center;
+          background-color: #003366;
         }
 
         .fishing-scene-v2.shake {

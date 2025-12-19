@@ -421,8 +421,17 @@ const ShopScreen: React.FC<ShopScreenProps> = ({ onBack }) => {
         .shop-bg {
           position: absolute;
           inset: 0;
-          background: linear-gradient(180deg, #2C3E50 0%, #1A252F 50%, #0D1B2A 100%);
+          background-image: url('/assets/backgrounds/splash_hero.jpg');
+          background-size: cover;
+          background-position: center;
           z-index: 0;
+        }
+
+        .shop-bg::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(44, 62, 80, 0.85) 0%, rgba(26, 37, 47, 0.9) 50%, rgba(13, 27, 42, 0.95) 100%);
         }
 
         .shop-header {

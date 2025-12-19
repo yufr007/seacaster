@@ -8,6 +8,7 @@ import { ChevronLeft, Zap } from 'lucide-react';
 import { useValidateCatch } from '../hooks/useGameAPI';
 import { FISH_TYPES } from '../constants';
 import ReelMiniGame from './ReelMiniGame';
+import { getBaitAsset, getFishAsset } from '../config/assets';
 
 interface FishingSceneV2Props {
     onBack?: () => void;
@@ -536,7 +537,7 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
             <div className="bait-display">
                 <span className="bait-label">BAIT</span>
                 <img
-                    src={`/assets/bait/bait_${inventory.activeBaitId}_*.png`.replace('*', '1765863155303')}
+                    src={getBaitAsset(inventory.activeBaitId || 'worm')}
                     alt="Bait"
                     className="bait-icon"
                     onError={(e) => {

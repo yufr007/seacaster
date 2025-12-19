@@ -1,21 +1,27 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const USDC_ADDRESS = "0x0Cb77646C49a01a1053bAf01072954e69ce55965";
-  const RECIPIENT = "0x6ADef5fC93160A7d4F64c274946F52a573DC9b92";
-  const AMOUNT = 1000_000_000n; // 1000 USDC (6 decimals)
-
-  const [signer] = await ethers.getSigners();
-  console.log(`Minting from: ${signer.address}`);
-
+  const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+  const YOUR_ADDRESS = "0xa98b74fa85C3cD4c3E214beBac8E4511A964c1f0";
+  
   const usdc = await ethers.getContractAt("MockUSDC", USDC_ADDRESS);
   
-  console.log(`Minting ${AMOUNT} USDC to ${RECIPIENT}...`);
-  const tx = await usdc.mint(RECIPIENT, AMOUNT);
-  await tx.wait();
+  console.log("💵 Attempting to mint testnet USDC...\n");
   
-  const balance = await usdc.balanceOf(RECIPIENT);
-  console.log(`✅ New balance: ${balance} (${Number(balance) / 1_000_000} USDC)`);
+  try {
+    // Try to mint 100 USDC (6 decimals)
+    const amount = ethers.parseUnits("100", 6);
+    const tx = await usdc.mint(YOUR_ADDRESS, amount);
+    await tx.wait();
+    
+    console.log("✅ Minted 100 USDC!");
+    
+    const balance = await usdc.balanceOf(YOUR_ADDRESS);
+    console.log(`💰 New Balance: ${ethers.formatUnits(balance, 6)} USDC`);
+  } catch (error: any) {
+    console.log("⚠️ Mint failed (testnet USDC might be locked)");
+    console.log("📍 Use Circle Faucet instead: https://faucet.circle.com/");
+  }
 }
 
 main().catch(console.error);

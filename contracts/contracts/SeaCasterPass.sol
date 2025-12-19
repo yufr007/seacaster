@@ -207,11 +207,11 @@ contract SeaCasterPass is ERC1155, ERC1155Supply, Ownable, Pausable {
         super._update(from, to, ids, values);
     }
 
-    // Required override - FIXED: Added ERC1155Supply
+    // Required override
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC1155, ERC1155Supply)
+        override
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

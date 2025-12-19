@@ -4,17 +4,25 @@
 
 import { ethers, run } from "hardhat";
 
-// Network-specific USDC addresses
+// Network-specific USDC addresses (use hyphenated names to match Hardhat network config)
 const USDC_ADDRESSES: Record<string, string> = {
-    base: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",       // Base Mainnet
-    baseSepolia: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // Base Sepolia
-    localhost: "0x0000000000000000000000000000000000000000",   // Local mock
+    "base": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",         // Base Mainnet
+    "base-sepolia": "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // Base Sepolia
+    "localhost": "0x0000000000000000000000000000000000000000",    // Local mock
+    "hardhat": "0x0000000000000000000000000000000000000000",      // Hardhat
+    "unknown": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",      // Default to Sepolia
 };
 
 async function main() {
-    const [deployer] = await ethers.getSigners();
+    // Get signers
+    const signers = await ethers.getSigners();
+    if (!signers || signers.length === 0) {
+        throw new Error("No signers available. Check your PRIVATE_KEY environment variable.");
+    }
+    const deployer = signers[0];
+
     const network = await ethers.provider.getNetwork();
-    const networkName = network.name === "unknown" ? "localhost" : network.name;
+    const networkName = network.name;
 
     console.log("╔══════════════════════════════════════════════════════════╗");
     console.log("║         SeaCaster Smart Contract Deployment              ║");
@@ -28,8 +36,13 @@ async function main() {
     console.log("");
 
     // Get USDC address for network
-    const usdcAddress = USDC_ADDRESSES[networkName];
-    if (!usdcAddress || usdcAddress === "0x0000000000000000000000000000000000000000") {
+    let usdcAddress = USDC_ADDRESSES[networkName];
+    if (!usdcAddress) {
+        // Try to use USDC_ADDRESS from environment if network not found
+        usdcAddress = process.env.USDC_ADDRESS || USDC_ADDRESSES["base-sepolia"];
+        console.log(`⚠️  Network '${networkName}' not in USDC list, using: ${usdcAddress}`);
+    }
+    if (usdcAddress === "0x0000000000000000000000000000000000000000") {
         console.log("⚠️  Warning: Using zero address for USDC (local testing only)");
     }
     console.log(`💵 USDC: ${usdcAddress}`);

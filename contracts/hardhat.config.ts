@@ -4,6 +4,24 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
+// Helper to format private key (with or without 0x prefix)
+function getAccounts(): string[] {
+  const pk = process.env.PRIVATE_KEY;
+  if (!pk) {
+    console.warn("⚠️ PRIVATE_KEY not set - deployment will fail");
+    return [];
+  }
+  // Ensure key has 0x prefix
+  const formattedKey = pk.startsWith("0x") ? pk : `0x${pk}`;
+  // Validate length (should be 66 chars with 0x prefix)
+  if (formattedKey.length !== 66) {
+    console.warn(`⚠️ PRIVATE_KEY invalid length: ${formattedKey.length} (expected 66)`);
+  }
+  return [formattedKey];
+}
+
+const accounts = getAccounts();
+
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.20",
@@ -18,12 +36,12 @@ const config: HardhatUserConfig = {
     "base-sepolia": {
       url: process.env.RPC_BASE_URL || "https://sepolia.base.org",
       chainId: 84532,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
+      accounts: accounts
     },
     "base": {
       url: "https://mainnet.base.org",
       chainId: 8453,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
+      accounts: accounts
     }
   },
   etherscan: {

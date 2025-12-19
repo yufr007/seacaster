@@ -10,7 +10,7 @@
     "iconUrl": "https://seacaster.app/icon-200x200.png",
     "homeUrl": "https://seacaster.app",
     "imageUrl": "https://seacaster.app/og-1200x800.png",
-    "buttonTitle": "🎣 Cast Line",
+    "buttonTitle": "🎣 Cast a Line",
     "splashImageUrl": "https://seacaster.app/splash-200x200.png",
     "splashBackgroundColor": "#0f172a",
     "webhookUrl": "https://api.seacaster.app/webhook"

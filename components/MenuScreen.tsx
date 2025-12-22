@@ -102,7 +102,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                         <motion.img
                             src={UI_ASSETS.pirateCaptain}
                             alt="Captain"
-                            className="mascot-img"
+                            className="mascot-img blend-screen"
                             animate={{ y: [0, -10, 0] }}
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                         />
@@ -159,7 +159,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
                         }}
                         transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                     >
-                        <img src={UI_ASSETS.dailyGift} alt="Daily Gift" />
+                        <img src={UI_ASSETS.dailyGift} alt="Daily Gift" className="blend-screen" />
                     </motion.button>
                 </main>
             </div>
@@ -450,7 +450,7 @@ const MenuButton = ({ icon, label, onClick, color }: { icon: string, label: stri
             background: `linear-gradient(135deg, ${color}20 0%, transparent 100%)`,
             opacity: 0.5
         }} />
-        <img src={icon} alt={label} className="menu-btn-icon" />
+        <img src={icon} alt={label} className="menu-btn-icon blend-screen" />
         <span className="menu-btn-label">{label}</span>
     </motion.button>
 );

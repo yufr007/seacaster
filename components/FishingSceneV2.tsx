@@ -8,6 +8,8 @@ import { ChevronLeft, Zap, Fish as FishIcon } from 'lucide-react';
 import { useValidateCatch } from '../hooks/useGameAPI';
 import { FISH_TYPES, BAITS } from '../constants';
 import ReelMiniGame from './ReelMiniGame';
+import CatchCelebration from './CatchCelebration';
+import { WaterSplash, BubbleTrail } from './ParticleEffects';
 import { getBaitAsset } from '../config/assets';
 
 interface FishingSceneV2Props {
@@ -60,6 +62,12 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
     const [showSplash, setShowSplash] = useState(false);
     const [ripples, setRipples] = useState<{ x: number; y: number; id: number }[]>([]);
     const [screenShake, setScreenShake] = useState(false);
+
+    // AAA Effects State
+    const [showCelebration, setShowCelebration] = useState(false);
+    const [showBubbles, setShowBubbles] = useState(false);
+    const [lastCatchReward, setLastCatchReward] = useState({ xp: 0, coins: 0 });
+    const [rodTipFlex, setRodTipFlex] = useState(0); // For dynamic rod tip animation
 
     // Generate swimming fish based on rarity weights
     useEffect(() => {
@@ -156,26 +164,49 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
 
             play('cast');
         } else if (phase === GamePhase.WAITING) {
-            // Gentle sway while waiting
+            // Gentle sway while waiting + bubble trail
             setRodAngle(12);
             setShowBobber(true);
             setLineLength(100);
+            setShowBubbles(true); // Enable bubble trail
+
+            // Subtle rod tip flex animation for tension
+            const flexInterval = setInterval(() => {
+                setRodTipFlex(Math.sin(Date.now() / 500) * 3);
+            }, 50);
 
             // Pick a random fish as target if none exists (just for visual logic if we needed it)
             if (swimmingFish.length > 0) {
                 const target = swimmingFish[Math.floor(Math.random() * swimmingFish.length)];
                 setBobberPosition({ x: target.x, y: target.y - 10 });
             }
+
+            return () => clearInterval(flexInterval);
         } else if (phase === GamePhase.HOOKED) {
-            // Rod bends when hooked
-            setRodAngle(-25);
-            setRodY(5);
+            // Rod bends dramatically when hooked
+            setRodAngle(-35); // More dramatic bend
+            setRodY(8);
+            setRodScale(0.95); // Slight compression
             setScreenShake(true);
             setShowCaughtFish(true);
+            setShowBubbles(false);
             triggerHaptic(Haptics.bite);
             play('splash');
 
-            setTimeout(() => setScreenShake(false), 300);
+            // Multiple shake pulses for dramatic effect
+            setTimeout(() => setScreenShake(false), 200);
+            setTimeout(() => setScreenShake(true), 250);
+            setTimeout(() => setScreenShake(false), 400);
+        } else if (phase === GamePhase.REWARD) {
+            // Celebration sequence
+            if (hookedFish) {
+                const xpReward = hookedFish.xp || 10;
+                const coinReward = Math.floor(hookedFish.weight * 5);
+                setLastCatchReward({ xp: xpReward, coins: coinReward });
+                setShowCelebration(true);
+                setShowBubbles(false);
+                play('success');
+            }
         } else if (phase === GamePhase.IDLE) {
             setRodAngle(10); // Natural holding position
             setRodY(0);
@@ -183,6 +214,9 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
             setLineLength(0);
             setShowBobber(false);
             setShowCaughtFish(false);
+            setShowBubbles(false);
+            setShowCelebration(false);
+            setRodTipFlex(0);
         }
     }, [phase, play, swimmingFish, bobberPosition]);
 
@@ -280,6 +314,9 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
                 {/* Light rays from surface */}
                 <div className="light-rays" />
 
+                {/* AAA Bubble Trail Effect */}
+                <BubbleTrail active={showBubbles} x={bobberPosition.x} y={bobberPosition.y} />
+
                 {/* Swimming fish */}
                 {swimmingFish.map((sf) => (
                     <motion.div
@@ -364,15 +401,13 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
                     )}
                 </AnimatePresence>
 
-                {/* Splash effect */}
+                {/* AAA Splash effect */}
                 <AnimatePresence>
                     {showSplash && (
-                        <motion.div
-                            className="splash"
-                            initial={{ scale: 0.5, opacity: 1 }}
-                            animate={{ scale: 2, opacity: 0 }}
-                            exit={{ opacity: 0 }}
-                            style={{ left: `${bobberPosition.x}%`, top: `${bobberPosition.y}%` }}
+                        <WaterSplash
+                            x={bobberPosition.x}
+                            y={bobberPosition.y}
+                            onComplete={() => setShowSplash(false)}
                         />
                     )}
                 </AnimatePresence>
@@ -400,16 +435,24 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
             <motion.div
                 className="rod-container"
                 animate={{
-                    rotate: rodAngle,
+                    rotate: rodAngle + rodTipFlex, // Dynamic tip flex
                     y: rodY,
                     scale: rodScale,
                 }}
                 transition={{ type: 'spring', damping: 15, stiffness: 200 }}
             >
-                <img
-                    src={userStats.premium ? '/assets/ui/golden_pirate_rod_1765863136497.png' : '/assets/ui/fishing_rod.png'}
+                <motion.img
+                    src={userStats.premium ? '/assets/ui/golden_pirate_rod_1765863136497.png' : '/assets/ui/fishing_rod_v4.png'}
                     alt="Fishing Rod"
-                    className="rod-image"
+                    className="rod-image blend-screen"
+                    animate={{
+                        skewX: phase === GamePhase.HOOKED ? [0, 2, -2, 0] : 0,
+                    }}
+                    transition={{
+                        duration: 0.3,
+                        repeat: phase === GamePhase.HOOKED ? Infinity : 0,
+                        repeatType: 'loop'
+                    }}
                 />
 
                 {/* Fishing Line */}
@@ -554,6 +597,19 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
                 />
             )}
 
+            {/* AAA Catch Celebration */}
+            <AnimatePresence>
+                {showCelebration && hookedFish && (
+                    <CatchCelebration
+                        fish={hookedFish}
+                        xpGained={lastCatchReward.xp}
+                        coinsGained={lastCatchReward.coins}
+                        isOpen={showCelebration}
+                        onComplete={() => setShowCelebration(false)}
+                    />
+                )}
+            </AnimatePresence>
+
             {/* Bait Display with Rarity Border */}
             <div className="bait-display">
                 <span className="bait-label">BAIT {activeBait?.rarity === Rarity.COMMON ? '' : `• ${activeBait?.rarity}`}</span>
@@ -567,9 +623,9 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
                     <img
                         src={getBaitAsset(inventory.activeBaitId || 'worm')}
                         alt="Bait"
-                        className="bait-icon"
+                        className="bait-icon blend-screen"
                         onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/assets/bait/bait_worm_1765863155303.png';
+                            (e.target as HTMLImageElement).src = '/assets/bait/bait_worm_v2.png';
                         }}
                     />
                 </div>

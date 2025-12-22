@@ -1,8 +1,8 @@
 {
   "accountAssociation": {
-    "header": "NEEDS_SIGNING",
-    "payload": "NEEDS_SIGNING",
-    "signature": "NEEDS_SIGNING"
+    "header": "eyJmaWQiOjE1MjYzMTIsInR5cGUiOiJhdXRoIiwia2V5IjoiMHhGMTc3MUI2NzY1NTg2ZGVDMDc2OUFCNTQ0QkRiOTVBMDczNTA4ZkU2In0",
+    "payload": "eyJkb21haW4iOiJzZWFjYXN0ZXIuYXBwIn0",
+    "signature": "m5td6cI/eYhyPrSW8aFCVeIAhgB4CfOP0dDOmBdMOc1vAg9qZN3kXOX1cctZrF1L/i2qzT5LE1/HoTTcWP8ErRs="
   },
   "frame": {
     "version": "1",
@@ -12,16 +12,13 @@
     "imageUrl": "https://seacaster.app/og-1200x800.png",
     "buttonTitle": "🎣 Cast a Line",
     "splashImageUrl": "https://seacaster.app/splash-200x200.png",
-    "splashBackgroundColor": "#0f172a",
+    "splashBackgroundColor": "#0A3A52",
     "webhookUrl": "https://api.seacaster.app/webhook"
   },
-  "baseBuilderAddress": "0xa98b74fa85C3cD4c3E214beBac8E4511A964c1f0",
+  "baseBuilderAddress": "0x6ADef5fC93160A7d4F64c274946F52a573DC9b92",
   "contractAddresses": {
-    "base-sepolia": {
-      "USDC": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      "SeaCasterPass": "0x1EBa3dDA0AFd1c20A61627730439249752180432",
-      "TournamentEscrow": "0x8Dc5bEdC24315F9f18111843FCA7Ecf86Af73013",
-      "Marketplace": "0xd4D0dcfe3424A7F55f850767f9A5B85f083F38E1"
-    }
+    "seasonPass": "0x1EBa3dDA0AFd1c20A61627730439249752180432",
+    "tournamentPool": "0x8Dc5bEdC24315F9f18111843FCA7Ecf86Af73013",
+    "marketplace": "0xd4D0dcfe3424A7F55f850767f9A5B85f083F38E1"
   }
 }

@@ -6,7 +6,7 @@
 // BAIT ASSETS
 // ════════════════════════════════════════════════════════════════════════════
 export const BAIT_ASSETS = {
-    worm: '/assets/bait/bait_worm_1765863155303.png',
+    worm: '/assets/bait/bait_worm_v2.png',
     shrimp: '/assets/bait/bait_shrimp_1765863173083.png',
     squid: '/assets/bait/bait_squid_1765863189969.png',
     minnow: '/assets/bait/bait_minnow_1765863236305.png',
@@ -65,13 +65,13 @@ export const UI_ASSETS = {
     buttonShop: '/assets/ui/ui_button_shop_1765959396654.png',
     // Icons
     energyBolt: '/assets/ui/ui_energy_bolt_1765959504987.png',
-    dailyGift: '/assets/ui/ui_daily_gift_icon_1765959887350.png',
+    dailyGift: '/assets/ui/daily_gift_v2.png',
     tournamentTrophy: '/assets/ui/ui_tournament_trophy_1765959775198.png',
     coinDoubloon: '/assets/ui/coin_doubloon.png',
     treasureChest: '/assets/ui/treasure_chest.png',
     baitBox: '/assets/ui/bait_box.png',
     // Misc
-    fishingRod: '/assets/ui/fishing_rod.png',
+    fishingRod: '/assets/ui/fishing_rod_v3.png',
     goldenPirateRod: '/assets/ui/golden_pirate_rod_1765863136497.png',
     pirateCaptain: '/assets/ui/pirate_captain_mascot_1765863268112.png',
     tournamentBanner: '/assets/ui/tournament_banner_1765863356617.png',

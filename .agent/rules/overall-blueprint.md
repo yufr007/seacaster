@@ -1,5 +1,5 @@
 ---
-trigger: always_on
+trigger: glob
 ---
 
 ## 🎯 THE 8 PHASES AT A GLANCE

@@ -1,14 +1,14 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { GamePhase, Rarity, Fish } from '../types';
+import { GamePhase, Rarity } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../hooks/useSound';
 import { Haptics, triggerHaptic } from '../utils/haptics';
-import { ChevronLeft, Zap } from 'lucide-react';
+import { ChevronLeft, Zap, Fish as FishIcon } from 'lucide-react';
 import { useValidateCatch } from '../hooks/useGameAPI';
-import { FISH_TYPES } from '../constants';
+import { FISH_TYPES, BAITS } from '../constants';
 import ReelMiniGame from './ReelMiniGame';
-import { getBaitAsset, getFishAsset } from '../config/assets';
+import { getBaitAsset } from '../config/assets';
 
 interface FishingSceneV2Props {
     onBack?: () => void;
@@ -17,7 +17,7 @@ interface FishingSceneV2Props {
 // Fish swimming in water - positions for visible fish
 interface SwimmingFish {
     id: string;
-    fish: Fish;
+    fish: typeof FISH_TYPES[0];
     x: number;
     y: number;
     scale: number;
@@ -25,25 +25,15 @@ interface SwimmingFish {
     direction: 1 | -1;
 }
 
-/**
- * AAA Fishing Scene V2
- * - Premium rod render with casting animation
- * - Visible fish swimming in water
- * - Fishing line that connects rod to water
- * - Cast lands on actual fish position
- */
 const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
     const {
         phase,
         castLine,
-        attemptCatch,
         startReeling,
         completeReeling,
-        failCatch,
         userStats,
         hookedFish,
-        inventory,
-        finishCatchAnimation
+        inventory
     } = useGameStore();
 
     const touchStartY = useRef<number | null>(null);
@@ -55,6 +45,7 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
     // Rod animation state
     const [rodAngle, setRodAngle] = useState(0);
     const [rodY, setRodY] = useState(0);
+    const [rodScale, setRodScale] = useState(1);
 
     // Fishing line state
     const [lineLength, setLineLength] = useState(0);
@@ -63,7 +54,6 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
 
     // Fish state
     const [swimmingFish, setSwimmingFish] = useState<SwimmingFish[]>([]);
-    const [targetFish, setTargetFish] = useState<SwimmingFish | null>(null);
     const [showCaughtFish, setShowCaughtFish] = useState(false);
 
     // Effects
@@ -125,13 +115,15 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
     useEffect(() => {
         if (phase === GamePhase.CASTING) {
             // Wind-up
-            setRodAngle(-40);
-            setRodY(-20);
+            setRodAngle(-45);
+            setRodY(-30);
+            setRodScale(0.9);
 
             setTimeout(() => {
                 // Power swing forward
-                setRodAngle(60);
-                setRodY(0);
+                setRodAngle(65);
+                setRodY(10);
+                setRodScale(1.1);
                 triggerHaptic(Haptics.medium);
 
                 // Deploy line
@@ -157,6 +149,8 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
                 // Settle rod
                 setTimeout(() => {
                     setRodAngle(15);
+                    setRodY(0);
+                    setRodScale(1);
                 }, 400);
             }, 200);
 
@@ -167,15 +161,15 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
             setShowBobber(true);
             setLineLength(100);
 
-            // Pick a random fish as target
+            // Pick a random fish as target if none exists (just for visual logic if we needed it)
             if (swimmingFish.length > 0) {
                 const target = swimmingFish[Math.floor(Math.random() * swimmingFish.length)];
-                setTargetFish(target);
                 setBobberPosition({ x: target.x, y: target.y - 10 });
             }
         } else if (phase === GamePhase.HOOKED) {
             // Rod bends when hooked
-            setRodAngle(-30);
+            setRodAngle(-25);
+            setRodY(5);
             setScreenShake(true);
             setShowCaughtFish(true);
             triggerHaptic(Haptics.bite);
@@ -183,12 +177,12 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
 
             setTimeout(() => setScreenShake(false), 300);
         } else if (phase === GamePhase.IDLE) {
-            setRodAngle(0);
+            setRodAngle(10); // Natural holding position
             setRodY(0);
+            setRodScale(1);
             setLineLength(0);
             setShowBobber(false);
             setShowCaughtFish(false);
-            setTargetFish(null);
         }
     }, [phase, play, swimmingFish, bobberPosition]);
 
@@ -217,8 +211,12 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
     const handleTouchMove = (e: React.TouchEvent) => {
         if (phase === GamePhase.IDLE && touchStartY.current !== null) {
             const deltaY = touchStartY.current - e.touches[0].clientY;
-            const power = Math.min(100, Math.max(0, (deltaY / 150) * 100));
+            const power = Math.min(100, Math.max(0, (deltaY / 200) * 100)); // Increased range for better feel
             setCastPower(power);
+            // Visual rod bend on pull back
+            if (power > 10) {
+                setRodAngle(-power * 0.4);
+            }
         }
     };
 
@@ -227,6 +225,9 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
         if (phase === GamePhase.IDLE && touchStartY.current !== null && castPower > 20) {
             triggerHaptic(Haptics.medium);
             castLine();
+        } else {
+            // Reset rod if cast cancelled
+            setRodAngle(10);
         }
         touchStartY.current = null;
         setCastPower(0);
@@ -248,6 +249,8 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
     const handleReelFail = () => {
         completeReeling(false);
     };
+
+    const activeBait = BAITS[inventory.activeBaitId || 'worm'];
 
     const getRarityColor = (rarity: Rarity) => {
         const colors = {
@@ -271,6 +274,9 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
         >
             {/* Underwater Background with visible fish */}
             <div className="water-layer">
+                {/* Dark Overlay to hide bottom watermarks and improve contrast */}
+                <div className="water-overlay" />
+
                 {/* Light rays from surface */}
                 <div className="light-rays" />
 
@@ -390,12 +396,13 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
             {/* Water surface line */}
             <div className="water-surface" />
 
-            {/* Fishing Rod - Positioned at bottom */}
+            {/* Fishing Rod - Premium Asset with Animation */}
             <motion.div
                 className="rod-container"
                 animate={{
                     rotate: rodAngle,
                     y: rodY,
+                    scale: rodScale,
                 }}
                 transition={{ type: 'spring', damping: 15, stiffness: 200 }}
             >
@@ -477,7 +484,7 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
                 )}
             </AnimatePresence>
 
-            {/* Hooked UI */}
+            {/* Hooked UI with Fish Names */}
             <AnimatePresence>
                 {phase === GamePhase.HOOKED && hookedFish && (
                     <motion.div
@@ -486,6 +493,20 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0, opacity: 0 }}
                     >
+                        <motion.div
+                            className="hooked-fish-info"
+                            animate={{ y: [0, -5, 0] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                        >
+                            {/* Fish Name Badge */}
+                            <div className="fish-name-badge" style={{ borderColor: getRarityColor(hookedFish.rarity) }}>
+                                <span className="fish-rarity-label" style={{ color: getRarityColor(hookedFish.rarity) }}>
+                                    {hookedFish.rarity.toUpperCase()}
+                                </span>
+                                <span className="fish-name-label">{hookedFish.name}</span>
+                            </div>
+                        </motion.div>
+
                         <motion.div
                             className="tap-prompt"
                             animate={{ scale: [0.95, 1.1, 0.95] }}
@@ -533,17 +554,25 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
                 />
             )}
 
-            {/* Bait Display */}
+            {/* Bait Display with Rarity Border */}
             <div className="bait-display">
-                <span className="bait-label">BAIT</span>
-                <img
-                    src={getBaitAsset(inventory.activeBaitId || 'worm')}
-                    alt="Bait"
-                    className="bait-icon"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/assets/bait/bait_worm_1765863155303.png';
+                <span className="bait-label">BAIT {activeBait?.rarity === Rarity.COMMON ? '' : `• ${activeBait?.rarity}`}</span>
+                <div
+                    className="bait-icon-container"
+                    style={{
+                        borderColor: getRarityColor(activeBait?.rarity || Rarity.COMMON),
+                        boxShadow: `0 0 10px ${getRarityColor(activeBait?.rarity || Rarity.COMMON)}40`
                     }}
-                />
+                >
+                    <img
+                        src={getBaitAsset(inventory.activeBaitId || 'worm')}
+                        alt="Bait"
+                        className="bait-icon"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/assets/bait/bait_worm_1765863155303.png';
+                        }}
+                    />
+                </div>
             </div>
 
             <style>{`
@@ -583,6 +612,17 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
             rgba(0, 50, 100, 0.8) 100%
           );
           overflow: hidden;
+        }
+
+        .water-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 15%; /* Cover bottom 15% */
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            z-index: 5;
+            pointer-events: none;
         }
 
         .light-rays {
@@ -800,44 +840,81 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 12px;
-          z-index: 25;
+          gap: 8px;
+          z-index: 40;
+          pointer-events: none;
         }
-
+        
         .swipe-icon {
-          font-size: 48px;
+            font-size: 40px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
 
         .swipe-text {
-          color: white;
-          font-size: 18px;
-          font-weight: 800;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-          letter-spacing: 2px;
+            color: white;
+            font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            font-size: 18px;
+            background: rgba(0,0,0,0.4);
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+
+        /* Hooked Fish Info */
+        .hooked-fish-info {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .fish-name-badge {
+            background: rgba(0,0,0,0.8);
+            border: 2px solid #fff;
+            border-radius: 12px;
+            padding: 8px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .fish-rarity-label {
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .fish-name-label {
+            color: white;
+            font-weight: 800;
+            font-size: 14px;
+            text-align: center;
         }
 
         /* Hooked UI */
         .hooked-ui {
           position: absolute;
-          top: 20%;
+          top: 40%;
           left: 50%;
-          transform: translateX(-50%);
+          transform: translate(-50%, -50%);
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 20px;
-          z-index: 40;
+          z-index: 50;
         }
 
         .tap-prompt {
-          background: linear-gradient(180deg, #E74C3C, #C0392B);
-          color: white;
-          padding: 16px 32px;
-          border-radius: 16px;
-          font-size: 24px;
+          font-size: 32px;
           font-weight: 900;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          box-shadow: 0 6px 0 #922B21, 0 10px 20px rgba(0,0,0,0.4);
+          color: #F4D03F;
+          text-shadow: 0 4px 0 #D35400, 0 0 20px rgba(244, 208, 63, 0.5);
+          white-space: nowrap;
         }
 
         .caught-fish-preview {
@@ -850,56 +927,76 @@ const FishingSceneV2: React.FC<FishingSceneV2Props> = ({ onBack }) => {
           width: 100%;
           height: 100%;
           object-fit: contain;
+          filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+          z-index: 2;
+          position: relative;
         }
-
+        
         .rarity-glow {
-          position: absolute;
-          inset: -10px;
-          border-radius: 50%;
-          opacity: 0.4;
-          filter: blur(20px);
-          z-index: -1;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            filter: blur(20px);
+            opacity: 0.6;
+            z-index: 1;
         }
 
         .catch-timer {
           width: 200px;
           height: 12px;
-          background: rgba(0,0,0,0.4);
+          background: rgba(0,0,0,0.5);
+          border: 2px solid rgba(255,255,255,0.3);
           border-radius: 6px;
           overflow: hidden;
-          border: 2px solid rgba(255,255,255,0.3);
         }
 
         .timer-fill {
           height: 100%;
-          background: linear-gradient(90deg, #E74C3C, #F1C40F, #27AE60);
+          background: #3B82F6;
+          box-shadow: 0 0 10px #3B82F6;
         }
 
         /* Bait Display */
         .bait-display {
           position: absolute;
-          bottom: 16px;
-          left: 16px;
-          padding-bottom: max(8px, env(safe-area-inset-bottom));
+          bottom: 20px;
+          left: 20px;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 4px;
-          z-index: 30;
         }
 
         .bait-label {
+          color: white;
           font-size: 10px;
-          color: rgba(255,255,255,0.7);
-          font-weight: 600;
+          font-weight: 700;
+          background: rgba(0,0,0,0.4);
+          padding: 2px 6px;
+          border-radius: 4px;
           text-transform: uppercase;
         }
 
+        .bait-icon-container {
+            width: 48px;
+            height: 48px;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
         .bait-icon {
-          width: 48px;
-          height: 48px;
+          width: 32px;
+          height: 32px;
           object-fit: contain;
-          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
         }
       `}</style>
         </div>

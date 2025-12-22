@@ -60,6 +60,11 @@
    GLOBAL STYLES
    ============================================ */
 
+.blend-screen {
+  mix-blend-mode: screen;
+  border-radius: 12px; /* Soften edges */
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;

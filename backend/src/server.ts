@@ -31,6 +31,7 @@ import usersRoutes from './routes/users';
 import tournamentsRoutes from './routes/tournaments';
 import leaderboardRoutes from './routes/leaderboard';
 import { registerScoreRoutes } from './routes/scores';
+import manifestRoutes from './routes/manifest';
 
 // Load environment variables
 dotenv.config();
@@ -115,6 +116,9 @@ async function startApolloServer() {
 // ===== SOCKET.IO =====
 const io = initializeSocketIO(httpServer);
 console.log('[Socket.IO] Real-time server initialized');
+
+// ===== MANIFEST (Must be before catch-all) =====
+app.use('/', manifestRoutes);
 
 // ===== REST API ROUTES =====
 app.use('/api/webhook', webhookRoutes);

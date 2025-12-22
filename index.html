@@ -1,48 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="https://fav.farm/🎣" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f172a" />
-    <meta name="description" content="A mobile-first competitive fishing game on Farcaster & Base. Cast your line, catch rare fish, and compete in tournaments." />
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Farcaster Mini App Meta Tag -->
-    <meta property="fc:miniapp" content='{"version":"1","imageUrl":"https://seacaster.app/og-1200x800.png","button":{"title":"🎣 Cast Line","action":{"type":"launch_frame","name":"SeaCaster","url":"https://seacaster.app"}}}' />
-    
-    <!-- Base.dev App ID -->
-    <meta name="base:app_id" content="694919b7d77c069a945be54b" />
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="SeaCaster Tournament" />
-    <meta property="og:description" content="Join the daily fishing tournament on Base! Win USDC prizes." />
-    <meta property="og:image" content="https://seacaster.app/og-1200x800.png" />
-    <meta property="og:type" content="website" />
 
-    <title>SeaCaster</title>
-    <!-- Google Fonts - CoC Style Typography -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-      /* Mobile-only optimizations */
-      body {
-        overscroll-behavior: none;
-        user-select: none;
-        -webkit-tap-highlight-color: transparent;
-        padding-bottom: env(safe-area-inset-bottom);
-      }
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-    </style>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="https://fav.farm/🎣" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description"
+    content="A mobile-first competitive fishing game on Farcaster & Base. Cast your line, catch rare fish, and compete in tournaments." />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Farcaster Mini App Meta Tag -->
+  <meta property="fc:miniapp"
+    content='{"version":"1","imageUrl":"https://seacaster.app/og-1200x800.png","button":{"title":"🎣 Cast Line","action":{"type":"launch_frame","name":"SeaCaster","url":"https://seacaster.app"}}}' />
+
+  <!-- Base.dev App ID -->
+  <meta name="base:app_id" content="69492e70d77c069a945be567" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="SeaCaster Tournament" />
+  <meta property="og:description" content="Join the daily fishing tournament on Base! Win USDC prizes." />
+  <meta property="og:image" content="https://seacaster.app/og-1200x800.png" />
+  <meta property="og:type" content="website" />
+
+  <title>SeaCaster</title>
+  <!-- Google Fonts - CoC Style Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&family=Rubik:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    /* Mobile-only optimizations */
+    body {
+      overscroll-behavior: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -66,10 +74,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-ocean-900 text-white h-screen w-screen overflow-hidden">
-    <div id="root"></div>
+
+<body class="bg-ocean-900 text-white h-screen w-screen overflow-hidden">
+  <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>

@@ -88,9 +88,9 @@ module.exports = function handler(req, res) {
 
     const manifest = {
         accountAssociation: {
-            header: "eyJmaWQiOjE1MjYzMTIsInR5cGUiOiJhdXRoIiwia2V5IjoiMHhGMTc3MUI2NzY1NTg2ZGVDMDc2OUFCNTQ0QkRiOTVBMDczNTA4ZkU2In0",
-            payload: "eyJkb21haW4iOiJzZWFjYXN0ZXIuYXBwIn0",
-            signature: "m5td6cI/eYhyPrSW8aFCVeIAhgB4CfOP0dDOmBdMOc1vAg9qZN3kXOX1cctZrF1L/i2qzT5LE1/HoTTcWP8ErRs=",
+            header: "eyJmaWQiOjE1MjYzMTIsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhiNEJkZjQyQjc0ZDVBYUJhMzBjMTNlNWE5NUZmOTIzY2JDNTg0N0NiIn0",
+            payload: "eyJkb21haW4iOiJ3d3cuc2VhY2FzdGVyLmFwcCJ9",
+            signature: "cZiGVC+cQlOgjIXvhCr4EhVOU1kydVdvxAHN5WyTgukpiKYbeUPVbxRYN+r7mdjnTuPOmsleWcD/egCQIlgVJRs=",
         },
         frame: {
             version: "1",

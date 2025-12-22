@@ -1,17 +1,17 @@
 {
   "accountAssociation": {
-    "header": "eyJmaWQiOjE1MjYzMTIsInR5cGUiOiJhdXRoIiwia2V5IjoiMHhGMTc3MUI2NzY1NTg2ZGVDMDc2OUFCNTQ0QkRiOTVBMDczNTA4ZkU2In0",
-    "payload": "eyJkb21haW4iOiJzZWFjYXN0ZXIuYXBwIn0",
-    "signature": "m5td6cI/eYhyPrSW8aFCVeIAhgB4CfOP0dDOmBdMOc1vAg9qZN3kXOX1cctZrF1L/i2qzT5LE1/HoTTcWP8ErRs="
+    "header": "eyJmaWQiOjE1MjYzMTIsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhiNEJkZjQyQjc0ZDVBYUJhMzBjMTNlNWE5NUZmOTIzY2JDNTg0N0NiIn0",
+    "payload": "eyJkb21haW4iOiJ3d3cuc2VhY2FzdGVyLmFwcCJ9",
+    "signature": "cZiGVC+cQlOgjIXvhCr4EhVOU1kydVdvxAHN5WyTgukpiKYbeUPVbxRYN+r7mdjnTuPOmsleWcD/egCQIlgVJRs="
   },
   "frame": {
     "version": "1",
     "name": "SeaCaster",
-    "iconUrl": "https://seacaster.app/icon-200x200.png",
-    "homeUrl": "https://seacaster.app",
-    "imageUrl": "https://seacaster.app/og-1200x800.png",
+    "iconUrl": "https://www.seacaster.app/icon-200x200.png",
+    "homeUrl": "https://www.seacaster.app",
+    "imageUrl": "https://www.seacaster.app/og-1200x800.png",
     "buttonTitle": "🎣 Cast a Line",
-    "splashImageUrl": "https://seacaster.app/splash-200x200.png",
+    "splashImageUrl": "https://www.seacaster.app/splash-200x200.png",
     "splashBackgroundColor": "#0A3A52",
     "webhookUrl": "https://api.seacaster.app/webhook"
   },

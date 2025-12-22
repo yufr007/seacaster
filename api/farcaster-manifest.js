@@ -1,5 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
 // ═══════════════════════════════════════════════════════════
 // BUTTON TITLE LIBRARY
 // ═══════════════════════════════════════════════════════════
@@ -54,7 +52,7 @@ const TITLE_CATEGORIES = {
     ],
 };
 
-function getContextualTitle(): string {
+function getContextualTitle() {
     const hour = new Date().getHours();
     const day = new Date().getDay();
 
@@ -82,10 +80,10 @@ function getContextualTitle(): string {
 }
 
 // ═══════════════════════════════════════════════════════════
-// HANDLER
+// HANDLER (CommonJS for Vercel compatibility)
 // ═══════════════════════════════════════════════════════════
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = function handler(req, res) {
     const randomTitle = getContextualTitle();
 
     const manifest = {
@@ -97,13 +95,13 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
         frame: {
             version: "1",
             name: "SeaCaster",
-            iconUrl: `${process.env.VITE_APP_URL || 'https://seacaster.app'}/icon-200x200.png`,
-            homeUrl: process.env.VITE_APP_URL || 'https://seacaster.app',
-            imageUrl: `${process.env.VITE_APP_URL || 'https://seacaster.app'}/og-1200x800.png`,
+            iconUrl: "https://seacaster.app/icon-200x200.png",
+            homeUrl: "https://seacaster.app",
+            imageUrl: "https://seacaster.app/og-1200x800.png",
             buttonTitle: randomTitle,
-            splashImageUrl: `${process.env.VITE_APP_URL || 'https://seacaster.app'}/splash-200x200.png`,
+            splashImageUrl: "https://seacaster.app/splash-200x200.png",
             splashBackgroundColor: "#0A3A52",
-            webhookUrl: `${process.env.API_URL || 'https://api.seacaster.app'}/webhook`,
+            webhookUrl: "https://api.seacaster.app/webhook",
         },
         baseBuilderAddress: process.env.DEPLOYER_ADDRESS || "0xa98b74fa85C3cD4c3E214beBac8E4511A964c1f0",
         contractAddresses: {
@@ -115,9 +113,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
 
     res.status(200).json(manifest);
-}
+};

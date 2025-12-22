@@ -103,7 +103,7 @@ module.exports = function handler(req, res) {
             splashBackgroundColor: "#0A3A52",
             webhookUrl: "https://api.seacaster.app/webhook",
         },
-        baseBuilderAddress: process.env.DEPLOYER_ADDRESS || "0xa98b74fa85C3cD4c3E214beBac8E4511A964c1f0",
+        baseBuilderAddress: process.env.DEPLOYER_ADDRESS || "0x6ADef5fC93160A7d4F64c274946F52a573DC9b92",
         contractAddresses: {
             seasonPass: process.env.SEACASTER_PASS_ADDRESS || "0x1EBa3dDA0AFd1c20A61627730439249752180432",
             tournamentPool: process.env.TOURNAMENT_ESCROW_ADDRESS || "0x8Dc5bEdC24315F9f18111843FCA7Ecf86Af73013",

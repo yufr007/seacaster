@@ -88,9 +88,9 @@ module.exports = function handler(req, res) {
 
     const manifest = {
         accountAssociation: {
-            header: process.env.FARCASTER_HEADER || "",
-            payload: process.env.FARCASTER_PAYLOAD || "",
-            signature: process.env.FARCASTER_SIGNATURE || "",
+            header: "eyJmaWQiOjE1MjYzMTIsInR5cGUiOiJhdXRoIiwia2V5IjoiMHhGMTc3MUI2NzY1NTg2ZGVDMDc2OUFCNTQ0QkRiOTVBMDczNTA4ZkU2In0",
+            payload: "eyJkb21haW4iOiJzZWFjYXN0ZXIuYXBwIn0",
+            signature: "m5td6cI/eYhyPrSW8aFCVeIAhgB4CfOP0dDOmBdMOc1vAg9qZN3kXOX1cctZrF1L/i2qzT5LE1/HoTTcWP8ErRs=",
         },
         frame: {
             version: "1",

@@ -23,7 +23,7 @@ def clean(path: Path, output: Path) -> dict:
             shutil.copyfile(path, output)
         return {'file': path.name, 'status': 'already transparent; unchanged'}
     rgb = pixels[:, :, :3].astype(np.int16)
-    eligible = (rgb.max(axis=2) - rgb.min(axis=2) <= 18) & (rgb.min(axis=2) >= 52)
+    eligible = (rgb.max(axis=2) - rgb.min(axis=2) <= 18) & (rgb.min(axis=2) >= (25 if path.stem == "cod" else 52))
     labels, _ = ndimage.label(eligible)
     border_ids = np.unique(np.concatenate((labels[0], labels[-1], labels[:, 0], labels[:, -1])))
     border_ids = border_ids[border_ids != 0]

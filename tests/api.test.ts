@@ -6,12 +6,13 @@ import { parseSiweMessage } from 'viem/siwe';
 import { verifyMessage } from 'viem';
 import { createApp, initializeDatabase } from '../backend/src/app.ts';
 import { newReel, stepReel } from '../game/engine.ts';
-// Disposable test fixture only; never a deployment key.
+// Disposable fixture only, never a deployment key.
 const signer = privateKeyToAccount(`0x${'11'.repeat(32)}`);
-const other = `0x${'22'.repeat(20)}`;
+const other: `0x${string}` = `0x${'22'.repeat(20)}`;
 const origin = 'http://localhost:5173';
 test('API rejects forged identity and replays, uses real PostgreSQL, and awards catches once', { timeout: 30000 }, async t => {
   assert.ok(process.env.DATABASE_URL, 'DATABASE_URL is required; do not silently skip API verification');
+  assert.ok(new URL(process.env.DATABASE_URL).pathname.endsWith('_test'), 'Use a disposable database ending in _test');
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
   await initializeDatabase(pool); await pool.query('TRUNCATE sessions,auth_nonces,players CASCADE');
   const app = createApp(pool, { origin, chainId: 84532, secure: false }, async (message, signature) => {
@@ -50,7 +51,7 @@ test('API rejects forged identity and replays, uses real PostgreSQL, and awards 
   let reel = newReel(), hold = true;
   const inputs = [{ at: 0, hold }];
   while (reel.status === 'playing') {
-    const next = reel.tension > .7 ? false : reel.tension < .35 ? true : hold;
+    const next: boolean = reel.tension > .7 ? false : reel.tension < .35 ? true : hold;
     if (next !== hold) { hold = next; inputs.push({ at: reel.elapsed, hold }); }
     reel = stepReel(reel, hold, hooked.data.seed);
   }

@@ -1,0 +1,29 @@
+name: Normalize legacy fish art
+on:
+  push:
+    branches: [revamp/base-app-v2]
+    paths: [.github/workflows/normalize-legacy-art.yml]
+permissions:
+  contents: write
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==12.3.0 numpy==2.3.5 scipy==1.16.3
+      - run: python scripts/normalize_fish_art.py --source public/assets/fish --output public/assets/fish
+      - name: Commit only the five inspected legacy sprites
+        run: |
+          git fetch origin revamp/base-app-v2
+          if [ "$(git rev-parse origin/revamp/base-app-v2)" != "$GITHUB_SHA" ]; then
+            echo 'Branch advanced; leave newer work untouched.'
+            exit 1
+          fi
+          git add public/assets/fish/sardine.png public/assets/fish/mackerel.png public/assets/fish/seabass.png public/assets/fish/cod.png public/assets/fish/leviathan.png
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix(art): replace baked checkerboards with real sprite transparency'
+          git push origin HEAD:refs/heads/revamp/base-app-v2

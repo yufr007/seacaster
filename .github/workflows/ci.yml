@@ -29,15 +29,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --ignore-scripts --no-audit
+      - run: npm ci --ignore-scripts --no-audit
       - run: npm test
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: contract-verification
-          path: |
-            contracts/package-lock.json
-            contracts/artifacts/
+          path: contracts/artifacts/
           retention-days: 7
   web-and-api:
     runs-on: ubuntu-latest
@@ -60,12 +58,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Resolve the revised dependency graph
-        run: npm install --ignore-scripts --no-audit
+      - run: npm ci --ignore-scripts --no-audit
       - run: npm run build
       - run: npm run test:api
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - name: Print browser failure context
+        if: failure()
+        run: find test-results -name error-context.md -exec cat {} \;
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -73,6 +73,5 @@ jobs:
           path: |
             test-results/
             playwright-report/
-            package-lock.json
             dist/
           retention-days: 7

@@ -1,7 +1,7 @@
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm install --ignore-scripts --no-audit
+RUN npm ci --ignore-scripts --no-audit
 COPY . .
 ARG VITE_CHAIN_ID=84532
 ARG VITE_RPC_URL=

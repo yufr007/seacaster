@@ -12,10 +12,10 @@ This is source under active release verification, not a deployed or independentl
 
 ## Run locally
 
-Node 22.16 or newer is required.
+Node 22.16 or newer is required. Both dependency graphs have committed lockfiles.
 
 ```bash
-npm install
+npm ci
 cp .env.example .env
 npm run dev
 ```
@@ -36,14 +36,15 @@ Use the development DATABASE_URL from .env.example. This database is disposable 
 ```bash
 npm test
 npm run build
-# Use a separate disposable database whose name ends in _test:
+# Create a separate disposable test database:
+docker compose exec postgres createdb -U seacaster seacaster_test
 DATABASE_URL=postgresql://seacaster:local-development-only@localhost:5432/seacaster_test npm run test:api
 npx playwright install chromium
 npm run test:e2e
-cd contracts && npm install && npm test
+cd contracts && npm ci && npm test
 ```
 
-The API test creates/truncates its test tables and refuses a database name without the _test suffix. The browser test exercises the real rendered fishing controls, collection persistence and mobile layout. A passing build is not equivalent to real-device or visual approval.
+The API test creates/truncates its test tables and refuses a database name without the _test suffix. The browser tests exercise real rendered fishing controls, collection persistence, missed-bite recovery, mobile layout and the unconfigured wallet state. A passing build is not equivalent to real-device or visual approval.
 
 ## Code boundaries
 

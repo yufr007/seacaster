@@ -27,7 +27,11 @@ test('guest fishing, collection and tackle work without a wallet', async ({ page
   }
   await page.mouse.up();
   await expect(page.getByRole('dialog', { name: 'Catch landed' })).toBeVisible({ timeout: 5000 });
-  await page.locator('.catch-art img').evaluate(async image => { await (image as HTMLImageElement).decode(); });
+  await page.locator('.catch-art img').evaluate(async image => {
+    await (image as HTMLImageElement).decode();
+    // Measure settled layout, not the intentional translate/scale entrance animation.
+    await Promise.all(image.getAnimations().map(animation => animation.finished));
+  });
   const bounds = await page.evaluate(() => {
     const frame = document.querySelector('.catch-art')!.getBoundingClientRect();
     const image = document.querySelector('.catch-art img')!.getBoundingClientRect();

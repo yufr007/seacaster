@@ -1,0 +1,30 @@
+name: Resolve V2 lockfiles
+on:
+  push:
+    branches: [revamp/base-app-v2]
+    paths: [.github/workflows/resolve-lockfiles.yml]
+permissions:
+  contents: write
+jobs:
+  lockfiles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --package-lock-only --ignore-scripts --no-audit
+      - run: npm install --package-lock-only --ignore-scripts --no-audit
+        working-directory: contracts
+      - name: Save only lockfiles, without overwriting newer work
+        run: |
+          git fetch origin revamp/base-app-v2
+          if [ "$(git rev-parse origin/revamp/base-app-v2)" != "$GITHUB_SHA" ]; then
+            echo 'Branch advanced; leave newer work untouched.'
+            exit 1
+          fi
+          git add package-lock.json contracts/package-lock.json
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'build: lock SeaCaster V2 dependencies'
+          git push origin HEAD:refs/heads/revamp/base-app-v2

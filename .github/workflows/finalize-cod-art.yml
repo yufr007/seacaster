@@ -1,0 +1,44 @@
+name: Finalize original cod transparency
+on:
+  push:
+    branches: [revamp/base-app-v2]
+    paths: [.github/workflows/finalize-cod-art.yml]
+permissions:
+  contents: write
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==12.3.0 numpy==2.3.5 scipy==1.16.3
+      - name: Reprocess only the original cod with its darker checkerboard threshold
+        run: |
+          git fetch --depth=1 origin fd98acb17ff3d31fe618fddae039718cb9bbaa7f
+          mkdir -p /tmp/seacaster-original-art
+          git show fd98acb17ff3d31fe618fddae039718cb9bbaa7f:public/assets/fish/cod.png > /tmp/seacaster-original-art/cod.png
+          python - <<'PY'
+          from pathlib import Path
+          source = Path('scripts/normalize_fish_art.py')
+          text = source.read_text()
+          before = '(rgb.min(axis=2) >= 52)'
+          after = '(rgb.min(axis=2) >= (25 if path.stem == "cod" else 52))'
+          assert text.count(before) == 1, 'Unexpected normalizer version'
+          source.write_text(text.replace(before, after))
+          from scripts.normalize_fish_art import clean
+          print(clean(Path('/tmp/seacaster-original-art/cod.png'), Path('public/assets/fish/cod.png')))
+          PY
+      - name: Commit only the inspected asset and its reproduction threshold
+        run: |
+          git fetch origin revamp/base-app-v2
+          if [ "$(git rev-parse origin/revamp/base-app-v2)" != "$GITHUB_SHA" ]; then
+            echo 'Branch advanced; leave newer work untouched.'
+            exit 1
+          fi
+          git add public/assets/fish/cod.png scripts/normalize_fish_art.py
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix(art): remove remaining dark checkerboard fringe from cod'
+          git push origin HEAD:refs/heads/revamp/base-app-v2

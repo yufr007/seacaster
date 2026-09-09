@@ -1,237 +1,56 @@
-import React, { useState, useEffect } from 'react';
-import FishingScene from './components/FishingSceneV2';
-import GameHUD from './components/GameHUD';
-import FishModal from './components/FishModal';
-import TournamentBoard from './components/TournamentBoard';
-import ShopScreen from './components/ShopScreen';
-import ProfileScreen from './components/ProfileScreen';
-import LeaderboardScreen from './components/LeaderboardScreen';
-import TrophyRoom from './components/TrophyRoom';
-import BossBattle from './components/BossBattle';
-import ToastContainer from './components/Toast';
-import ErrorBoundary from './components/ErrorBoundary';
-import AnimatedLoading from './components/AnimatedLoading';
-import { Home, Trophy, ShoppingBag } from 'lucide-react';
-
-import { MenuScreen } from './components/MenuScreen';
-import { farcaster } from './services/farcaster';
-import { useGameStore } from './store/gameStore';
-import { useUIStore } from './store/uiStore';
-import { Web3Provider } from './providers/Web3Provider';
-import { useAccount } from 'wagmi';
-import { useContracts } from './hooks/useContracts';
-import { Haptics, triggerHaptic } from './utils/haptics';
-import { useWakeLock } from './hooks/useWakeLock';
-
-import { WalletConnect } from './components/WalletConnect';
-
-// API Integration hooks
-import { useSyncProfile, useGameState } from './hooks/useGameAPI';
-import { useAuthSetup } from './hooks/useTournamentAPI';
-
-
-const SeaCasterApp: React.FC = () => {
-  const [screen, setScreen] = useState<'menu' | 'game' | 'shop'>('menu');
-  const [isReady, setIsReady] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [showTrophyRoom, setShowTrophyRoom] = useState(false);
-  const [showBossBattle, setShowBossBattle] = useState(false);
-  const { userStats, regenerateCasts, checkDailyLogin, syncPremiumStatus } = useGameStore();
-  const { addToast } = useUIStore();
-
-  // Web3 state sync
-  const { address, isConnected } = useAccount();
-  const { checkSeasonPass } = useContracts();
-
-  // PWA Features: Keep screen on during fishing
-  useWakeLock(screen === 'game');
-
-  // API Integration: Sync profile with backend
-  const syncProfileMutation = useSyncProfile();
-  const { user: apiUser, isLoading: apiLoading, refetchUser } = useGameState();
-
-  // Setup auth token (uses Farcaster auth)
-  const authToken = userStats.fid ? `fid:${userStats.fid}` : null;
-  useAuthSetup(authToken);
-
-  // Verify Season Pass on wallet connect
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { BookOpen, Anchor, Trophy, Sun, Settings, Wallet, Compass, Fish } from 'lucide-react';
+import { FISH, levelForXP, nextLevelXP } from './game/engine.ts';
+import { usePlayer } from './app/player';
+import { useFishing } from './app/useFishing';
+import { Modal } from './app/Modal';
+import type { Panel } from './app/Panels';
+import './index.css';
+const Scene = lazy(() => import('./app/Scene'));
+const Panels = lazy(() => import('./app/Panels'));
+const WalletPanel = lazy(() => import('./app/WalletPanel'));
+export default function App() {
+  const profile = usePlayer(s => s.profile), address = usePlayer(s => s.address);
+  const notice = usePlayer(s => s.notice), passActive = usePlayer(s => s.passActive);
+  const game = useFishing();
+  const [panel, setPanel] = useState<Panel | null>(null);
+  const [walletLoaded, setWalletLoaded] = useState(false), [walletOpen, setWalletOpen] = useState(false);
+  const fishing = !['idle', 'lost', 'caught'].includes(game.phase);
+  useEffect(() => { if (!notice) return; const timer = setTimeout(() => usePlayer.getState().notify(''), 6000); return () => clearTimeout(timer); }, [notice]);
   useEffect(() => {
-    if (isConnected && address) {
-      checkSeasonPass(address).then((isActive) => {
-        if (isActive && !userStats.premium) {
-          syncPremiumStatus(true);
-          addToast("Restored Season Pass from On-Chain!", "success");
-        }
-      });
-    }
-  }, [isConnected, address, checkSeasonPass, userStats.premium, syncPremiumStatus, addToast]);
-
-
-
-  // Lock orientation to portrait (mobile PWA)
-  useEffect(() => {
-    const lockOrientation = async () => {
-      const screenAny = window.screen as any;
-      if (screenAny.orientation && screenAny.orientation.lock) {
-        try {
-          await screenAny.orientation.lock('portrait');
-          console.log('[Orientation] Locked to portrait');
-        } catch (err) {
-          console.warn('[Orientation] Lock failed (may require fullscreen):', err);
-        }
-      }
+    const down = (event: KeyboardEvent) => {
+      if (event.code !== 'Space' || panel || walletOpen || game.phase === 'caught' || (event.target as HTMLElement)?.closest('button,input,select,textarea')) return;
+      event.preventDefault();
+      if (game.phase === 'reeling') game.hold(true);
+      else if (!event.repeat && game.phase === 'bite') void game.hook();
+      else if (!event.repeat && ['idle', 'lost'].includes(game.phase)) void game.cast();
     };
-    lockOrientation();
-  }, []);
-
-  useEffect(() => {
-    const initApp = async () => {
-      // 1. Init Farcaster SDK
-      await farcaster.init();
-      const user = farcaster.getUser();
-      if (user) {
-        useGameStore.setState(state => ({
-          userStats: { ...state.userStats, fid: user.fid, username: user.username }
-        }));
-
-        // Sync with backend API (non-blocking)
-        syncProfileMutation.mutate({
-          fid: user.fid,
-          username: user.username || `user_${user.fid}`,
-          pfpUrl: user.pfpUrl,
-        });
-      }
-
-      // 2. Trigger initial energy calculation (resume from idle)
-      regenerateCasts();
-
-      // 3. Check Daily Login
-      const loginReward = checkDailyLogin();
-      if (loginReward) {
-        setTimeout(() => addToast(loginReward, 'success'), 2000);
-      }
-
-      // Simulate loading time for suspense
-      setTimeout(() => setIsReady(true), 1000);
-    };
-    initApp();
-
-    // 4. Heartbeat Loop (Check every minute)
-    const interval = setInterval(() => {
-      regenerateCasts();
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, [regenerateCasts, checkDailyLogin, addToast]);
-
-  // Haptic feedback wrapper
-  const handleScreenChange = (newScreen: 'menu' | 'game' | 'shop') => {
-    triggerHaptic(Haptics.soft);
-    setScreen(newScreen);
-  };
-
-  const handleOpenProfile = () => {
-    triggerHaptic(Haptics.soft);
-    setShowProfile(true);
-  };
-
-  if (!isReady) {
-    return <AnimatedLoading variant="default" showTips={true} />;
-  }
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100dvh',
-        minHeight: '100vh',
-        width: '100%',
-        maxWidth: '480px',
-        margin: '0 auto',
-        position: 'relative',
-        background: '#0a1628',
-        overflow: 'hidden',
-        fontFamily: "'Nunito', -apple-system, sans-serif"
-      }}
-    >
-      <div className="absolute top-4 right-4 z-50">
-        <WalletConnect />
-      </div>
-
-      {/* Landscape orientation warning */}
-      <div className="landscape-warning">
-        <div className="text-6xl mb-4">📱</div>
-        <div className="text-xl font-bold">Please rotate to portrait mode</div>
-        <div className="text-sm text-gray-400 mt-2">SeaCaster is designed for portrait orientation</div>
-      </div>
-
-      <ToastContainer />
-
-      {/* Main Content Area */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#0a1628', height: '100%' }}>
-        {screen === 'menu' && (
-          <MenuScreen
-            onCompete={() => handleScreenChange('game')}
-            onShop={() => handleScreenChange('shop')}
-            onConnect={() => console.log('Connect wallet clicked')}
-            onTrophyRoom={() => { triggerHaptic(Haptics.soft); setShowTrophyRoom(true); }}
-            onLeaderboard={() => { triggerHaptic(Haptics.soft); setShowLeaderboard(true); }}
-            onBossBattle={() => { triggerHaptic(Haptics.medium); setShowBossBattle(true); }}
-            xp={userStats.xp}
-            coins={userStats.coins}
-          />
-        )}
-
-        {screen === 'game' && (
-          <>
-            <GameHUD onOpenProfile={handleOpenProfile} />
-            <FishingScene onBack={() => handleScreenChange('menu')} />
-            <FishModal />
-          </>
-        )}
-
-        {/* Keeping TournamentBoard accessible via Compete flow if needed, or integrating into Menu later.
-            For now, 'Compete' button on Menu goes to 'game' (Fishing) per user request, 
-            Usage of TournamentBoard might be inside GameHUD or separate. 
-            The workflow logic said "onCompete={() => setScreen('game')}", so sticking to that.
-        */}
-
-        {screen === 'shop' && (
-          <ShopScreen onBack={() => handleScreenChange('menu')} />
-        )}
-      </div>
-
-      {/* Modal Layer */}
-      <ProfileScreen isOpen={showProfile} onClose={() => setShowProfile(false)} />
-      <LeaderboardScreen isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
-      <TrophyRoom isOpen={showTrophyRoom} onClose={() => setShowTrophyRoom(false)} />
-      <BossBattle
-        isOpen={showBossBattle}
-        onClose={() => setShowBossBattle(false)}
-        onVictory={(rewards) => {
-          useGameStore.setState(state => ({
-            userStats: {
-              ...state.userStats,
-              xp: state.userStats.xp + rewards.xp,
-              coins: state.userStats.coins + rewards.coins
-            }
-          }));
-          addToast(`Boss defeated! +${rewards.xp} XP, +${rewards.coins} coins`, 'success');
-        }}
-      />
-
-    </div>
-  );
-};
-
-const App = () => (
-  <ErrorBoundary>
-    <Web3Provider>
-      <SeaCasterApp />
-    </Web3Provider>
-  </ErrorBoundary>
-);
-
-export default App;
+    const up = (event: KeyboardEvent) => { if (event.code === 'Space') game.hold(false); };
+    window.addEventListener('keydown', down); window.addEventListener('keyup', up);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
+  }, [game.phase, game.hold, game.hook, game.cast, panel, walletOpen]);
+  const caughtFish = game.caught ? FISH.find(f => f.id === game.caught!.speciesId) : null;
+  const level = levelForXP(profile.xp), levelStart = (level - 1) ** 2 * 100;
+  const xpProgress = level >= 100 ? 100 : (profile.xp - levelStart) / (nextLevelXP(profile.xp) - levelStart) * 100;
+  const status = { idle: 'Find your quiet. Cast your line.', casting: 'Out over the water…', waiting: 'Watch the float. Something is stirring.', bite: 'A bite! Set the hook.', reeling: game.holding ? 'Reeling in. Watch your tension.' : 'Giving it slack. Do not let the line go loose.', saving: 'Landing your catch…', caught: 'A story for the journal.', lost: 'The one that got away. Try another cast.' }[game.phase];
+  const nav = [ ['collection', BookOpen, 'Journal'], ['tackle', Anchor, 'Tackle'], ['challenges', Sun, 'Daily'], ['leaderboard', Trophy, 'Board'], ['settings', Settings, 'Settings'] ] as const;
+  return <main className="game-shell">
+    <Suspense fallback={<div className="seascape" />}><Scene phase={game.phase} /></Suspense>
+    <header className="game-header"><div className="brand"><Compass aria-hidden="true" /><div><h1>SeaCaster</h1><span>{passActive ? 'SEA PASS · THE OPEN WATER' : 'THE OPEN WATER'}</span></div></div><button className="wallet-button" disabled={fishing} onClick={() => { setWalletLoaded(true); setWalletOpen(true); }}><Wallet size={16} aria-hidden="true" /><span>{address ? `${address.slice(0, 6)}…${address.slice(-4)}` : 'Save with Base'}</span></button></header>
+    <div className="player-strip"><div className="level-badge">{level}</div><div className="xp-detail"><span>Level {level}<small>{address ? 'Online angler' : 'Guest · saved on this device'}</small></span><div className="xp-track"><i style={{ width: `${xpProgress}%` }} /></div></div><div className="coins"><img src="/assets/ui/gold_coin_v2.png" alt="" /><strong>{profile.coins.toLocaleString()}</strong></div></div>
+    <nav className="game-nav" aria-label="Game panels">{nav.map(([id, Icon, label]) => <button key={id} aria-label={`Open ${id}`} disabled={fishing} onClick={() => setPanel(id)}><Icon size={20} aria-hidden="true" /><span>{label}</span></button>)}</nav>
+    <section className="fishing-controls" aria-label="Fishing controls"><p className="water-location">SALTWATER COVE <span>·</span> {profile.bait === 'worm' ? 'Basic worm' : profile.bait === 'shrimp' ? 'Premium shrimp' : 'Rare squid'}</p><p className="fishing-status" role="status">{status}</p>
+      {game.phase === 'reeling' && <div className="reel-instruments"><div className="meter-label"><span>Line tension</span><strong>{Math.round(game.reel.tension * 100)}%</strong></div><div role="meter" aria-label="Line tension" aria-valuenow={Math.round(game.reel.tension * 100)} aria-valuemin={0} aria-valuemax={100} className={`tension-track ${game.reel.tension > .78 ? 'danger' : ''}`}><i style={{ width: `${game.reel.tension * 100}%` }} /></div><div className="meter-label"><span>Bringing it home</span><span>{Math.round(game.reel.progress * 100)}%</span></div><progress value={game.reel.progress} max={1} aria-label="Reel progress" /></div>}
+      {['idle', 'lost'].includes(game.phase) && <button className="cast-button" aria-label="Cast line" onClick={() => void game.cast()}><Fish aria-hidden="true" /> Cast your line</button>}
+      {game.phase === 'bite' && <button className="cast-button bite-button" aria-label="Hook fish" onClick={() => void game.hook()}>Set the hook</button>}
+      {game.phase === 'reeling' && <button className={`cast-button reel-button ${game.holding ? 'holding' : ''}`} aria-label="Hold to reel" onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); game.hold(true); }} onPointerUp={() => game.hold(false)} onPointerCancel={() => game.hold(false)} onLostPointerCapture={() => game.hold(false)} onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); game.hold(true); } }} onKeyUp={() => game.hold(false)}>{game.holding ? 'Reeling…' : 'Hold to reel'}<small>Release to ease tension</small></button>}
+      {['casting', 'waiting', 'saving'].includes(game.phase) && <div className="waiting-line"><span /><span /><span /></div>}
+      {fishing && game.phase !== 'saving' && <button className="cancel-cast" onClick={game.reset}>Cancel cast</button>}
+      {!fishing && <small className="play-hint">No wallet needed to fish. No transaction per cast.</small>}
+    </section>
+    {notice && <div className="toast" role="alert">{notice}<button aria-label="Dismiss notification" onClick={() => usePlayer.getState().notify('')}>×</button></div>}
+    {panel && <Suspense fallback={<Modal title="Opening your kit…" onClose={() => setPanel(null)}><p>Loading…</p></Modal>}><Panels panel={panel} onClose={() => setPanel(null)} /></Suspense>}
+    {walletLoaded && <Suspense fallback={walletOpen ? <Modal title="Connecting to Base" onClose={() => setWalletOpen(false)}><p>Loading wallet tools…</p></Modal> : null}><WalletPanel open={walletOpen} onClose={() => setWalletOpen(false)} /></Suspense>}
+    {game.phase === 'caught' && caughtFish && game.caught && <Modal title="Catch landed" onClose={game.reset}><div className="catch-reveal"><small className={`rarity rarity-${caughtFish.rarity.toLowerCase()}`}>{caughtFish.rarity}{profile.catches[caughtFish.id]?.count === 1 ? ' · FIRST DISCOVERY' : ''}</small><div className="catch-art"><img src={caughtFish.image} alt={caughtFish.name} /></div><h2>{caughtFish.name}</h2><p className="catch-weight">{game.caught.weight.toLocaleString()} <small>kg</small></p><p>Added to your journal. {profile.catches[caughtFish.id]?.count} caught.</p><button className="primary" onClick={game.reset}>Keep fishing</button></div></Modal>}
+  </main>;
+}

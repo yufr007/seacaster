@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --experimental-strip-types --test tests/engine.test.ts tests/cast.test.ts
+      - run: npm test
   contracts:
     runs-on: ubuntu-latest
     timeout-minutes: 10

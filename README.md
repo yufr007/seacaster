@@ -10,6 +10,27 @@ A connected wallet can sign in through SIWE to a separate server-authoritative j
 
 This is source under active release verification, not a deployed or independently audited mainnet product. Read [the release checklist](docs/RELEASE.md) before enabling purchases.
 
+## A little life on the water
+
+The title screen opens into your harbour: real XP, earned coins, your field journal, daily challenge progress and the next fishing berth. Go fishing without connecting a wallet.
+
+Swipe **upward over the water** to wind up and cast. Swipe direction and length move the landing point; they do not buy or alter catch odds. Tap-to-cast and Space remain available. Watch the bobber dip, set the hook, then hold to reel and release before the tension gets too high. The catch jumps aboard before the journal reveal.
+
+| Berth | Unlock | Surroundings |
+| --- | --- | --- |
+| Driftwood Pier | Start | Timber deck, bait chest, bucket and lantern |
+| Willow Inlet | 3 catches | Estuary banks, reeds, stones and lily pads |
+| Little Skipper | 10 catches | Rocking painted fishing boat |
+| Sunseeker Yacht | 30 catches | Cream hull, teak-coloured deck and cabin |
+
+Berths are earned through catches, cost no coins, and persist with the active profile. Server-authenticated selection checks the same unlock rules; guest saves remain separate. Use the physical **Bait box** button on the deck to select worms, shrimp or squid, or restock through the tackle shop.
+
+The 3D world uses original stylized geometry, animated water, curious fish, distant sailboats, gulls, clouds, islands and a lighthouse. Lighting follows the device's local clock, without GPS or an astronomical sunrise calculation. The existing Sea Pass Moonlit Cove setting remains an optional visual override.
+
+Sound is opt-in: procedural Web Audio supplies surf, cast/splash/reel effects, sparse birds and catch cues. Settings separately control ambience, effects, haptics and low-power mode. No external sound download is required. Reduced motion suppresses decorative animation; hidden pages suspend audio and rendering. Low-power mode keeps the illustrated scene and touch gameplay.
+
+See [the immersion specification](docs/IMMERSION.md) for the scope and verification boundaries. This iteration does not change contracts, payment prices or fishing reward probabilities.
+
 ## Run locally
 
 Node 22.16 or newer is required. Both dependency graphs have committed lockfiles.
@@ -44,7 +65,7 @@ npm run test:e2e
 cd contracts && npm ci && npm test
 ```
 
-The API test creates/truncates its test tables and refuses a database name without the _test suffix. The browser tests exercise real rendered fishing controls, collection persistence, missed-bite recovery, mobile layout and the unconfigured wallet state. A passing build is not equivalent to real-device or visual approval.
+The API test creates/truncates its test tables and refuses a database name without the _test suffix. The browser tests exercise real touch swipes and reeling, collection persistence, missed-bite recovery, all four berths, local timezone lighting, settings persistence, live audio generation/muting and the unconfigured wallet state. The mobile animation test records the actual browser flow; Playwright video itself has no audio track. A passing build is not equivalent to real-device or visual approval.
 
 ## Code boundaries
 

@@ -20,3 +20,11 @@ The sky follows device-local time (no GPS prompt, no astronomical sunrise claim)
 4. Replace the presentation scene with shared stylized world components and phase-driven animation. Animate refs, not React state, in the render loop; cap DPR and pause hidden canvases.
 5. Verify core flows, real touch swipes, cancel/multitouch, unlocked platforms, day/night, sound/persistence, viewport bounds, WebGL fallback and existing auth/economy regressions. Capture mobile/desktop screenshots and short rendered animation evidence.
 6. Remove the temporary dependency-snapshot workflow, publish tested changes to the existing revamp branch, and update PR #10. No mainnet deployment or merge is implicit.
+
+## Verification boundaries
+
+The remote Chromium runner is used for rendered tests because this workspace blocks local browser navigation. Domain and TypeScript checks also run locally. Touch tests use browser-native touch events; the complete mobile fight is recorded, rather than setting a synthetic catch in application state. Platform screenshot tests use an explicitly test-only guest profile to cover unlocked environments. Domain and API tests independently reject unearned platform selection.
+
+The audio check instruments a real AudioContext in the test harness, verifies non-zero waveform output after a user gesture, and verifies suspension on mute. It does not constitute an auditory mix review on phone speakers. Browser video contains no audio track.
+
+Device-local time is an ambient day/dusk/night cycle, not weather or calculated latitude-specific sunrise. The existing illustrated low-power fallback is retained; 3D boat geometry, splashes and decorative wildlife are not rendered in that mode. Live iPhone/Android/Base App testing and sustained thermal/frame-time measurements remain physical-device checks. No new onchain deployment or transaction is needed for this presentation/progression update.

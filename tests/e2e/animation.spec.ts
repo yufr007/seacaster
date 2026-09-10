@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { enterFishing, touchSwipe } from './support';
 
+test.use({ viewport: { width: 390, height: 844 }, timezoneId: 'Pacific/Honolulu', video: { mode: 'on', size: { width: 390, height: 844 } } });
+
 test.describe('mobile animation evidence', () => {
-  test.use({ viewport: { width: 390, height: 844 }, timezoneId: 'Pacific/Honolulu', video: { mode: 'on', size: { width: 390, height: 844 } } });
   test('a real swipe, bobber, tension fight and landing complete with the soundscape enabled', async ({ page }, testInfo) => {
     test.setTimeout(75000);
     const errors: string[] = [];

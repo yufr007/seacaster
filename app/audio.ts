@@ -1,4 +1,6 @@
 /** Original procedural sound design. No downloads, trackers, samples or licence dependency. */
+import { platformAtmosphere } from '../game/world';
+import type { PlatformId } from '../game/world';
 export type SoundSettings = { sound: boolean; ambience: number; effects: number };
 export type SoundCue = 'cast' | 'splash' | 'hook' | 'catch' | 'lost' | 'wood' | 'unlock';
 class OceanAudio {
@@ -10,13 +12,13 @@ class OceanAudio {
   private settings: SoundSettings = { sound: false, ambience: .55, effects: .7 };
   private reel = false;
   private night = false;
-  private river = false;
+  private platform: PlatformId = 'pier';
   private ticks = 0;
   configure(settings: SoundSettings) {
     this.settings = settings;
     if (!settings.sound) { void this.context?.suspend().catch(() => {}); return; }
     if (this.context && this.ambient && this.fx) {
-      this.ambient.gain.setTargetAtTime(settings.ambience * .12, this.context.currentTime, .15);
+      this.ambient.gain.setTargetAtTime(settings.ambience * .12 * platformAtmosphere(this.platform).water, this.context.currentTime, .15);
       this.fx.gain.setTargetAtTime(settings.effects * .2, this.context.currentTime, .03);
     }
   }
@@ -43,13 +45,15 @@ class OceanAudio {
           this.ticks++;
           if (this.reel) this.tone(260 + (this.ticks % 3) * 70, .025, .16, 'triangle');
           if (this.ticks % 145 === 0 && !this.night && this.settings.ambience > 0) this.gull();
+          const cadence = Math.max(120, Math.round(220 / platformAtmosphere(this.platform).ambientRate));
+          if (this.ticks % cadence === 0 && this.settings.ambience > 0) this.berthTexture();
         }, 120);
         this.configure(this.settings);
       }
       if (!document.hidden) void this.context.resume().catch(() => {});
     } catch { /* Audio is optional, never block a cast. */ }
   }
-  environment(night: boolean, river: boolean) { this.night = night; this.river = river; }
+  environment(night: boolean, platform: PlatformId) { this.night = night; this.platform = platform; this.configure(this.settings); }
   reeling(value: boolean) { this.reel = value; }
   suspend() { this.reel = false; void this.context?.suspend().catch(() => {}); }
   private noise(seconds: number) {
@@ -65,16 +69,27 @@ class OceanAudio {
     gain.gain.setValueAtTime(.0001, t); gain.gain.exponentialRampToValueAtTime(Math.max(.001, volume), t + .009); gain.gain.exponentialRampToValueAtTime(.0001, t + duration);
     o.connect(gain); gain.connect(bus); o.start(t); o.stop(t + duration + .02); o.onended = () => { o.disconnect(); gain.disconnect(); };
   }
-  private burst(duration: number, frequency: number, volume: number) {
-    const c = this.context; if (!c || !this.fx || c.state !== 'running') return;
+  private burst(duration: number, frequency: number, volume: number, bus = this.fx) {
+    const c = this.context; if (!c || !bus || c.state !== 'running') return;
     const source = c.createBufferSource(), filter = c.createBiquadFilter(), gain = c.createGain();
     source.buffer = this.noise(duration); filter.type = 'bandpass'; filter.frequency.value = frequency; filter.Q.value = .4;
     gain.gain.setValueAtTime(volume, c.currentTime); gain.gain.exponentialRampToValueAtTime(.0001, c.currentTime + duration);
-    source.connect(filter); filter.connect(gain); gain.connect(this.fx); source.start(); source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
+    source.connect(filter); filter.connect(gain); gain.connect(bus); source.start(); source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
   }
   private gull() {
-    if (this.river) { this.tone(2300, .13, .18, 'sine', 0, 3100, this.ambient); this.tone(2600, .15, .16, 'sine', .22, 3300, this.ambient); }
+    if (this.platform === 'river') { this.tone(2300, .13, .18, 'sine', 0, 3100, this.ambient); this.tone(2600, .15, .16, 'sine', .22, 3300, this.ambient); }
     else { this.tone(1050, .35, .22, 'sine', 0, 650, this.ambient); this.tone(1150, .3, .18, 'sine', .42, 750, this.ambient); }
+  }
+  private berthTexture() {
+    if (this.platform === 'river') {
+      const base = this.night ? 1700 : 2350; this.tone(base, .09, .055, 'sine', 0, base * 1.16, this.ambient); this.tone(base * 1.08, .08, .04, 'sine', .16, base * 1.25, this.ambient);
+    } else if (this.platform === 'boat') {
+      this.burst(.09, 320, .05, this.ambient); this.tone(145, .1, .045, 'triangle', .02, 112, this.ambient);
+    } else if (this.platform === 'yacht') {
+      this.tone(760, .08, .035, 'triangle', 0, 610, this.ambient); this.tone(1180, .06, .025, 'sine', .06, 900, this.ambient);
+    } else {
+      this.burst(.07, 410, .045, this.ambient); this.tone(180, .08, .035, 'triangle', 0, 135, this.ambient);
+    }
   }
   cue(cue: SoundCue) {
     if (!this.settings.sound || this.context?.state !== 'running') return;

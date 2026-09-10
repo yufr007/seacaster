@@ -5,7 +5,7 @@ import { BufferGeometry, Float32BufferAttribute, Group, Line as ThreeLine, LineB
 import type { WorldProps } from './types';
 import { FishModel, BaitModel, Block } from './Props';
 import { FISH } from '../../game/engine';
-import { castArc } from '../../game/world';
+import { castArc, castTarget } from '../../game/world';
 import { usePlayer } from '../player';
 
 function FishPortrait({ species }: { species: string }) {
@@ -14,7 +14,7 @@ function FishPortrait({ species }: { species: string }) {
   return <Billboard><mesh><planeGeometry args={[2.6, 2]} /><meshBasicMaterial map={texture} transparent depthWrite={false} alphaTest={.02} /></mesh></Billboard>;
 }
 export function FishingRig({ phase, motion, reduced, home, platform, species }: Pick<WorldProps, 'phase' | 'motion' | 'reduced' | 'home' | 'platform' | 'species'>) {
-  const rod = useRef<Group>(null), shaft = useRef<Group>(null), float = useRef<Group>(null), splash = useRef<Group>(null), fish = useRef<Group>(null), prize = useRef<Group>(null), crank = useRef<Group>(null);
+  const rod = useRef<Group>(null), shaft = useRef<Group>(null), float = useRef<Group>(null), splash = useRef<Group>(null), fish = useRef<Group>(null), prize = useRef<Group>(null), crank = useRef<Group>(null), preview = useRef<Group>(null), landing = useRef<Group>(null);
   
   const portrait = useThree(s => s.size.width < s.size.height);
   const gold = usePlayer(s => s.goldSkin), rodId = usePlayer(s => s.profile.rod);
@@ -43,7 +43,30 @@ export function FishingRig({ phase, motion, reduced, home, platform, species }: 
     }
     rod.current.updateMatrixWorld(true); vectors.tip.set(-bend, 3.55, 0); rod.current.localToWorld(vectors.tip);
     if (mem.castAt !== m.castAt) { mem.castAt = m.castAt; vectors.from.copy(vectors.tip); mem.splashAt = m.castAt + 820; }
-    vectors.to.set(m.aim * 2.8, .16, -2.8 - m.power * 6.4);
+    const target = castTarget({ power: m.power, aim: m.aim });
+    vectors.to.set(target[0], target[1], target[2]);
+    const aiming = !home && (phase === 'idle' || phase === 'lost') && m.preview;
+    if (preview.current) {
+      preview.current.visible = Boolean(aiming);
+      if (aiming) {
+        const predicted = castTarget(aiming);
+        preview.current.children.forEach((child, i) => {
+          const t = (i + 1) / (preview.current!.children.length + 1);
+          const point = castArc(vectors.tip.toArray(), predicted, t);
+          child.position.set(point[0], point[1], point[2]);
+          child.scale.setScalar(.55 + t * .5 + m.charge * .18);
+        });
+      }
+    }
+    if (landing.current) {
+      landing.current.visible = Boolean(aiming);
+      if (aiming) {
+        const predicted = castTarget(aiming);
+        landing.current.position.set(predicted[0], .19, predicted[2]);
+        const pulse = reduced ? 0 : Math.sin(time * 5) * .045;
+        landing.current.scale.setScalar(.72 + m.charge * .45 + pulse);
+      }
+    }
     if (phase === 'reeling' || phase === 'saving' || phase === 'caught') { vectors.to.z += m.progress * 4; vectors.to.x += Math.sin(time * 3.5) * .18 * (1 - m.progress); }
     if (flying) {
       const t = Math.max(0, Math.min(1, (castTime - .16) / .84));
@@ -88,6 +111,8 @@ export function FishingRig({ phase, motion, reduced, home, platform, species }: 
       <mesh position={[.08, .45, .07]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[.19, .19, .17, 12]} /><meshStandardMaterial color="#67adb0" metalness={.2} /></mesh>
       <group ref={crank} position={[.22, .45, .07]}><Block at={[0, .13, 0]} size={[.04, .25, .045]} color="#fbd395" /><mesh position={[.06, .26, .07]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[.04, .04, .14, 8]} /><meshStandardMaterial color="#493e3a" /></mesh></group>
     </group>
+    <group ref={preview} visible={false}>{Array.from({ length: 9 }, (_, i) => <mesh key={i}><sphereGeometry args={[.055, 7, 5]} /><meshBasicMaterial color="#fff0a8" transparent opacity={.58 + i * .025} depthWrite={false} /></mesh>)}</group>
+    <group ref={landing} visible={false} rotation={[-Math.PI / 2, 0, 0]}><mesh><torusGeometry args={[.52, .035, 6, 30]} /><meshBasicMaterial color="#fff2b4" transparent opacity={.62} depthWrite={false} /></mesh><mesh scale={.62}><torusGeometry args={[.52, .018, 5, 26]} /><meshBasicMaterial color="#cffff0" transparent opacity={.48} depthWrite={false} /></mesh></group>
     <primitive object={line} dispose={null} />
     <group ref={float}><mesh position={[0, .04, 0]} scale={[1, 1.25, 1]}><sphereGeometry args={[.14, 12, 8]} /><meshStandardMaterial color="#fff2be" /></mesh><mesh position={[0, .12, 0]}><sphereGeometry args={[.135, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#ff7359" /></mesh><mesh position={[0, .32, 0]}><cylinderGeometry args={[.023, .023, .3, 6]} /><meshStandardMaterial color="#ff7255" /></mesh><group position={[0, -.18, 0]}><BaitModel bait={motion.current.bait} scale={.58} /></group></group>
     <group ref={splash}>{Array.from({ length: 3 }, (_, i) => <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, .01 * i, 0]}><torusGeometry args={[.4, .025, 4, 32]} /><meshBasicMaterial color="#dcffed" transparent opacity={.7} depthWrite={false} /></mesh>)}{Array.from({ length: 9 }, (_, i) => <mesh key={`d${i}`}><sphereGeometry args={[.065, 6, 5]} /><meshStandardMaterial color="#b2f1e8" transparent /></mesh>)}</group>

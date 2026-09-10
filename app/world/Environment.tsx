@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Color, Group, ShaderMaterial, BackSide } from 'three';
 import type { WorldProps } from './types';
 import { Block, Pebble, Palm, BoatModel, FishModel } from './Props';
+import { platformAtmosphere } from '../../game/world';
 
 function Sky({ sky, reduced }: Pick<WorldProps, 'sky' | 'reduced'>) {
   const uniforms = useMemo(() => ({ top: { value: new Color('#61bbef') }, bottom: { value: new Color('#c5efef') } }), []);
@@ -41,17 +42,54 @@ function Gull({ index, reduced }: { index: number; reduced: boolean }) {
 function PassingBoat({ reduced }: { reduced: boolean }) {
   const ship = useRef<Group>(null);
   useFrame(({ clock }) => { if (ship.current) { const t = reduced ? 0 : clock.elapsedTime; ship.current.position.x = -4 + Math.sin(t * .014) * 13; ship.current.position.y = Math.sin(t * 1.1) * .07; ship.current.rotation.z = Math.sin(t) * .025; } });
-  return <group ref={ship} position={[-4, 0, -25]} rotation={[0, Math.PI / 2, 0]} scale={.9}><BoatModel /><mesh position={[0, 2, 0]}><cylinderGeometry args={[.055, .065, 3.6, 6]} /><meshStandardMaterial color="#825b46" /></mesh><mesh position={[.5, 2.2, 0]} rotation={[0, Math.PI / 2, -.1]} scale={[1, 1.6, .1]}><coneGeometry args={[.9, 1.9, 3]} /><meshStandardMaterial color="#ffeac0" flatShading /></mesh><Block at={[0, 3.7, 0]} size={[.08, .3, .7]} color="#ef8367" /></group>;
+  return <group ref={ship} position={[-4, 0, -25]} rotation={[0, Math.PI / 2, 0]} scale={.9}><BoatModel /><mesh position={[0, 2, 0]}><cylinderGeometry args={[.055, .065, 3.6, 6]} /><meshStandardMaterial color="#825b46" /></mesh><mesh position={[.5, 2.2, 0]} rotation={[0, Math.PI / 2, -.1]} scale={[1, 1.6, .1]}><coneGeometry args={[.9, 1.9, 3]} /><meshStandardMaterial color="#ffeac0" flatShading /></mesh><Block at={[0, 3.7, 0]} size={[.08, .3, .7]} color="#ef8367" /><group position={[0, .025, 3.1]} rotation={[-Math.PI / 2, 0, 0]}>{[0, 1].map(i => <mesh key={i} position={[0, 0, i * 1.05]} scale={[1 + i * .55, 1 + i * .9, 1]}><ringGeometry args={[.35, .42, 24, 1, 0, Math.PI]} /><meshBasicMaterial color="#d8fff0" transparent opacity={.28 - i * .07} depthWrite={false} /></mesh>)}</group></group>;
 }
-function Island({ right = false }: { right?: boolean }) {
+function LighthouseLamp({ sky, reduced }: Pick<WorldProps, 'sky' | 'reduced'>) {
+  const lamp = useRef<Group>(null);
+  useFrame(({ clock }) => {
+    if (!lamp.current) return;
+    const pulse = reduced ? 1 : .86 + Math.sin(clock.elapsedTime * 2.2) * .14;
+    lamp.current.visible = sky.daylight < .62; lamp.current.scale.setScalar(pulse);
+  });
+  return <group ref={lamp} position={[-.7, 4.52, .4]}><mesh><sphereGeometry args={[.18, 9, 7]} /><meshBasicMaterial color="#ffe59a" /></mesh><pointLight color="#ffd97c" intensity={2.6} distance={7} /></group>;
+}
+function Island({ right = false, sky, reduced }: { right?: boolean } & Pick<WorldProps, 'sky' | 'reduced'>) {
   const portrait = useThree(s => s.size.width < s.size.height);
   return <group position={[right ? (portrait ? 5.3 : 11) : (portrait ? -4.8 : -10), -.2, right ? -20 : -18]} scale={portrait ? .72 : 1}>
     <Pebble at={[0, -.2, 0]} size={[5, .8, 3.8]} color="#e8c98e" />
     <Pebble at={[0, .2, -.4]} size={[4.3, .6, 3]} color="#84bd60" />
     <Pebble at={[2.5, .35, 1]} size={[1, .7, .9]} color="#82a496" />
     <Palm at={[1.2, .6, 0]} scale={1.4} /><Palm at={[-1.3, .55, -1]} scale={.95} />
-    {!right && <group position={[-.7, .65, .4]}><mesh position={[0, 1.5, 0]}><cylinderGeometry args={[.48, .68, 3, 10]} /><meshStandardMaterial color="#fff1ce" /></mesh><mesh position={[0, 1.8, 0]}><cylinderGeometry args={[.54, .59, .55, 10]} /><meshStandardMaterial color="#ef8463" /></mesh><mesh position={[0, 3.25, 0]}><cylinderGeometry args={[.62, .62, .5, 8]} /><meshStandardMaterial color="#497f8d" /></mesh><mesh position={[0, 3.8, 0]}><coneGeometry args={[.84, .6, 8]} /><meshStandardMaterial color="#e87258" /></mesh></group>}
+    {!right && <><group position={[-.7, .65, .4]}><mesh position={[0, 1.5, 0]}><cylinderGeometry args={[.48, .68, 3, 10]} /><meshStandardMaterial color="#fff1ce" /></mesh><mesh position={[0, 1.8, 0]}><cylinderGeometry args={[.54, .59, .55, 10]} /><meshStandardMaterial color="#ef8463" /></mesh><mesh position={[0, 3.25, 0]}><cylinderGeometry args={[.62, .62, .5, 8]} /><meshStandardMaterial color="#497f8d" /></mesh><mesh position={[0, 3.8, 0]}><coneGeometry args={[.84, .6, 8]} /><meshStandardMaterial color="#e87258" /></mesh></group><LighthouseLamp sky={sky} reduced={reduced} /></>}
   </group>;
+}
+function Fireflies({ reduced }: { reduced: boolean }) {
+  const group = useRef<Group>(null);
+  useFrame(({ clock }) => {
+    if (!group.current) return;
+    const t = reduced ? 0 : clock.elapsedTime;
+    group.current.children.forEach((child, i) => {
+      child.position.x = Math.sin(t * (.25 + i * .011) + i * 2.3) * (2.5 + (i % 3));
+      child.position.y = .75 + (i % 4) * .35 + Math.sin(t * 1.1 + i) * .18;
+      child.position.z = -5 - (i % 5) * 1.35 + Math.cos(t * .4 + i * .7) * .45;
+      child.scale.setScalar(.65 + Math.sin(t * 2.1 + i) * .25);
+    });
+  });
+  return <group ref={group}>{Array.from({ length: 9 }, (_, i) => <mesh key={i}><sphereGeometry args={[.045, 6, 5]} /><meshBasicMaterial color={i % 2 ? '#eaff9d' : '#fff1a4'} transparent opacity={.82} depthWrite={false} /></mesh>)}</group>;
+}
+function DistantBreach({ reduced }: { reduced: boolean }) {
+  const breach = useRef<Group>(null), rings = useRef<Group>(null);
+  useFrame(({ clock }) => {
+    if (!breach.current || !rings.current) return;
+    const cycle = reduced ? 4 : (clock.elapsedTime + 3.2) % 11;
+    const active = cycle < 1.6, t = Math.min(1, cycle / 1.6);
+    breach.current.visible = active; rings.current.visible = active;
+    if (!active) return;
+    breach.current.position.set(-4.6 + t * 1.2, -.08 + Math.sin(Math.PI * t) * 1.15, -13.5);
+    breach.current.rotation.z = -.8 + t * 1.6;
+    rings.current.position.set(-4.1, .03, -13.5); rings.current.scale.setScalar(.35 + t * 1.8);
+  });
+  return <><group ref={breach} scale={.65}><FishModel color="#72cfc0" size={1} reduced={reduced} /></group><group ref={rings} rotation={[-Math.PI / 2, 0, 0]}>{[0, 1].map(i => <mesh key={i} scale={1 + i * .45}><torusGeometry args={[.45, .025, 5, 28]} /><meshBasicMaterial color="#d8fff0" transparent opacity={.32 - i * .08} depthWrite={false} /></mesh>)}</group></>;
 }
 function SwimmingSchool({ reduced, phase, motion }: Pick<WorldProps, 'reduced' | 'phase' | 'motion'>) {
   const school = useRef<Group>(null);
@@ -69,5 +107,6 @@ function SwimmingSchool({ reduced, phase, motion }: Pick<WorldProps, 'reduced' |
   return <group ref={school}>{['#ffc064', '#93dbc4', '#ff9f8b', '#acd5f2'].map((color, i) => <group key={i}><FishModel color={color} size={.55} reduced={reduced} /></group>)}</group>;
 }
 export function Environment({ sky, reduced, platform, phase, motion }: Pick<WorldProps, 'sky' | 'reduced' | 'platform' | 'phase' | 'motion'>) {
-  return <><Sky sky={sky} reduced={reduced} /><Island /><Island right /><PassingBoat reduced={reduced} />{[0, 1, 2].map(i => <Gull key={i} index={i} reduced={reduced} />)}<SwimmingSchool reduced={reduced} phase={phase} motion={motion} />{platform === 'river' && <group>{[-1, 1].map(side => <group key={side} position={[side * 6, -.12, -6]}><Pebble at={[0, 0, 0]} size={[3.7, .45, 11]} color="#7cc48a" /><Pebble at={[-side * 2.2, .1, 4]} size={[1.2, .5, 1.8]} color="#b3c5a6" /><Palm at={[0, .3, -1]} scale={1.35} />{Array.from({ length: 7 }, (_, i) => <mesh key={i} position={[-side * 2.7, .45, i * 1.4 - 3]} rotation={[0, i, side * .13]}><coneGeometry args={[.13, 1.25, 5]} /><meshStandardMaterial color={i % 2 ? '#429d70' : '#a9d676'} /></mesh>)}</group>)}{[[-2, .03, -3], [2.5, .03, -5], [-3, .03, -8]].map((p, i) => <mesh key={i} position={p as [number, number, number]} rotation={[-Math.PI / 2, 0, i]}><circleGeometry args={[.45, 18, .2, Math.PI * 1.8]} /><meshStandardMaterial color="#a4d974" side={2} /></mesh>)}</group>}</>;
+  const mood = platformAtmosphere(platform), river = platform === 'river';
+  return <><Sky sky={sky} reduced={reduced} /><Island sky={sky} reduced={reduced} /><Island right sky={sky} reduced={reduced} />{!river && <PassingBoat reduced={reduced} />}{Array.from({ length: river ? 1 : 3 }, (_, i) => <Gull key={i} index={i} reduced={reduced} />)}<SwimmingSchool reduced={reduced} phase={phase} motion={motion} />{!river && mood.water > .6 && <DistantBreach reduced={reduced} />}{river && <group>{[-1, 1].map(side => <group key={side} position={[side * 6, -.12, -6]}><Pebble at={[0, 0, 0]} size={[3.7, .45, 11]} color="#7cc48a" /><Pebble at={[-side * 2.2, .1, 4]} size={[1.2, .5, 1.8]} color="#b3c5a6" /><Palm at={[0, .3, -1]} scale={1.35} />{Array.from({ length: 7 }, (_, i) => <mesh key={i} position={[-side * 2.7, .45, i * 1.4 - 3]} rotation={[0, i, side * .13]}><coneGeometry args={[.13, 1.25, 5]} /><meshStandardMaterial color={i % 2 ? '#429d70' : '#a9d676'} /></mesh>)}</group>)}{[[-2, .03, -3], [2.5, .03, -5], [-3, .03, -8]].map((p, i) => <mesh key={i} position={p as [number, number, number]} rotation={[-Math.PI / 2, 0, i]}><circleGeometry args={[.45, 18, .2, Math.PI * 1.8]} /><meshStandardMaterial color="#a4d974" side={2} /></mesh>)}{sky.daylight < .58 && <Fireflies reduced={reduced} />}</group>}</>;
 }

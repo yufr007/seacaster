@@ -4,12 +4,14 @@ import { Html } from '@react-three/drei';
 import { PackageOpen } from 'lucide-react';
 import type { Group } from 'three';
 import type { WorldProps } from './types';
-import { Block, Pebble, BoatModel, BaitModel } from './Props';
+import { Block, Pebble, BoatModel, BaitModel, RopeCoil, MooringCleat, Pennant, Cushion, DeckRail } from './Props';
+import { platformAtmosphere, platformDetails } from '../../game/world';
 export function Platform({ platform, reduced, baitOpen, onBait, home, sky }: Pick<WorldProps, 'platform' | 'reduced' | 'baitOpen' | 'onBait' | 'home' | 'sky'>) {
   const portrait = useThree(s => s.size.width < s.size.height);
   const deck = useRef<Group>(null), lid = useRef<Group>(null);
+  const mood = platformAtmosphere(platform), details = platformDetails(platform);
   useFrame(({ clock }, dt) => {
-    if (deck.current && (platform === 'boat' || platform === 'yacht')) { deck.current.position.y = reduced ? 0 : Math.sin(clock.elapsedTime * 1.2) * .04; deck.current.rotation.z = reduced ? 0 : Math.sin(clock.elapsedTime * .9) * .008; }
+    if (deck.current && mood.rock > 0) { deck.current.position.y = reduced ? 0 : Math.sin(clock.elapsedTime * 1.2) * mood.rock; deck.current.rotation.z = reduced ? 0 : Math.sin(clock.elapsedTime * .9) * mood.rock * .2; }
     if (lid.current && reduced) lid.current.rotation.x = baitOpen ? -1.8 : -.18;
     else if (lid.current) lid.current.rotation.x += ((baitOpen ? -1.8 : -.18) - lid.current.rotation.x) * (1 - Math.exp(-12 * Math.min(dt, .1)));
   });
@@ -19,6 +21,10 @@ export function Platform({ platform, reduced, baitOpen, onBait, home, sky }: Pic
       {[-2.4, 2.4].map(x => <group key={x} position={[x, 0, -1.8]}><mesh position={[0, .2, 0]}><cylinderGeometry args={[.19, .21, 1.8, 8]} /><meshStandardMaterial color="#a86b42" /></mesh><Block at={[0, 1.08, 0]} size={[.49, .14, .49]} color="#edc487" /><mesh position={[0, .7, 0]}><torusGeometry args={[.22, .045, 5, 12]} /><meshStandardMaterial color="#f3d79c" /></mesh></group>)}
       {platform === 'river' && <><Pebble at={[-3.2, -.12, 1.8]} size={[1.8, .6, 3]} color="#94c178" /><Pebble at={[3.5, -.1, 2]} size={[1.6, .6, 3]} color="#92bb80" /></>}
     </group>}
+    {details.signature === 'working-pier' && <><RopeCoil at={[1.25, .17, 4.75]} scale={.9} /><MooringCleat at={[2.05, .17, 4.25]} /></>}
+    {details.signature === 'willow-landing' && <><RopeCoil at={[1.4, .17, 4.65]} scale={.72} />{[-2.05, 2.15].map((x, i) => <group key={x} position={[x, .15, 4.35]}>{Array.from({ length: 4 }, (_, j) => <mesh key={j} position={[(j - 1.5) * .12, .35 + (j % 2) * .08, i ? .1 : -.1]} rotation={[0, 0, (j - 1.5) * .08]}><coneGeometry args={[.055, .72 + j * .06, 5]} /><meshStandardMaterial color={j % 2 ? '#77a960' : '#95bf70'} /></mesh>)}</group>)}</>}
+    {details.signature === 'little-skippers-deck' && <><Block at={[1.38, .45, 3.72]} size={[.9, .48, .65]} color="#f1d27f" /><Block at={[1.38, .71, 3.72]} size={[.76, .08, .54]} color="#67aab0" /><Pennant at={[-1.8, .2, 4.35]} reduced={reduced} /><MooringCleat at={[2.05, .27, 4.5]} color="#ffe0a0" /></>}
+    {details.signature === 'sunseeker-deck' && <><Cushion at={[1.15, .5, 3.95]} size={[.82, .16, 1]} /><Cushion at={[1.15, .5, 4.85]} size={[.82, .16, .62]} color="#80d2cc" /><DeckRail at={[2.05, .2, 4.2]} length={1.8} rotation={[0, Math.PI / 2, 0]} /><DeckRail at={[-2.05, .2, 4.2]} length={1.8} rotation={[0, Math.PI / 2, 0]} /><RopeCoil at={[-1.65, .26, 3.88]} scale={.62} /></>}
     <group position={[-1.15, .4, 3.5]} rotation={[0, .16, 0]}>
       <Block size={[1.08, .5, .74]} color="#377f7d" />
       <Block at={[0, .27, 0]} size={[.91, .045, .61]} color="#213e45" />

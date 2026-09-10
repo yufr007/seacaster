@@ -30,7 +30,7 @@ export default function App() {
   const clock = useWorldClock(moonlit && passActive), platform = platformFor(profile);
   const fishing = !['idle', 'lost', 'caught'].includes(game.phase), idle = ['idle', 'lost'].includes(game.phase);
   const modalOpen = Boolean(panel || platformsOpen || baitOpen || walletOpen || reveal);
-  useSoundscape(game.phase, game.holding, clock.sky.daylight < .3, platform.id === 'river', motion.current.castAt);
+  useSoundscape(game.phase, game.holding, clock.sky.daylight < .3, platform.id, motion.current.castAt);
   useEffect(() => {
     const media = matchMedia('(prefers-reduced-motion: reduce)'), change = () => setReduced(media.matches);
     media.addEventListener('change', change); return () => media.removeEventListener('change', change);
@@ -46,12 +46,12 @@ export default function App() {
     if (!['idle', 'lost'].includes(game.phase)) return;
     const p = usePlayer.getState().profile;
     castStart.current = { catches: p.totalCatches, xp: p.xp, coins: p.coins };
-    motion.current.castAt = performance.now(); motion.current.bait = p.bait; motion.current.charge = 0; motion.current.progress = 0;
+    motion.current.castAt = performance.now(); motion.current.bait = p.bait; motion.current.charge = 0; motion.current.preview = null; motion.current.progress = 0;
     oceanAudio.unlock(); oceanAudio.cue('cast'); void game.cast();
   }, [game.phase, game.cast]);
   const gesture = useCastGesture(screen === 'fishing' && idle && !modalOpen, motion, beginCast);
   const openBait = useCallback(() => { if (idle) { setBaitOpen(true); oceanAudio.cue('wood'); } }, [idle]);
-  const reset = () => { game.reset(); setReveal(false); motion.current.charge = 0; };
+  const reset = () => { game.reset(); setReveal(false); motion.current.charge = 0; motion.current.preview = null; };
   const go = (next: Screen) => { if (fishing || game.phase === 'caught') game.reset(); setScreen(next); oceanAudio.unlock(); oceanAudio.cue('wood'); };
   const openWallet = () => { setWalletLoaded(true); setWalletOpen(true); oceanAudio.cue('wood'); };
   const openPanel = (next: Panel) => { setPanel(next); oceanAudio.cue('wood'); };

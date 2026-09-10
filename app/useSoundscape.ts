@@ -2,14 +2,15 @@ import { useEffect } from 'react';
 import { oceanAudio } from './audio';
 import { usePlayer } from './player';
 import type { Phase } from './useFishing';
+import type { PlatformId } from '../game/world';
 export function enableSound(enabled: boolean) {
   usePlayer.getState().settings({ sound: enabled });
   oceanAudio.configure(usePlayer.getState()); oceanAudio.unlock();
 }
-export function useSoundscape(phase: Phase, holding: boolean, night: boolean, river: boolean, castAt: number) {
+export function useSoundscape(phase: Phase, holding: boolean, night: boolean, platform: PlatformId, castAt: number) {
   const sound = usePlayer(s => s.sound), ambience = usePlayer(s => s.ambience), effects = usePlayer(s => s.effects);
   useEffect(() => { oceanAudio.configure({ sound, ambience, effects }); }, [sound, ambience, effects]);
-  useEffect(() => { oceanAudio.environment(night, river); }, [night, river]);
+  useEffect(() => { oceanAudio.environment(night, platform); }, [night, platform]);
   useEffect(() => { oceanAudio.reeling(phase === 'reeling' && holding); }, [phase, holding]);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;

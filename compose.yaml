@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: seacaster
+      POSTGRES_PASSWORD: local-development-only
+      POSTGRES_DB: seacaster
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - seacaster_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U seacaster -d seacaster']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  seacaster_dev:

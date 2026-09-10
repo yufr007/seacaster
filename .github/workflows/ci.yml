@@ -1,0 +1,77 @@
+name: SeaCaster CI
+on:
+  push:
+    branches: [main, revamp/base-app-v2]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: seacaster-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  game-rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit
+      - run: npm test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contract-verification
+          path: contracts/artifacts/
+          retention-days: 7
+  web-and-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: seacaster
+          POSTGRES_PASSWORD: local-ci-only
+          POSTGRES_DB: seacaster_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U seacaster -d seacaster_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://seacaster:local-ci-only@localhost:5432/seacaster_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit
+      - run: npm run build
+      - run: npm run test:api
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Print browser failure context
+        if: failure()
+        run: find test-results -name error-context.md -exec cat {} \;
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: seacaster-verification
+          path: |
+            test-results/
+            playwright-report/
+            dist/
+          retention-days: 7

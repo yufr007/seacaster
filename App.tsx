@@ -30,7 +30,7 @@ export default function App() {
   const clock = useWorldClock(moonlit && passActive), platform = platformFor(profile);
   const fishing = !['idle', 'lost', 'caught'].includes(game.phase), idle = ['idle', 'lost'].includes(game.phase);
   const modalOpen = Boolean(panel || platformsOpen || baitOpen || walletOpen || reveal);
-  useSoundscape(game.phase, game.holding, clock.sky.daylight < .3, platform.id === 'river');
+  useSoundscape(game.phase, game.holding, clock.sky.daylight < .3, platform.id === 'river', motion.current.castAt);
   useEffect(() => {
     const media = matchMedia('(prefers-reduced-motion: reduce)'), change = () => setReduced(media.matches);
     media.addEventListener('change', change); return () => media.removeEventListener('change', change);
@@ -50,7 +50,7 @@ export default function App() {
     oceanAudio.unlock(); oceanAudio.cue('cast'); void game.cast();
   }, [game.phase, game.cast]);
   const gesture = useCastGesture(screen === 'fishing' && idle && !modalOpen, motion, beginCast);
-  const openBait = useCallback(() => { if (!fishing) { setBaitOpen(true); oceanAudio.cue('wood'); } }, [fishing]);
+  const openBait = useCallback(() => { if (idle) { setBaitOpen(true); oceanAudio.cue('wood'); } }, [idle]);
   const reset = () => { game.reset(); setReveal(false); motion.current.charge = 0; };
   const go = (next: Screen) => { if (fishing || game.phase === 'caught') game.reset(); setScreen(next); oceanAudio.unlock(); oceanAudio.cue('wood'); };
   const openWallet = () => { setWalletLoaded(true); setWalletOpen(true); oceanAudio.cue('wood'); };
@@ -85,7 +85,7 @@ export default function App() {
         {game.phase === 'reeling' && <><div className="reel-instruments"><div className="meter-label"><span>Line tension</span><strong>{Math.round(game.reel.tension * 100)}%</strong></div><div role="meter" aria-label="Line tension" aria-valuenow={Math.round(game.reel.tension * 100)} aria-valuemin={0} aria-valuemax={100} className={`tension-track ${game.reel.tension > .78 ? 'danger' : ''}`}><i style={{ width: `${game.reel.tension * 100}%` }} /></div><div className="meter-label"><span>Bringing it home</span><span>{Math.round(game.reel.progress * 100)}%</span></div><progress value={game.reel.progress} max={1} aria-label="Reel progress" /></div><button className={`hero-button reel-button ${game.holding ? 'holding' : ''}`} aria-label="Hold to reel" onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); game.hold(true); }} onPointerUp={() => game.hold(false)} onPointerCancel={() => game.hold(false)} onLostPointerCapture={() => game.hold(false)} onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); game.hold(true); } }} onKeyUp={() => game.hold(false)}>{game.holding ? 'Reeling…' : 'Hold to reel'}<small>Release to ease tension</small></button></>}
         {['casting', 'waiting', 'saving'].includes(game.phase) && <div className="float-watch" aria-hidden="true"><i /><span>Let the world slow down.</span></div>}
         {fishing && game.phase !== 'saving' && <button className="cancel-cast" onClick={reset}>Cancel cast</button>}
-        <nav className="dock-tools" aria-label="Game panels"><button aria-label="Open collection" disabled={fishing} onClick={() => openPanel('collection')}><BookOpen size={19} /><span>Journal</span></button><button aria-label="Open tackle" disabled={fishing} onClick={() => openPanel('tackle')}><Anchor size={19} /><span>Tackle</span></button><button aria-label="Open platforms" disabled={fishing} onClick={() => setPlatformsOpen(true)}><Map size={19} /><span>Places</span></button><button aria-label="Open settings" disabled={fishing} onClick={() => openPanel('settings')}><Settings size={19} /><span>Settings</span></button></nav>
+        <nav className="dock-tools" aria-label="Game panels"><button aria-label="Open collection" disabled={!idle} onClick={() => openPanel('collection')}><BookOpen size={19} /><span>Journal</span></button><button aria-label="Open tackle" disabled={!idle} onClick={() => openPanel('tackle')}><Anchor size={19} /><span>Tackle</span></button><button aria-label="Open platforms" disabled={!idle} onClick={() => setPlatformsOpen(true)}><Map size={19} /><span>Places</span></button><button aria-label="Open settings" disabled={!idle} onClick={() => openPanel('settings')}><Settings size={19} /><span>Settings</span></button></nav>
       </section>
     </section>}
     {notice && <div className="toast" role="alert">{notice}<button aria-label="Dismiss notification" onClick={() => usePlayer.getState().notify('')}>×</button></div>}

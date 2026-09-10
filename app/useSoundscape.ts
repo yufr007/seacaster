@@ -6,19 +6,19 @@ export function enableSound(enabled: boolean) {
   usePlayer.getState().settings({ sound: enabled });
   oceanAudio.configure(usePlayer.getState()); oceanAudio.unlock();
 }
-export function useSoundscape(phase: Phase, holding: boolean, night: boolean, river: boolean) {
+export function useSoundscape(phase: Phase, holding: boolean, night: boolean, river: boolean, castAt: number) {
   const sound = usePlayer(s => s.sound), ambience = usePlayer(s => s.ambience), effects = usePlayer(s => s.effects);
   useEffect(() => { oceanAudio.configure({ sound, ambience, effects }); }, [sound, ambience, effects]);
   useEffect(() => { oceanAudio.environment(night, river); }, [night, river]);
   useEffect(() => { oceanAudio.reeling(phase === 'reeling' && holding); }, [phase, holding]);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
-    if (phase === 'waiting') timer = setTimeout(() => oceanAudio.cue('splash'), 650);
+    if (phase === 'waiting') timer = setTimeout(() => oceanAudio.cue('splash'), Math.max(0, 820 - (performance.now() - castAt)));
     if (phase === 'bite') oceanAudio.cue('hook');
     if (phase === 'caught') { oceanAudio.cue('splash'); timer = setTimeout(() => oceanAudio.cue('catch'), 500); }
     if (phase === 'lost') oceanAudio.cue('lost');
     return () => clearTimeout(timer);
-  }, [phase]);
+  }, [phase, castAt]);
   useEffect(() => {
     const unlock = () => oceanAudio.unlock();
     const visibility = () => { if (document.hidden) oceanAudio.suspend(); else oceanAudio.unlock(); };

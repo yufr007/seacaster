@@ -23,11 +23,11 @@ export const waterFragmentShader = `
     vec3 color=mix(deep,shallow,near*.55+.15);
     float stripe=sin(vWorld.x*.9+sin(vWorld.z*.85+time*.4)*1.4+time*.32);
     float ripple=smoothstep(.9,.99,stripe)*smoothstep(.3,.9,sin(vWorld.z*1.6-time*.3));
-    color+=vec3(.09,.12,.08)*ripple*(.3+.7*daylight);
-    color+=floor((vWave+.14)*22.)*.009;
+    color+=vec3(.04,.06,.04)*ripple*(.3+.7*daylight);
+    color+=vWave*.06;
     float glint=pow(max(0.,sin(vWorld.x*2.7+time*.4)*sin(vWorld.z*4.1-time*.45)),22.);
-    color=mix(color,vec3(.83,.98,.85),glint*.28*daylight);
-    gl_FragColor=vec4(color,.88);
+    color=mix(color,vec3(.83,.98,.85),glint*.09*daylight);
+    gl_FragColor=vec4(color,.82);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }

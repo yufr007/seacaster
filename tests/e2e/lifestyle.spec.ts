@@ -39,22 +39,24 @@ test('real touch gestures cast once; taps, sideways gestures and cancellation do
   await expect(page.getByRole('button', { name: 'Cast line', exact: true })).toBeVisible();
 });
 
-test('earned berths render distinct river, boat and yacht scenes and persist selection', async ({ page }) => {
-  const p = { ...newProfile(), totalCatches: 30, catches: { f1: { count: 30, best: .2 } } };
-  await page.addInitScript(profile => {
-    if (!localStorage.getItem('seacaster:guest:v2')) localStorage.setItem('seacaster:guest:v2', JSON.stringify(profile));
-  }, p);
-  await page.clock.setFixedTime(new Date('2026-09-10T12:00:00Z')); await page.goto('/'); await enterHarbour(page);
-  for (const [id, name] of [['river', 'Willow Inlet'], ['boat', 'Little Skipper'], ['yacht', 'Sunseeker Yacht']]) {
+for (const [id, name] of [['river', 'Willow Inlet'], ['boat', 'Little Skipper'], ['yacht', 'Sunseeker Yacht']]) {
+  test(`${name} renders its own earned berth and persists selection`, async ({ page }) => {
+    const p = { ...newProfile(), totalCatches: 30, catches: { f1: { count: 30, best: .2 } } };
+    await page.addInitScript(profile => {
+      if (!localStorage.getItem('seacaster:guest:v2')) localStorage.setItem('seacaster:guest:v2', JSON.stringify(profile));
+    }, p);
+    await page.clock.setFixedTime(new Date('2026-09-10T12:00:00Z')); await page.goto('/'); await enterHarbour(page);
     await page.getByRole('button', { name: 'Open platforms', exact: true }).click();
     await page.getByRole('button', { name: `Fish from ${name}`, exact: true }).click();
     await expect(page.getByTestId('living-world')).toHaveAttribute('data-platform', id);
     await page.getByRole('button', { name: 'Go fishing' }).click(); await page.waitForTimeout(700);
     await page.screenshot({ path: `test-results/lifestyle-${id}-desktop.png` });
+    await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(400);
+    await page.screenshot({ path: `test-results/lifestyle-${id}-mobile.png` });
     await page.getByRole('button', { name: 'Return to harbour' }).click();
-  }
-  await page.reload(); await expect(page.getByTestId('living-world')).toHaveAttribute('data-platform', 'yacht');
-});
+    await page.reload(); await expect(page.getByTestId('living-world')).toHaveAttribute('data-platform', id);
+  });
+}
 
 test('clock follows the device timezone rather than a server timezone', async ({ browser }) => {
   for (const [zone, period] of [['America/New_York', 'night'], ['Australia/Melbourne', 'day']]) {

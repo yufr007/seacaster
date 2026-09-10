@@ -5,6 +5,7 @@ import { BufferGeometry, Float32BufferAttribute, Group, Line as ThreeLine, LineB
 import type { WorldProps } from './types';
 import { FishModel, BaitModel, Block } from './Props';
 import { FISH } from '../../game/engine';
+import { castArc } from '../../game/world';
 import { usePlayer } from '../player';
 
 function FishPortrait({ species }: { species: string }) {
@@ -15,6 +16,7 @@ function FishPortrait({ species }: { species: string }) {
 export function FishingRig({ phase, motion, reduced, home, platform, species }: Pick<WorldProps, 'phase' | 'motion' | 'reduced' | 'home' | 'platform' | 'species'>) {
   const rod = useRef<Group>(null), shaft = useRef<Group>(null), float = useRef<Group>(null), splash = useRef<Group>(null), fish = useRef<Group>(null), prize = useRef<Group>(null), crank = useRef<Group>(null);
   
+  const portrait = useThree(s => s.size.width < s.size.height);
   const gold = usePlayer(s => s.goldSkin), rodId = usePlayer(s => s.profile.rod);
   const memory = useRef({ castAt: -10000, splashAt: -10000, phase, phaseAt: 0 });
   const vectors = useMemo(() => ({ tip: new Vector3(), from: new Vector3(), to: new Vector3(), bob: new Vector3(), up: new Vector3(0, 1, 0), dir: new Vector3(), a: new Vector3(), b: new Vector3() }), []);
@@ -28,10 +30,10 @@ export function FishingRig({ phase, motion, reduced, home, platform, species }: 
     const castTime = reduced ? 1 : (now - m.castAt) / 820;
     const active = !home && ['casting', 'waiting', 'bite', 'reeling', 'saving', 'caught'].includes(phase);
     const flying = active && castTime < 1;
-    const rodSwing = flying ? Math.sin(Math.min(1, castTime) * Math.PI * 2) * .72 : 0;
+    const rodSwing = flying ? (castTime < .16 ? .9 * (1 - castTime / .16) : -Math.sin((castTime - .16) / .84 * Math.PI) * .45) : 0;
     rod.current.visible = !home;
-    rod.current.position.set(.95, .45 + ((platform === 'boat' || platform === 'yacht') ? Math.sin(time * 1.2) * .04 : 0), 4.3);
-    rod.current.rotation.set(-.35 - m.charge * .75 + rodSwing + (phase === 'reeling' ? .16 : 0), m.aim * .25, .18);
+    rod.current.position.set(.95, .45 + ((platform === 'boat' || platform === 'yacht') ? Math.sin(time * 1.2) * .04 : 0), portrait ? 1.3 : 3.3);
+    rod.current.rotation.set(-.35 + m.charge * .95 + rodSwing + (phase === 'reeling' ? .16 : 0), m.aim * .25, .18);
     const bend = m.charge * .5 + (phase === 'reeling' ? m.tension * .5 : phase === 'bite' ? .35 : .06 + Math.sin(time * 1.6) * .025);
     for (let i = 0; i < shaft.current.children.length; i++) {
       const child = shaft.current.children[i], a = i / 10, b = (i + 1) / 10;
@@ -45,7 +47,8 @@ export function FishingRig({ phase, motion, reduced, home, platform, species }: 
     if (phase === 'reeling' || phase === 'saving' || phase === 'caught') { vectors.to.z += m.progress * 4; vectors.to.x += Math.sin(time * 3.5) * .18 * (1 - m.progress); }
     if (flying) {
       const t = Math.max(0, Math.min(1, (castTime - .16) / .84));
-      vectors.bob.copy(vectors.from).lerp(vectors.to, t); vectors.bob.y += Math.sin(t * Math.PI) * 2.9;
+      if (castTime < .16) vectors.from.copy(vectors.tip);
+      const arc = castArc(vectors.from.toArray(), vectors.to.toArray(), t); vectors.bob.set(...arc);
     } else {
       vectors.bob.copy(vectors.to);
       vectors.bob.y += Math.sin(time * 2.2) * .075 + Math.cos(time * 1.7) * .035;
@@ -73,7 +76,7 @@ export function FishingRig({ phase, motion, reduced, home, platform, species }: 
     if (prize.current) {
       const t = reduced ? 1 : Math.min(1, (now - mem.phaseAt) / 1150);
       prize.current.visible = phase === 'caught' && !home;
-      prize.current.position.copy(vectors.to).lerp(vectors.a.set(-.2, 1.15, 4.4), t);
+      prize.current.position.copy(vectors.to).lerp(vectors.a.set(-.2, 1.15, portrait ? 1.4 : 3.4), t);
       prize.current.position.y += Math.sin(Math.PI * t) * 3.3;
       prize.current.rotation.z = reduced ? 0 : Math.sin(t * Math.PI * 2) * .25;
     }

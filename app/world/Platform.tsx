@@ -1,18 +1,19 @@
 import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import { PackageOpen } from 'lucide-react';
 import type { Group } from 'three';
 import type { WorldProps } from './types';
 import { Block, Pebble, BoatModel, BaitModel } from './Props';
 export function Platform({ platform, reduced, baitOpen, onBait, home, sky }: Pick<WorldProps, 'platform' | 'reduced' | 'baitOpen' | 'onBait' | 'home' | 'sky'>) {
+  const portrait = useThree(s => s.size.width < s.size.height);
   const deck = useRef<Group>(null), lid = useRef<Group>(null);
   useFrame(({ clock }, dt) => {
     if (deck.current && (platform === 'boat' || platform === 'yacht')) { deck.current.position.y = reduced ? 0 : Math.sin(clock.elapsedTime * 1.2) * .04; deck.current.rotation.z = reduced ? 0 : Math.sin(clock.elapsedTime * .9) * .008; }
     if (lid.current && reduced) lid.current.rotation.x = baitOpen ? -1.8 : -.18;
     else if (lid.current) lid.current.rotation.x += ((baitOpen ? -1.8 : -.18) - lid.current.rotation.x) * (1 - Math.exp(-12 * Math.min(dt, .1)));
   });
-  return <group ref={deck}>
+  return <group ref={deck} position={[0, 0, portrait ? -3 : -1]}>
     {platform === 'boat' || platform === 'yacht' ? <group position={[0, -.1, 5.2]} scale={[2.1, 1.8, 2.2]} rotation={[0, Math.PI, 0]}><BoatModel yacht={platform === 'yacht'} /></group> : <group position={[0, .02, 5.5]}>
       {Array.from({ length: 12 }, (_, i) => <Block key={i} at={[-2.2 + i * .4, .02, .4]} size={[.38, .22, 4.7]} color={i % 3 === 0 ? '#c78d50' : '#e7b16b'} />)}
       {[-2.4, 2.4].map(x => <group key={x} position={[x, 0, -1.8]}><mesh position={[0, .2, 0]}><cylinderGeometry args={[.19, .21, 1.8, 8]} /><meshStandardMaterial color="#a86b42" /></mesh><Block at={[0, 1.08, 0]} size={[.49, .14, .49]} color="#edc487" /><mesh position={[0, .7, 0]}><torusGeometry args={[.22, .045, 5, 12]} /><meshStandardMaterial color="#f3d79c" /></mesh></group>)}

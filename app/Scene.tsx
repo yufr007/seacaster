@@ -16,7 +16,7 @@ class SceneBoundary extends Component<{ children: ReactNode; onFailure: () => vo
 }
 function View({ onFailure }: { onFailure: () => void }) {
   const { camera, gl, size } = useThree();
-  useEffect(() => { camera.position.set(0, 7.3, 12); camera.lookAt(0, .1, -6.5); camera.updateProjectionMatrix(); }, [camera, size.width, size.height]);
+  useEffect(() => { camera.position.set(0, 7.3, 12); camera.lookAt(0, 1, -6.5); camera.updateProjectionMatrix(); }, [camera, size.width, size.height]);
   useEffect(() => {
     const canvas = gl.domElement;
     const lost = (event: Event) => { event.preventDefault(); onFailure(); };
@@ -44,7 +44,7 @@ function Scene(props: WorldProps) {
   return <div className={`scene-layer sky-${props.sky.period} platform-${props.platform} ${fallback ? 'is-illustrated' : ''}`} data-testid="living-world" data-platform={props.platform} data-period={props.sky.period}>
     <div className="illustrated-water" />
     {!fallback && <SceneBoundary onFailure={() => setFailed(true)}><Suspense fallback={null}><Canvas camera={{ fov: 48, near: .1, far: 190 }} dpr={[1, 1.5]} frameloop={!visible ? 'never' : props.reduced ? 'demand' : 'always'} gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }} fallback={<div className="illustrated-water" />}>
-      <View onFailure={() => setFailed(true)} /><Environment sky={props.sky} reduced={props.reduced} platform={props.platform} /><Water sky={props.sky} reduced={props.reduced} platform={props.platform} /><Platform {...props} /><FishingRig {...props} />
+      <View onFailure={() => setFailed(true)} /><Environment sky={props.sky} reduced={props.reduced} platform={props.platform} phase={props.phase} motion={props.motion} /><Water sky={props.sky} reduced={props.reduced} platform={props.platform} /><Platform {...props} /><FishingRig {...props} />
     </Canvas></Suspense></SceneBoundary>}
     {fallback && !props.home && <><div className={`illustrated-float float-${props.phase}`} aria-hidden="true"><i /></div><button className="fallback-bait world-bait-button" aria-label="Open bait box" onClick={props.onBait}>Bait box</button></>}
     {failed && <button className="restore-3d" onClick={() => setFailed(false)}>Illustrated mode · retry 3D</button>}

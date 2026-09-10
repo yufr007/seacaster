@@ -32,11 +32,11 @@ test('real touch gestures cast once; taps, sideways gestures and cancellation do
   await expect(page.getByRole('button', { name: 'Cast line', exact: true })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('seacaster:guest:v2'))).toBe(before);
   await touchSwipe(page, [230, 500], [260, 320]);
+  // This is the interaction assertion. SwiftShader screenshot capture can outlive the short cast window,
+  // so no post-capture cleanup may assume the cast is still active.
   await expect(page.getByRole('button', { name: 'Cancel cast', exact: true })).toBeVisible();
-  await page.waitForTimeout(950);
+  await page.waitForTimeout(350);
   await page.screenshot({ path: 'test-results/lifestyle-bobber-mobile.png' });
-  await page.getByRole('button', { name: 'Cancel cast', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Cast line', exact: true })).toBeVisible();
 });
 
 for (const [id, name] of [['river', 'Willow Inlet'], ['boat', 'Little Skipper'], ['yacht', 'Sunseeker Yacht']]) {

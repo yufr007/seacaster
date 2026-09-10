@@ -1,17 +1,20 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { enterFishing } from './support';
+import { enterFishing, setTestTime } from './support';
 
 test('capture the real authored scene and renderer timing before gameplay regressions', async ({ page }) => {
   test.setTimeout(90000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.clock.setFixedTime(new Date('2026-09-10T12:00:00Z'));
+  await setTestTime(page, '2026-09-10T12:00:00Z');
   await page.goto('/'); await enterFishing(page);
   await expect(page.getByTestId('living-world')).toHaveAttribute('data-art-ready', 'true');
   await page.waitForTimeout(500);
   const metrics = await page.evaluate(async () => {
+    if (!requestAnimationFrame.toString().includes('[native code]') || !performance.now.toString().includes('[native code]')) {
+      throw new Error('Renderer timing must use native browser frames and performance.now.');
+    }
     const samples: number[] = [];
     let previous = performance.now();
     await new Promise<void>(resolve => {
@@ -27,6 +30,7 @@ test('capture the real authored scene and renderer timing before gameplay regres
     const extension = gl?.getExtension('WEBGL_debug_renderer_info');
     samples.sort((a, b) => a - b);
     return {
+      clockMode: 'Date offset only; native RAF and performance.now',
       renderer: gl && extension ? gl.getParameter(extension.UNMASKED_RENDERER_WEBGL) : 'not exposed',
       frames: samples.length,
       medianFrameMs: samples[Math.floor(samples.length * .5)],

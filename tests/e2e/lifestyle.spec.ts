@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { enterFishing, enterHarbour, touchSwipe } from './support';
+import { enterFishing, enterHarbour, touchSwipe, setTestTime } from './support';
 import { newProfile } from '../../game/engine';
 
 test('title, harbour and the in-world bait chest are usable on a phone', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.clock.setFixedTime(new Date('2026-09-10T12:00:00Z')); await page.goto('/');
+  await setTestTime(page, '2026-09-10T12:00:00Z'); await page.goto('/');
   await expect(page.getByRole('button', { name: 'Enter the harbour' })).toBeVisible();
   await page.locator('canvas').waitFor(); await page.waitForTimeout(1200);
   await page.screenshot({ path: 'test-results/lifestyle-title-mobile.png' });
@@ -45,7 +45,7 @@ for (const [id, name] of [['river', 'Willow Inlet'], ['boat', 'Little Skipper'],
     await page.addInitScript(profile => {
       if (!localStorage.getItem('seacaster:guest:v2')) localStorage.setItem('seacaster:guest:v2', JSON.stringify(profile));
     }, p);
-    await page.clock.setFixedTime(new Date('2026-09-10T12:00:00Z')); await page.goto('/'); await enterHarbour(page);
+    await setTestTime(page, '2026-09-10T12:00:00Z'); await page.goto('/'); await enterHarbour(page);
     await page.getByRole('button', { name: 'Open platforms', exact: true }).click();
     await page.getByRole('button', { name: `Fish from ${name}`, exact: true }).click();
     await expect(page.getByTestId('living-world')).toHaveAttribute('data-platform', id);
@@ -61,7 +61,7 @@ for (const [id, name] of [['river', 'Willow Inlet'], ['boat', 'Little Skipper'],
 test('clock follows the device timezone rather than a server timezone', async ({ browser }) => {
   for (const [zone, period] of [['America/New_York', 'night'], ['Australia/Melbourne', 'day']]) {
     const context = await browser.newContext({ timezoneId: zone, viewport: { width: 390, height: 844 } }); const page = await context.newPage();
-    await page.clock.setFixedTime(new Date('2026-09-10T03:00:00Z'));
+    await setTestTime(page, '2026-09-10T03:00:00Z');
     await page.goto('http://127.0.0.1:4173/'); await enterFishing(page);
     await expect(page.getByTestId('living-world')).toHaveAttribute('data-period', period);
     await page.waitForTimeout(700); await page.screenshot({ path: `test-results/lifestyle-${period}-mobile.png` }); await context.close();

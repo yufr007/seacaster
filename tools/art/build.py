@@ -218,9 +218,10 @@ def island(name,lighthouse=False):
         a=i*2.4;leaf(r,(math.cos(a)*2.3,.62,math.sin(a)*1.7),.62,.14,a,.3)
     if lighthouse:
         x,z=-.65,.5;cyl('Stone_foot',(x,.45,z),(x,.72,z),.9,.8,'sand',r);cyl('Tower_plaster',(x,.68,z),(x,3.85,z),.64,.46,'cream',r,32)
-        for y in [1.4,2.5]:cyl('Coral_tower_band',(x,y,z),(x,y+.38,z),.64-(y-.68)*.057,.62-(y-.68)*.057,'coral',r,32)
+        # A real raised trim shell avoids z-fighting against the tapered tower.
+        for y in [1.4,2.5]:cyl('Coral_tower_band',(x,y,z),(x,y+.38,z),.68-(y-.68)*(.18/3.17),.68-(y+.38-.68)*(.18/3.17),'coral',r,32)
         box('Arched_door',(x,.97,z+.60),(.32,.65,.06),'blue',r,.11)
-        for y in [2.0,3.05]:box('Window_recess',(x,y,z+.52),(.24,.3,.08),'glass',r,.08)
+        for y in [2.0,3.05]:box('Window_recess',(x,y,z+.66-(y-.68)*(.18/3.17)),(.24,.3,.08),'glass',r,.08)
         cyl('Lantern_balcony',(x,3.8,z),(x,3.99,z),.80,.80,'gold',r,32);cyl('Lantern_glass',(x,4.02,z),(x,4.67,z),.5,.5,'glass',r,24)
         for i in range(8):
             a=i*math.tau/8;cyl('Lantern_mullion',(x+math.cos(a)*.5,4,z+math.sin(a)*.5),(x+math.cos(a)*.5,4.69,z+math.sin(a)*.5),.035,.035,'cream',r,12)

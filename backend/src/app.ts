@@ -7,6 +7,7 @@ import { createPublicClient, http, getAddress } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { createSiweMessage } from 'viem/siwe';
 import { newProfile, buyTackle, equipTackle, claimDaily } from '../../game/engine.ts';
+import { equipPlatform } from '../../game/world.ts';
 import type { Profile } from '../../game/engine.ts';
 import { createCast, hookCast, finishCast, castView } from '../../game/cast.ts';
 import type { Cast } from '../../game/cast.ts';
@@ -131,6 +132,9 @@ export function createApp(pool: Pool | null, config: Config, verifyOverride?: Ve
     else throw new HttpError(400, 'Unknown tackle action.');
     return summary(p);
   }))));
+  app.post('/api/platform', wrap(async (req, res) => res.json(await mutate(req, async p => {
+    idle(p); p.profile = equipPlatform(p.profile, String(req.body.id)); return summary(p);
+  }))));
   app.post('/api/daily', wrap(async (req, res) => res.json(await mutate(req, async p => { p.profile = claimDaily(p.profile); return summary(p); }))));
   app.get('/api/leaderboard', wrap(async (_req, res) => {
     const { rows } = await db().query<{ address: string; xp: number; catches: number }>("SELECT address,(profile->>'xp')::integer AS xp,(profile->>'totalCatches')::integer AS catches FROM players WHERE (profile->>'totalCatches')::integer>0 ORDER BY (profile->>'xp')::integer DESC, address ASC LIMIT 25");
@@ -140,7 +144,7 @@ export function createApp(pool: Pool | null, config: Config, verifyOverride?: Ve
   app.use('/api', (error: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (error instanceof HttpError) { res.status(error.status).json({ error: error.message }); return; }
     if (error instanceof SyntaxError) { res.status(400).json({ error: 'Invalid JSON request.' }); return; }
-    if (error instanceof Error && !('code' in error) && ['Invalid', 'Missed', 'No ', 'Not ', 'Unknown tackle', 'Choose ', 'Unlocks', 'You already', 'This cast', 'Reel ', 'The fish', 'Catch five', 'Rod not', 'Bait box', 'Input '].some(prefix => error.message.startsWith(prefix))) { res.status(400).json({ error: error.message }); return; }
+    if (error instanceof Error && !('code' in error) && ['Invalid', 'Missed', 'No ', 'Not ', 'Unknown tackle', 'Unknown platform', 'Choose ', 'Unlocks', 'You already', 'This cast', 'Reel ', 'The fish', 'Catch five', 'Rod not', 'Bait box', 'Input '].some(prefix => error.message.startsWith(prefix))) { res.status(400).json({ error: error.message }); return; }
     console.error('API request failed', error instanceof Error ? error.name : 'UnknownError');
     res.status(503).json({ error: 'Online service is unavailable. Please retry.' });
   });

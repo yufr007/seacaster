@@ -18,20 +18,7 @@ export function useFishing() {
   const generation = useRef(0);
   const pendingCancel = useRef<Promise<unknown>>(Promise.resolve());
   const phaseRef = useRef<Phase>('idle');
-  const audio = useRef<AudioContext | null>(null);
   const change = useCallback((value: Phase) => { phaseRef.current = value; setPhase(value); }, []);
-  const cue = useCallback((frequency: number) => {
-    if (!usePlayer.getState().sound) return;
-    try {
-      audio.current ??= new AudioContext(); void audio.current.resume();
-      const oscillator = audio.current.createOscillator(), gain = audio.current.createGain();
-      oscillator.type = 'sine'; oscillator.frequency.value = frequency;
-      gain.gain.setValueAtTime(.035, audio.current.currentTime);
-      gain.gain.exponentialRampToValueAtTime(.001, audio.current.currentTime + .18);
-      oscillator.connect(gain); gain.connect(audio.current.destination);
-      oscillator.start(); oscillator.stop(audio.current.currentTime + .2);
-    } catch { /* Sound is optional, never a gameplay gate. */ }
-  }, []);
   const release = useCallback(() => { state.current.hold = false; setHolding(false); }, []);
   const reset = useCallback(() => {
     generation.current++;
@@ -44,12 +31,12 @@ export function useFishing() {
     const blur = () => { release(); if (['casting', 'waiting', 'bite', 'reeling'].includes(phaseRef.current)) { generation.current++; change('lost'); usePlayer.getState().notify('Cast paused when you left the game. Cast again when ready.'); } };
     const visibility = () => { if (document.hidden) blur(); };
     window.addEventListener('blur', blur); document.addEventListener('visibilitychange', visibility);
-    return () => { generation.current++; window.removeEventListener('blur', blur); document.removeEventListener('visibilitychange', visibility); void audio.current?.close(); audio.current = null; };
+    return () => { generation.current++; window.removeEventListener('blur', blur); document.removeEventListener('visibilitychange', visibility); };
   }, [change, release]);
   const cast = useCallback(async () => {
     if (!['idle', 'lost', 'caught'].includes(phaseRef.current)) return;
     reset(); const ticket = generation.current;
-    change('casting'); cue(260);
+    change('casting'); 
     const { profile, address } = usePlayer.getState();
     try {
       if (address) {
@@ -66,7 +53,7 @@ export function useFishing() {
       }
       change('waiting');
     } catch (error) { if (ticket === generation.current) { change('idle'); usePlayer.getState().notify(error instanceof Error ? error.message : 'Could not cast.'); } }
-  }, [change, cue, reset]);
+  }, [change, reset]);
   const hook = useCallback(async () => {
     if (phaseRef.current !== 'bite' || !state.current.cast) return;
     change('casting'); const ticket = generation.current;
@@ -82,9 +69,9 @@ export function useFishing() {
       }
       state.current.reel = newReel(); state.current.inputs = [{ at: 0, hold: false }];
       state.current.hold = false; state.current.start = performance.now();
-      setHolding(false); setReel(newReel()); cue(520); change('reeling');
+      setHolding(false); setReel(newReel()); change('reeling');
     } catch (error) { if (ticket === generation.current) { change('lost'); usePlayer.getState().notify(error instanceof Error ? error.message : 'Missed the bite.'); } }
-  }, [change, cue]);
+  }, [change]);
   useEffect(() => {
     let raf = 0, lastPaint = 0;
     const tick = (now: number) => {
@@ -92,7 +79,7 @@ export function useFishing() {
       if (current.cast && (currentPhase === 'waiting' || currentPhase === 'bite')) {
         const time = Date.now() + current.offset;
         if (time > current.cast.expiresAt) change('lost');
-        else if (time >= current.cast.biteAt && currentPhase === 'waiting') { cue(680); change('bite'); navigator.vibrate?.(80); }
+        else if (time >= current.cast.biteAt && currentPhase === 'waiting') { change('bite'); usePlayer.getState().haptics && navigator.vibrate?.(80); }
       }
       if (currentPhase === 'reeling') {
         const target = Math.min(30000, now - current.start);
@@ -105,7 +92,7 @@ export function useFishing() {
           current.reel = stepReel(current.reel, current.hold, current.seed);
         }
         if (now - lastPaint > 32 || current.reel.status !== 'playing') { setReel(current.reel); lastPaint = now; }
-        if (current.reel.status === 'lost') { release(); change('lost'); cue(130); }
+        if (current.reel.status === 'lost') { release(); change('lost'); }
         if (current.reel.status === 'won' && current.cast) {
           release(); change('saving'); const ticket = generation.current;
           const { address, profile } = usePlayer.getState();
@@ -115,7 +102,7 @@ export function useFishing() {
                 ? await api<{ profile: Profile; catch: Catch }>(`/casts/${current.cast!.id}/finish`, { inputs: current.inputs, duration: current.reel.elapsed }, address)
                 : finishCast(profile, current.cast as Cast, current.inputs, current.reel.elapsed, Date.now());
               if (ticket !== generation.current) return;
-              usePlayer.getState().setProfile(result.profile); setCaught(result.catch); change('caught'); cue(880); navigator.vibrate?.([40, 30, 80]);
+              usePlayer.getState().setProfile(result.profile); setCaught(result.catch); change('caught'); usePlayer.getState().haptics && navigator.vibrate?.([40, 30, 80]);
             } catch (error) { if (ticket === generation.current) { change('lost'); usePlayer.getState().notify(error instanceof Error ? error.message : 'Catch could not be saved.'); } }
           };
           void finish();
@@ -125,7 +112,7 @@ export function useFishing() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [change, cue, release]);
+  }, [change, release]);
   const hold = useCallback((value: boolean) => {
     if (phaseRef.current !== 'reeling') return;
     state.current.hold = value; setHolding(value);

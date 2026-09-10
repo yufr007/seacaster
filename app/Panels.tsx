@@ -4,6 +4,7 @@ import type { Profile } from '../game/engine.ts';
 import { usePlayer } from './player';
 import { api } from './api';
 import { Modal } from './Modal';
+import { enableSound } from './useSoundscape';
 export type Panel = 'collection' | 'tackle' | 'challenges' | 'leaderboard' | 'settings';
 const titles: Record<Panel, string> = { collection: 'The field journal', tackle: 'The tackle shop', challenges: 'Today on the water', leaderboard: 'The harbour board', settings: 'Make yourself at home' };
 function Leaderboard() {
@@ -17,7 +18,7 @@ function Leaderboard() {
 }
 export default function Panels({ panel, onClose }: { panel: Panel; onClose: () => void }) {
   const profile = usePlayer(s => s.profile), address = usePlayer(s => s.address);
-  const sound = usePlayer(s => s.sound), lowPower = usePlayer(s => s.lowPower);
+  const sound = usePlayer(s => s.sound), lowPower = usePlayer(s => s.lowPower), ambience = usePlayer(s => s.ambience), effects = usePlayer(s => s.effects), haptics = usePlayer(s => s.haptics);
   const [busy, setBusy] = useState(false), [filter, setFilter] = useState('All');
   async function act(action: 'buy' | 'equip' | 'daily', id?: string) {
     if (busy) return;
@@ -55,6 +56,6 @@ export default function Panels({ panel, onClose }: { panel: Panel; onClose: () =
     </>}
     {panel === 'challenges' && <section className="challenge"><img src="/assets/ui/daily_gift_v3.png" alt="" /><h3>Five before sundown</h3><p>Land five fish today. Any species. Any size.</p><progress max={5} value={Math.min(5, dailyCount)} aria-label="Daily catches" /><p>{Math.min(5, dailyCount)} / 5 fish · 100 earned coins</p><button className="primary" disabled={busy || dailyCount < 5 || claimedToday} onClick={() => void act('daily')}>{claimedToday ? 'Reward collected' : 'Claim daily reward'}</button><small>Resets at 00:00 UTC. No entry fee or cash prize.</small></section>}
     {panel === 'leaderboard' && <><p className="muted">Server-recorded progress only. Guest practice does not enter this board.</p><Leaderboard /></>}
-    {panel === 'settings' && <div className="settings-list"><label><span><strong>Sound effects</strong><small>Gentle cues for casting, bites and catches.</small></span><input type="checkbox" checked={sound} onChange={e => usePlayer.getState().settings({ sound: e.target.checked })} /></label><label><span><strong>Low-power mode</strong><small>Use SeaCaster's illustrated scene instead of 3D.</small></span><input type="checkbox" checked={lowPower} onChange={e => usePlayer.getState().settings({ lowPower: e.target.checked })} /></label><p className="muted">Hold to reel. Release to ease the tension. On a keyboard, use Space. Leaving the game cancels the current attempt without removing earlier catches.</p><p className="muted">{address ? 'Your current progress is stored against your signed-in wallet.' : 'Guest progress stays in this browser. Online accounts start a separate, server-verified collection.'}</p></div>}
+    {panel === 'settings' && <div className="settings-list"><label><span><strong>Sound effects</strong><small>Surf, bird calls, splashes, a ticking reel and catch celebrations.</small></span><input type="checkbox" checked={sound} onChange={e => enableSound(e.target.checked)} /></label><label><span><strong>Low-power mode</strong><small>Use SeaCaster's illustrated scene instead of 3D.</small></span><input type="checkbox" checked={lowPower} onChange={e => usePlayer.getState().settings({ lowPower: e.target.checked })} /></label><label><span><strong>Ocean ambience</strong><small>Keep the coast in the background.</small></span><input aria-label="Ocean ambience volume" type="range" min="0" max="1" step=".05" value={ambience} onChange={e => usePlayer.getState().settings({ ambience: Number(e.target.value) })} /></label><label><span><strong>Effects volume</strong><small>Fishing and interface sounds.</small></span><input aria-label="Effects volume" type="range" min="0" max="1" step=".05" value={effects} onChange={e => usePlayer.getState().settings({ effects: Number(e.target.value) })} /></label><label><span><strong>Haptics</strong><small>Small taps on supported devices.</small></span><input type="checkbox" checked={haptics} onChange={e => usePlayer.getState().settings({ haptics: e.target.checked })} /></label><p className="muted">Swipe upward to cast, or use the tap button. Your sky follows this device’s local clock without requesting your location. Hold to reel. Release to ease the tension. On a keyboard, use Space. Leaving the game cancels the current attempt without removing earlier catches.</p><p className="muted">{address ? 'Your current progress is stored against your signed-in wallet.' : 'Guest progress stays in this browser. Online accounts start a separate, server-verified collection.'}</p></div>}
   </Modal>;
 }

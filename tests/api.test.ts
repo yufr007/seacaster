@@ -42,7 +42,11 @@ test('API rejects forged identity and replays, uses real PostgreSQL, and awards 
   assert.equal((await request('/auth/verify', { message: challenge.data.message, signature })).status, 401);
   assert.equal((await request('/me', undefined, other)).status, 401);
   assert.equal((await request('/tackle', { action: 'buy', id: 'shrimp', price: -100000 })).data.profile.coins, 60);
+  assert.equal((await request('/platform', { id: 'yacht', totalCatches: 999 })).status, 400);
+  assert.equal((await request('/platform', { id: 'unknown' })).status, 400);
+  assert.equal((await request('/platform', { id: 'pier' })).data.profile.platform, 'pier');
   const started = await request('/casts', {});
+  assert.equal((await request('/platform', { id: 'pier' })).status, 409);
   assert.equal(started.status, 200); assert.equal('catch' in started.data.cast, false);
   assert.equal((await request(`/casts/${started.data.cast.id}/hook`, {})).status, 400);
   await pool.query("UPDATE players SET active_cast=jsonb_set(jsonb_set(active_cast,'{biteAt}',to_jsonb($1::bigint)),'{expiresAt}',to_jsonb($2::bigint))", [Date.now() - 10, Date.now() + 3000]);

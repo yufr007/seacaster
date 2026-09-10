@@ -1,3 +1,5 @@
+import { normalizePlatform } from './world.ts';
+import type { PlatformId } from './world.ts';
 /** Shared rules. No wallet, renderer, timers, persistence or network side effects. */
 export type Rarity = 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic';
 export type Fish = { id: string; name: string; rarity: Rarity; weight: number; xp: number; image: string };
@@ -28,7 +30,7 @@ export const TACKLE = [
   { id: 'gold', name: 'Golden Rod', price: 2500, amount: 1, level: 12, description: 'A permanent rod upgrade. Earn 20% more catch XP.', image: '/assets/ui/golden_pirate_rod_1765863136497.png' },
 ] as const;
 export type Profile = {
-  version: 2; xp: number; coins: number; totalCatches: number;
+  version: 2; platform: PlatformId; xp: number; coins: number; totalCatches: number;
   catches: Record<string, { count: number; best: number }>;
   bait: Bait; baits: Record<'shrimp' | 'squid', number>; rod: Rod; rods: Rod[];
   daily: { day: string; catches: number; claimed: boolean };
@@ -38,7 +40,7 @@ export const dayKey = (now: number) => new Date(now).toISOString().slice(0, 10);
 export const levelForXP = (xp: number) => Math.min(100, Math.floor(Math.sqrt(Math.max(0, xp) / 100)) + 1);
 export const nextLevelXP = (xp: number) => levelForXP(xp) ** 2 * 100;
 export function newProfile(now = Date.now()): Profile {
-  return { version: 2, xp: 0, coins: 100, totalCatches: 0, catches: {}, bait: 'worm', baits: { shrimp: 0, squid: 0 }, rod: 'bamboo', rods: ['bamboo'], daily: { day: dayKey(now), catches: 0, claimed: false } };
+  return { version: 2, platform: 'pier', xp: 0, coins: 100, totalCatches: 0, catches: {}, bait: 'worm', baits: { shrimp: 0, squid: 0 }, rod: 'bamboo', rods: ['bamboo'], daily: { day: dayKey(now), catches: 0, claimed: false } };
 }
 const integer = (n: unknown, max = 1e9): n is number => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0 && n <= max;
 const record = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -59,7 +61,7 @@ export function validateProfile(value: unknown, now = Date.now()): Profile {
     count += entry.count;
   }
   if (count !== value.totalCatches) return fresh();
-  return { version: 2, xp: value.xp, coins: value.coins, totalCatches: count, catches, bait: value.bait as Bait, baits: { shrimp: value.baits.shrimp, squid: value.baits.squid }, rod: value.rod as Rod, rods: [...value.rods] as Rod[], daily: { day: value.daily.day, catches: value.daily.catches, claimed: value.daily.claimed } };
+  return { version: 2, platform: normalizePlatform(value.platform, count), xp: value.xp, coins: value.coins, totalCatches: count, catches, bait: value.bait as Bait, baits: { shrimp: value.baits.shrimp, squid: value.baits.squid }, rod: value.rod as Rod, rods: [...value.rods] as Rod[], daily: { day: value.daily.day, catches: value.daily.catches, claimed: value.daily.claimed } };
 }
 export function buyTackle(profile: Profile, itemId: string): Profile {
   const item = TACKLE.find(i => i.id === itemId);

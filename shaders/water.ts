@@ -5,7 +5,8 @@ export const waterVertexShader = `
   varying float vWave;
   void main() {
     vec3 p=position;
-    p.z = sin(p.x*.6+time*.85)*.075 + cos(p.y*.43-time*.6)*.055;
+    vec3 worldBase=(modelMatrix*vec4(p,1.)).xyz;
+    p.z = sin(worldBase.x*.6+time*.85)*.075 + cos(worldBase.z*.43+time*.6)*.055;
     vWave=p.z;
     vWorld=(modelMatrix*vec4(p,1.)).xyz;
     gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);

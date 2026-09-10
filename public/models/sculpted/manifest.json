@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "source": "tools/art/build.py",
+  "authoring": "Original scripted Blender models and procedural paint textures; no purchased or AI-generated art.",
+  "roots": [
+    "Pier",
+    "Skiff",
+    "Yacht",
+    "BaitChest",
+    "Island",
+    "LighthouseIsland",
+    "InletBanks",
+    "ReefFish",
+    "Rod",
+    "Bobber",
+    "Gull"
+  ],
+  "units": "metres",
+  "up": "+Y",
+  "forward": "-Z for environment; +X for fish",
+  "runtime": "harbour-kit.glb",
+  "review": "Candidate asset set; artistic approval and physical-device profiling are separate gates."
+}

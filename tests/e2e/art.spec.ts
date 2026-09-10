@@ -41,10 +41,11 @@ test('authored pier keeps bait selection and touch casting attached to the rende
   await expect(page.getByRole('dialog', { name: 'A little something for the fish' })).toBeVisible();
   await page.getByRole('button', { name: 'Close panel' }).click();
   await touchSwipe(page, [225, 495], [240, 315]);
+  // This assertion is the interaction gate. Do not perform cleanup after the screenshot:
+  // a software-rendered PNG capture can outlive the intentionally short fishing cast window.
   await expect(page.getByRole('button', { name: 'Cancel cast', exact: true })).toBeVisible();
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(350);
   await page.screenshot({ path: 'test-results/art-pier-cast-mobile.png' });
-  await page.getByRole('button', { name: 'Cancel cast', exact: true }).click();
 });
 
 test('a failed art download falls back to playable illustrated fishing', async ({ page }) => {

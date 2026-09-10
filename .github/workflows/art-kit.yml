@@ -1,0 +1,58 @@
+name: Build authored harbour art
+on:
+  push:
+    branches: [art/sculpted-harbour-v3]
+    paths: [tools/art/build.py, .github/workflows/art-kit.yml]
+permissions:
+  contents: write
+concurrency:
+  group: seacaster-art-kit
+  cancel-in-progress: true
+jobs:
+  author:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install authoring tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender
+      - name: Build original Blender assets
+        run: |
+          blender --background --threads 2 --python tools/art/build.py > /tmp/seacaster-art-build.log 2>&1
+          test -s public/models/sculpted/harbour-kit.glb
+      - name: Deduplicate without destroying named pivots
+        run: |
+          npx --yes --package=@gltf-transform/cli@4.2.1 gltf-transform dedup public/models/sculpted/harbour-kit.glb /tmp/harbour-kit.glb
+          cp /tmp/harbour-kit.glb public/models/sculpted/harbour-kit.glb
+          npx --yes --package=@gltf-transform/cli@4.2.1 gltf-transform validate public/models/sculpted/harbour-kit.glb
+      - name: Verify real exported interfaces and budgets
+        run: node --experimental-strip-types --test tests/art.test.ts
+      - name: Commit only the generated kit on the art branch
+        run: |
+          test "$GITHUB_REF_NAME" = art/sculpted-harbour-v3
+          git fetch origin "$GITHUB_REF_NAME"
+          test "$(git rev-parse FETCH_HEAD)" = "$(git rev-parse HEAD)"
+          git config user.name 'SeaCaster asset builder'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/models/sculpted/harbour-kit.glb public/models/sculpted/manifest.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'art: build original textured harbour GLB kit'
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
+      - name: Print authoring diagnostics
+        if: always()
+        run: tail -100 /tmp/seacaster-art-build.log || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: seacaster-authored-art
+          retention-days: 7
+          path: |
+            public/models/sculpted/
+            /tmp/seacaster-art-source.blend
+            /tmp/seacaster-art-build.log

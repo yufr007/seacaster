@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { bendRodVertex, bendRodNormal, waveHeight } from '../game/art-motion.ts';
+import * as artMotion from '../game/art-motion.ts';
+import { readFileSync } from 'node:fs';
 test('authored rod stays fixed at the grip and its tip matches the fishing line', () => {
   assert.deepEqual(bendRodVertex(0, .73, 0, .6), [0, .73, 0]);
   assert.deepEqual(bendRodVertex(0, 3.55, 0, .6), [-.6, 3.55, 0]);
@@ -16,5 +18,32 @@ test('float uses the same world-space displacement as the water shader', () => {
   for (const [x, z, time] of [[0, 0, 0], [2, -8, 3], [-2, -4, 15]]) {
     const expected = -.05 + Math.sin(x * .6 + time * .85) * .075 + Math.cos(z * .43 + time * .6) * .055;
     assert.equal(waveHeight(x, z, time), expected);
+  }
+});
+test('rod attribute snapshots honor the actual interleaved GLB stride and offsets', () => {
+  const snapshot = (artMotion as Record<string, unknown>).snapshotVec3;
+  assert.equal(typeof snapshot, 'function', 'The rod needs stride-aware attribute snapshots.');
+  const copy = snapshot as (a: { count: number; getX(i: number): number; getY(i: number): number; getZ(i: number): number }) => Float32Array;
+  const bytes = readFileSync(new URL('../public/models/sculpted/harbour-kit.glb', import.meta.url));
+  const jsonLength = bytes.readUInt32LE(12);
+  const gltf = JSON.parse(bytes.subarray(20, 20 + jsonLength).toString());
+  const binary = 20 + jsonLength + 8;
+  const node = gltf.nodes.find((n: { name: string }) => n.name === 'RodBlank');
+  const primitive = gltf.meshes[node.mesh].primitives[0];
+  for (const key of ['POSITION', 'NORMAL']) {
+    const accessor = gltf.accessors[primitive.attributes[key]];
+    const view = gltf.bufferViews[accessor.bufferView];
+    assert.ok(view.byteStride > 12, 'The regression fixture must remain interleaved.');
+    const start = binary + view.byteOffset + (accessor.byteOffset ?? 0);
+    const at = (i: number, component: number) => bytes.readFloatLE(start + i * view.byteStride + component * 4);
+    const packed = copy({ count: accessor.count, getX: i => at(i, 0), getY: i => at(i, 1), getZ: i => at(i, 2) });
+    assert.equal(packed.length, accessor.count * 3);
+    for (let i = 0; i < accessor.count; i++) {
+      assert.deepEqual(Array.from(packed.subarray(i * 3, i * 3 + 3)), [at(i, 0), at(i, 1), at(i, 2)]);
+      if (key === 'POSITION') {
+        const bent = bendRodVertex(packed[i * 3], packed[i * 3 + 1], packed[i * 3 + 2], .6);
+        assert.ok(Math.abs(bent[0]) < .7 && bent[1] >= .72 && bent[1] <= 3.56 && Math.abs(bent[2]) < .05);
+      }
+    }
   }
 });

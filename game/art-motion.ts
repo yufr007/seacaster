@@ -15,3 +15,14 @@ export function bendRodNormal(x: number, y: number, z: number, height: number, b
 export function waveHeight(x: number, z: number, time: number): number {
   return -.05 + Math.sin(x * .6 + time * .85) * .075 + Math.cos(z * .43 + time * .6) * .055;
 }
+
+/** GLB attributes may share an interleaved buffer. Read the accessor, not its raw array. */
+export function snapshotVec3(attribute: { count: number; getX(index: number): number; getY(index: number): number; getZ(index: number): number }): Float32Array {
+  const values = new Float32Array(attribute.count * 3);
+  for (let i = 0; i < attribute.count; i++) {
+    values[i * 3] = attribute.getX(i);
+    values[i * 3 + 1] = attribute.getY(i);
+    values[i * 3 + 2] = attribute.getZ(i);
+  }
+  return values;
+}

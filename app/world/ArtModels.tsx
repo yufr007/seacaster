@@ -4,7 +4,7 @@ import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import { AnimationMixer, Mesh, MeshStandardMaterial } from 'three';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
-import { bendRodNormal, bendRodVertex } from '../../game/art-motion';
+import { bendRodNormal, bendRodVertex, snapshotVec3 } from '../../game/art-motion';
 
 export const ART_URL = '/models/sculpted/harbour-kit.glb';
 export type ArtName = 'Pier' | 'Skiff' | 'Yacht' | 'BaitChest' | 'Island' | 'LighthouseIsland' | 'InletBanks' | 'ReefFish' | 'Rod' | 'Bobber' | 'Gull';
@@ -79,7 +79,7 @@ export function ArtRod({ bend, holding, reduced, golden }: { bend: MutableRefObj
     const source = blank.geometry;
     const position = source.getAttribute('position'), normal = source.getAttribute('normal');
     const material = (blank.material as MeshStandardMaterial).clone();
-    return { geometry, source, positions: Float32Array.from(position.array), normals: Float32Array.from(normal.array), material, sourceMaterial: blank.material };
+    return { geometry, source, positions: snapshotVec3(position), normals: snapshotVec3(normal), material, sourceMaterial: blank.material };
   }, [blank]);
   useEffect(() => {
     blank.geometry = resources.geometry; blank.material = resources.material;

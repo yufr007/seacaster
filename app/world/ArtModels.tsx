@@ -4,7 +4,7 @@ import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import { AnimationMixer, Mesh, MeshStandardMaterial } from 'three';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
-import { bendRodNormal, bendRodVertex, snapshotVec3 } from '../../game/art-motion';
+import { bendRodNormal, bendRodVertex, snapshotVec3, artCastsShadow } from '../../game/art-motion';
 
 export const ART_URL = '/models/sculpted/harbour-kit.glb';
 export type ArtName = 'Pier' | 'Skiff' | 'Yacht' | 'BaitChest' | 'Island' | 'LighthouseIsland' | 'InletBanks' | 'ReefFish' | 'Rod' | 'Bobber' | 'Gull';
@@ -18,7 +18,7 @@ export function useArt(name: ArtName) {
     const instance = clone(source);
     instance.traverse(node => {
       if (node instanceof Mesh) {
-        node.castShadow = true; node.receiveShadow = true;
+        node.castShadow = artCastsShadow(name); node.receiveShadow = artCastsShadow(name);
       }
     });
     return instance;
@@ -82,6 +82,9 @@ export function ArtRod({ bend, holding, reduced, golden }: { bend: MutableRefObj
     return { geometry, source, positions: snapshotVec3(position), normals: snapshotVec3(normal), material, sourceMaterial: blank.material };
   }, [blank]);
   useEffect(() => {
+    resources.material.envMap = (resources.sourceMaterial as MeshStandardMaterial).envMap;
+    resources.material.envMapIntensity = (resources.sourceMaterial as MeshStandardMaterial).envMapIntensity;
+    resources.material.needsUpdate = true;
     blank.geometry = resources.geometry; blank.material = resources.material;
     return () => {
       blank.geometry = resources.source; blank.material = resources.sourceMaterial;

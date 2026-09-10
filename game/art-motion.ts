@@ -26,3 +26,12 @@ export function snapshotVec3(attribute: { count: number; getX(index: number): nu
   }
   return values;
 }
+
+/** Shadows add contact on the working deck, not on distant foliage or underwater wildlife. */
+export function artCastsShadow(name: string): boolean {
+  return ['Pier', 'Skiff', 'Yacht', 'BaitChest', 'Rod'].includes(name);
+}
+/** Matte wood, foliage and cloth use direct/hemisphere lighting instead of cube-map filtering. */
+export function needsArtReflection(roughness: number, metalness: number): boolean {
+  return roughness < .5 || metalness > .1;
+}

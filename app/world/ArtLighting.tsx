@@ -4,24 +4,32 @@ import { useGLTF } from '@react-three/drei';
 import { ACESFilmicToneMapping, MeshStandardMaterial, PMREMGenerator, SRGBColorSpace } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { ART_URL } from './ArtModels';
+import { needsArtReflection } from '../../game/art-motion';
 import type { WorldProps } from './types';
 
 /** One key shadow plus soft reflection fill; no external HDR download or postprocess stack. */
 export function ArtLighting({ sky }: Pick<WorldProps, 'sky'>) {
-  const { gl, scene } = useThree();
+  const { gl } = useThree();
   const { materials } = useGLTF(ART_URL, false);
   useEffect(() => {
-    const previous = scene.environment;
     const environment = new RoomEnvironment();
     const generator = new PMREMGenerator(gl);
     const map = generator.fromScene(environment, .04);
-    scene.environment = map.texture;
+    const changes = Object.values(materials).filter((m): m is MeshStandardMaterial => m instanceof MeshStandardMaterial)
+      .map(material => ({ material, previous: material.envMap }));
+    for (const { material } of changes) {
+      material.envMap = needsArtReflection(material.roughness, material.metalness) ? map.texture : null;
+      material.needsUpdate = true;
+    }
     gl.outputColorSpace = SRGBColorSpace;
     gl.toneMapping = ACESFilmicToneMapping;
     gl.toneMappingExposure = 1.0;
     environment.dispose(); generator.dispose();
-    return () => { scene.environment = previous; map.dispose(); };
-  }, [gl, scene]);
+    return () => {
+      for (const { material, previous } of changes) { material.envMap = previous; material.needsUpdate = true; }
+      map.dispose();
+    };
+  }, [gl, materials]);
   useEffect(() => {
     for (const material of Object.values(materials)) {
       if (material instanceof MeshStandardMaterial) material.envMapIntensity = .18 + sky.daylight * .36;

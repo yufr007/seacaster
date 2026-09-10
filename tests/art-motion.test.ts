@@ -47,3 +47,17 @@ test('rod attribute snapshots honor the actual interleaved GLB stride and offset
     }
   }
 });
+test('background art does not pay for foreground-only shadow receivers', () => {
+  const policy = (artMotion as Record<string, unknown>).artCastsShadow;
+  assert.equal(typeof policy, 'function');
+  const casts = policy as (name: string) => boolean;
+  assert.equal(casts('Pier'), true); assert.equal(casts('BaitChest'), true);
+  for (const name of ['ReefFish', 'Gull', 'Island', 'LighthouseIsland', 'InletBanks']) assert.equal(casts(name), false);
+});
+test('environment reflections are reserved for glossy paint, glass and metal', () => {
+  const policy = (artMotion as Record<string, unknown>).needsArtReflection;
+  assert.equal(typeof policy, 'function');
+  const reflects = policy as (roughness: number, metalness: number) => boolean;
+  assert.equal(reflects(.73, 0), false); assert.equal(reflects(.85, 0), false);
+  assert.equal(reflects(.3, 0), true); assert.equal(reflects(.33, .58), true);
+});

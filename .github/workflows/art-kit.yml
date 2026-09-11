@@ -2,7 +2,7 @@ name: Build authored harbour art
 on:
   push:
     branches: [finish/seacaster-release]
-    paths: [tools/art/build.py, tools/art/premium_pass.py, tools/art/angler_pass.py, .github/workflows/art-kit.yml]
+    paths: [tools/art/build.py, tools/art/premium_pass.py, tools/art/angler_pass.py, tools/art/fish_pass.py, .github/workflows/art-kit.yml]
 permissions:
   contents: write
 concurrency:
@@ -33,6 +33,10 @@ jobs:
         run: |
           PYTHONPATH=/usr/lib/python3/dist-packages blender --background --threads 2 --python-exit-code 1 --python tools/art/angler_pass.py >> /tmp/seacaster-art-build.log 2>&1
           test -s public/models/sculpted/harbour-kit.glb
+      - name: Build the complete catch catalog
+        run: |
+          PYTHONPATH=/usr/lib/python3/dist-packages blender --background --threads 2 --python-exit-code 1 --python tools/art/fish_pass.py >> /tmp/seacaster-art-build.log 2>&1
+          test -s public/models/sculpted/harbour-kit.glb
       - name: Deduplicate without destroying named pivots
         run: |
           npx --yes --package=@gltf-transform/cli@4.2.1 gltf-transform dedup public/models/sculpted/harbour-kit.glb /tmp/harbour-kit.glb
@@ -54,7 +58,7 @@ jobs:
           fi
       - name: Print authoring diagnostics
         if: always()
-        run: tail -120 /tmp/seacaster-art-build.log || true
+        run: tail -140 /tmp/seacaster-art-build.log || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:

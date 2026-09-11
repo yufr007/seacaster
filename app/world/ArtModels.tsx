@@ -7,7 +7,14 @@ import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { bendRodNormal, bendRodVertex, snapshotVec3, artCastsShadow } from '../../game/art-motion';
 
 export const ART_URL = '/models/sculpted/harbour-kit.glb';
-export type ArtName = 'Pier' | 'Skiff' | 'Yacht' | 'BaitChest' | 'Island' | 'LighthouseIsland' | 'InletBanks' | 'ReefFish' | 'Rod' | 'Bobber' | 'Gull' | 'AnglerHands';
+type FishIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
+export type SpeciesArtName = `Fish_f${FishIndex}`;
+export type ArtName = 'Pier' | 'Skiff' | 'Yacht' | 'BaitChest' | 'Island' | 'LighthouseIsland' | 'InletBanks' | 'ReefFish' | 'Rod' | 'Bobber' | 'Gull' | 'AnglerHands' | SpeciesArtName;
+
+function speciesArtName(speciesId: string): SpeciesArtName {
+  if (!/^f(?:[1-9]|1[0-5])$/.test(speciesId)) throw new Error(`Unknown SeaCaster species art: ${speciesId}`);
+  return `Fish_${speciesId}` as SpeciesArtName;
+}
 
 /** GLB is fetched once. Instances own transforms/morph weights, never cached mesh state. */
 export function useArt(name: ArtName) {
@@ -57,6 +64,22 @@ export function ArtFish({ reduced, size = 1, variant = 0 }: { reduced: boolean; 
   });
   return <group scale={size}><primitive object={object} dispose={null} /></group>;
 }
+
+/** The landed catch resolves into its real catalogue model only after the server awards it. */
+export function ArtSpeciesFish({ speciesId, reduced, size = 1 }: { speciesId: string; reduced: boolean; size?: number }) {
+  const name = speciesArtName(speciesId);
+  const { object } = useArt(name);
+  const tail = useMemo(() => object.getObjectByName(`Tail_${speciesId}`), [object, speciesId]);
+  const fins = useMemo(() => [object.getObjectByName('FinLeft'), object.getObjectByName('FinRight')], [object]);
+  useFrame(({ clock }) => {
+    if (reduced) return;
+    const t = clock.elapsedTime;
+    if (tail) tail.rotation.y = Math.sin(t * 7.4) * (speciesId === 'f14' ? .48 : .34);
+    fins.forEach((fin, i) => { if (fin) fin.rotation.x = Math.sin(t * 6.1 + i * .8) * .16 * (i ? 1 : -1); });
+  });
+  return <group scale={size} data-species-art={speciesId}><primitive object={object} dispose={null} /></group>;
+}
+
 export function ArtBird({ reduced, offset = 0 }: { reduced: boolean; offset?: number }) {
   const { object } = useArt('Gull');
   const wings = useMemo(() => [object.getObjectByName('WingLeft'), object.getObjectByName('WingRight')], [object]);

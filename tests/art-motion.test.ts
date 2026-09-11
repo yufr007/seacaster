@@ -20,8 +20,9 @@ test('float and rendered surface use the same primary world-space displacement',
     const expected = -.05 + Math.sin(x * .6 + time * .85) * .075 + Math.cos(z * .43 + time * .6) * .055;
     assert.equal(waveHeight(x, z, time), expected);
   }
-  assert.match(waterVertexShader, /base\.x \* \.6 \+ t \* \.85/);
-  assert.match(waterVertexShader, /base\.z \* \.43 \+ t \* \.6/);
+  assert.match(waterVertexShader, /p\.x \* \.6 \+ t \* \.85/);
+  assert.match(waterVertexShader, /p\.y \* \.43 \+ t \* \.6/);
+  assert.match(waterVertexShader, /waveHeight\(base\.xz, time\)/);
   assert.doesNotMatch(waterVertexShader, /float c\s*=/, 'Do not add hidden geometry waves the float cannot follow.');
 });
 test('water uses view-aware surface shading instead of repeating binary stripe bands', () => {

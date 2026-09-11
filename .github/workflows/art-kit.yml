@@ -2,7 +2,7 @@ name: Build authored harbour art
 on:
   push:
     branches: [finish/seacaster-release]
-    paths: [tools/art/build.py, tools/art/premium_pass.py, .github/workflows/art-kit.yml]
+    paths: [tools/art/build.py, tools/art/premium_pass.py, tools/art/angler_pass.py, .github/workflows/art-kit.yml]
 permissions:
   contents: write
 concurrency:
@@ -28,6 +28,10 @@ jobs:
       - name: Apply premium landmark pass
         run: |
           PYTHONPATH=/usr/lib/python3/dist-packages blender --background --threads 2 --python-exit-code 1 --python tools/art/premium_pass.py >> /tmp/seacaster-art-build.log 2>&1
+          test -s public/models/sculpted/harbour-kit.glb
+      - name: Add first-person angler pass
+        run: |
+          PYTHONPATH=/usr/lib/python3/dist-packages blender --background --threads 2 --python-exit-code 1 --python tools/art/angler_pass.py >> /tmp/seacaster-art-build.log 2>&1
           test -s public/models/sculpted/harbour-kit.glb
       - name: Deduplicate without destroying named pivots
         run: |

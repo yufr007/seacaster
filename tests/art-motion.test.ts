@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { bendRodVertex, bendRodNormal, waveHeight } from '../game/art-motion.ts';
 import * as artMotion from '../game/art-motion.ts';
+import { waterVertexShader, waterFragmentShader } from '../shaders/water.ts';
 import { readFileSync } from 'node:fs';
 test('authored rod stays fixed at the grip and its tip matches the fishing line', () => {
   assert.deepEqual(bendRodVertex(0, .73, 0, .6), [0, .73, 0]);
@@ -14,11 +15,20 @@ test('rod normals follow the deformation and stay normalized', () => {
   assert.ok(Math.abs(Math.hypot(...normal) - 1) < 1e-6);
   assert.deepEqual(bendRodNormal(0, 0, 1, 2, .6), [0, 0, 1]);
 });
-test('float uses the same world-space displacement as the water shader', () => {
+test('float and rendered surface use the same primary world-space displacement', () => {
   for (const [x, z, time] of [[0, 0, 0], [2, -8, 3], [-2, -4, 15]]) {
     const expected = -.05 + Math.sin(x * .6 + time * .85) * .075 + Math.cos(z * .43 + time * .6) * .055;
     assert.equal(waveHeight(x, z, time), expected);
   }
+  assert.match(waterVertexShader, /base\.x \* \.6 \+ t \* \.85/);
+  assert.match(waterVertexShader, /base\.z \* \.43 \+ t \* \.6/);
+  assert.doesNotMatch(waterVertexShader, /float c\s*=/, 'Do not add hidden geometry waves the float cannot follow.');
+});
+test('water uses view-aware surface shading instead of repeating binary stripe bands', () => {
+  assert.match(waterVertexShader, /vNormal/);
+  assert.match(waterFragmentShader, /fresnel/i);
+  assert.match(waterFragmentShader, /cameraPosition/);
+  assert.doesNotMatch(waterFragmentShader, /float band\s*\(/, 'Old stripe-band water reads as a repeating texture at phone scale.');
 });
 test('rod attribute snapshots honor the actual interleaved GLB stride and offsets', () => {
   const snapshot = (artMotion as Record<string, unknown>).snapshotVec3;

@@ -11,6 +11,10 @@ test('shipped art has textures, normals, animation and stable interaction pivots
   const names = new Set(gltf.nodes.map((n: {name?: string}) => n.name));
   for (const name of ['Pier', 'Skiff', 'Yacht', 'BaitChest', 'Island', 'LighthouseIsland', 'InletBanks', 'ReefFish', 'Rod', 'Bobber', 'Gull', 'LidPivot', 'BaitAnchor', 'RodTip', 'RodBlank', 'ReelCrank', 'TailPivot', 'WingLeft', 'WingRight']) assert.ok(names.has(name), `Missing art interface: ${name}`);
   for (const name of ['IslandCliff', 'LighthouseCliff', 'KeeperCottage', 'IslandJetty', 'AnglerHands']) assert.ok(names.has(name), `Missing premium landmark: ${name}`);
+  for (let i = 1; i <= 15; i++) {
+    assert.ok(names.has(`Fish_f${i}`), `Missing species model Fish_f${i}`);
+    assert.ok(names.has(`Tail_f${i}`), `Missing species tail pivot Tail_f${i}`);
+  }
   assert.ok(gltf.images?.length >= 5, 'Expected textures, not flat-color primitives.');
   assert.ok(gltf.images.every((i: {uri?: string; bufferView?: number}) => !i.uri && i.bufferView !== undefined));
   assert.ok(gltf.buffers.every((b: {uri?: string}) => !b.uri), 'No off-origin geometry.');

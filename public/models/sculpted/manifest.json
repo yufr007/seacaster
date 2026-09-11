@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "source": "tools/art/build.py + tools/art/premium_pass.py",
+  "version": 5,
+  "source": "tools/art/build.py + tools/art/premium_pass.py + tools/art/angler_pass.py",
   "authoring": "Original SeaCaster Blender models, sculpted landmark pass and procedural paint textures; no third-party assets.",
   "roots": [
     "Pier",
@@ -19,5 +19,5 @@
   "up": "+Y",
   "forward": "-Z for environment; +X for fish",
   "runtime": "harbour-kit.glb",
-  "review": "Premium landmark candidate; verify mobile renders and physical-device performance before release."
+  "review": "Premium first-person harbour candidate; verify authored WebGL renders and physical-device performance."
 }

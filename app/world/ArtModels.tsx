@@ -7,7 +7,7 @@ import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { bendRodNormal, bendRodVertex, snapshotVec3, artCastsShadow } from '../../game/art-motion';
 
 export const ART_URL = '/models/sculpted/harbour-kit.glb';
-export type ArtName = 'Pier' | 'Skiff' | 'Yacht' | 'BaitChest' | 'Island' | 'LighthouseIsland' | 'InletBanks' | 'ReefFish' | 'Rod' | 'Bobber' | 'Gull';
+export type ArtName = 'Pier' | 'Skiff' | 'Yacht' | 'BaitChest' | 'Island' | 'LighthouseIsland' | 'InletBanks' | 'ReefFish' | 'Rod' | 'Bobber' | 'Gull' | 'AnglerHands';
 
 /** GLB is fetched once. Instances own transforms/morph weights, never cached mesh state. */
 export function useArt(name: ArtName) {

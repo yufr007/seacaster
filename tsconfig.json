@@ -6,5 +6,5 @@
     "allowImportingTsExtensions": true, "noEmit": true, "resolveJsonModule": true,
     "types": ["node", "vite/client"]
   },
-  "include": ["App.tsx", "index.tsx", "env.d.ts", "vite.config.ts", "playwright.config.ts", "app/**/*", "game/**/*", "shaders/**/*", "backend/src/**/*", "tests/**/*"]
+  "include": ["App.tsx", "index.tsx", "env.d.ts", "vite.config.ts", "playwright.config.ts", "api/**/*", "app/**/*", "game/**/*", "shaders/**/*", "backend/src/**/*", "tests/**/*"]
 }

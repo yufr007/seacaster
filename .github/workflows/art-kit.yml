@@ -1,12 +1,12 @@
 name: Build authored harbour art
 on:
   push:
-    branches: [art/sculpted-harbour-v3]
-    paths: [tools/art/build.py, .github/workflows/art-kit.yml]
+    branches: [finish/seacaster-release]
+    paths: [tools/art/build.py, tools/art/premium_pass.py, .github/workflows/art-kit.yml]
 permissions:
   contents: write
 concurrency:
-  group: seacaster-art-kit
+  group: seacaster-art-kit-release
   cancel-in-progress: true
 jobs:
   author:
@@ -25,6 +25,10 @@ jobs:
         run: |
           PYTHONPATH=/usr/lib/python3/dist-packages blender --background --threads 2 --python-exit-code 1 --python tools/art/build.py > /tmp/seacaster-art-build.log 2>&1
           test -s public/models/sculpted/harbour-kit.glb
+      - name: Apply premium landmark pass
+        run: |
+          PYTHONPATH=/usr/lib/python3/dist-packages blender --background --threads 2 --python-exit-code 1 --python tools/art/premium_pass.py >> /tmp/seacaster-art-build.log 2>&1
+          test -s public/models/sculpted/harbour-kit.glb
       - name: Deduplicate without destroying named pivots
         run: |
           npx --yes --package=@gltf-transform/cli@4.2.1 gltf-transform dedup public/models/sculpted/harbour-kit.glb /tmp/harbour-kit.glb
@@ -32,21 +36,21 @@ jobs:
           npx --yes --package=@gltf-transform/cli@4.2.1 gltf-transform validate public/models/sculpted/harbour-kit.glb
       - name: Verify real exported interfaces and budgets
         run: node --experimental-strip-types --test tests/art.test.ts
-      - name: Commit only the generated kit on the art branch
+      - name: Commit only the generated kit on the release branch
         run: |
-          test "$GITHUB_REF_NAME" = art/sculpted-harbour-v3
+          test "$GITHUB_REF_NAME" = finish/seacaster-release
           git fetch origin "$GITHUB_REF_NAME"
           test "$(git rev-parse FETCH_HEAD)" = "$(git rev-parse HEAD)"
           git config user.name 'SeaCaster asset builder'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add public/models/sculpted/harbour-kit.glb public/models/sculpted/manifest.json
           if ! git diff --cached --quiet; then
-            git commit -m 'art: build original textured harbour GLB kit'
+            git commit -m 'art: build premium sculpted harbour GLB kit'
             git push origin "HEAD:$GITHUB_REF_NAME"
           fi
       - name: Print authoring diagnostics
         if: always()
-        run: tail -100 /tmp/seacaster-art-build.log || true
+        run: tail -120 /tmp/seacaster-art-build.log || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:

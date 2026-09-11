@@ -40,7 +40,6 @@ export function ArtFish({ reduced, size = 1, variant = 0 }: { reduced: boolean; 
   const mixer = useMemo(() => new AnimationMixer(object), [object]);
   const fins = useMemo(() => [object.getObjectByName('FinLeft'), object.getObjectByName('FinRight')], [object]);
   useEffect(() => {
-    // Exported clips are filtered by target name, not a guessed DCC action index.
     const names = new Set<string>(); object.traverse(node => names.add(node.name));
     for (const clip of animations) {
       const tracks = clip.tracks.filter(track => names.has(track.name.split('.')[0]));
@@ -100,13 +99,12 @@ export function ArtRod({ bend, holding, reduced, golden }: { bend: MutableRefObj
       normals.setXYZ(i, ...bendRodNormal(n[k], n[k + 1], n[k + 2], a[k + 1], bend.current));
     }
     positions.needsUpdate = true; normals.needsUpdate = true;
-    // Conservative bounds avoid recalculating the same bounds every frame.
     if (!resources.geometry.boundingSphere) resources.geometry.computeBoundingSphere();
     if (resources.geometry.boundingSphere) resources.geometry.boundingSphere.radius = 4;
     if (tip) tip.position.x = -bend.current;
     if (crank && holding.current && !reduced) crank.rotation.x += Math.min(delta, .1) * 18;
   });
-  return <primitive object={object} dispose={null} />;
+  return <><primitive object={object} dispose={null} /><ArtObject name="AnglerHands" /></>;
 }
 
 export function ArtChest({ open, reduced, children }: { open: boolean; reduced: boolean; children?: React.ReactNode }) {

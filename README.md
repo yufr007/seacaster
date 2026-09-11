@@ -1,39 +1,54 @@
 # SeaCaster
 
-A web-native fishing game with optional ownership on Base. Cast, set the hook, manage line tension, land a catch and build a field journal. No wallet or transaction is required for guest fishing.
+A mobile-first fishing game for Base: cast with a swipe, read the water, manage line tension, land fish, build a journal and earn your way from a weathered pier to the yacht. Guest fishing requires no wallet or transaction.
 
-## V2 scope
+## The game
 
-The active game uses React 18, Vite, TypeScript and React Three Fiber. Original fish artwork and nautical identity are retained. Features include fifteen discoverable species, earned-currency tackle and rod upgrades, a daily five-catch challenge, a server-recorded leaderboard, optional sound, and an illustrated low-power mode.
+SeaCaster is a React 18 + Vite + TypeScript + React Three Fiber game with a server-authoritative online journal and optional ownership on Base.
 
-A connected wallet can sign in through SIWE to a separate server-authoritative journal. The optional Sea Pass provides thirty days of Moonlit Cove and a badge. The Golden Tide Rod is an appearance-only, transferable ERC-1155 cosmetic. Neither is represented by a trusted local premium flag. Checkout is disabled until a valid contract is configured and verified.
+- 15 discoverable fish species with distinct rarity, weight and rewards.
+- Swipe-to-cast rod motion, visible bait flight, splash, bobber, hook timing and tension-based reeling.
+- Worm, shrimp and squid bait plus earned rod/tackle progression.
+- Daily five-catch challenge, XP, coins, collection journal and leaderboard.
+- Four earned fishing berths: Driftwood Pier, Willow Inlet, Little Skipper and Sunseeker Yacht.
+- Authored Blender/GLB harbour assets, animated wildlife/fish, stylized water, atmospheric lighting and berth-specific set dressing.
+- Local-time day/night presentation, Moonlit Cove visual override for Sea Pass owners, opt-in procedural ocean/fishing soundscape and haptics.
+- Illustrated low-power mode keeps the full fishing loop usable on constrained devices.
 
-This is source under active release verification, not a deployed or independently audited mainnet product. Read [the release checklist](docs/RELEASE.md) before enabling purchases.
+The world is intentionally stylized and readable on a phone rather than photorealistic. Gameplay simulation is kept outside React rendering so visual fidelity does not control catch outcomes.
 
-## A little life on the water
+## Base ownership
 
-The title screen opens into your harbour: real XP, earned coins, your field journal, daily challenge progress and the next fishing berth. Go fishing without connecting a wallet.
+Connect with Base Account or another EVM wallet. SIWE creates a separate server-authoritative online journal; guest progress stays local and is never silently imported into the online leaderboard.
 
-Swipe **upward over the water** to wind up and cast. Swipe direction and length move the landing point; they do not buy or alter catch odds. Tap-to-cast and Space remain available. Watch the bobber dip, set the hook, then hold to reel and release before the tension gets too high. The catch jumps aboard before the journal reveal.
+The optional `SeaCasterAssetsV2` contract supports:
 
-| Berth | Unlock | Surroundings |
-| --- | --- | --- |
-| Driftwood Pier | Start | Timber deck, bait chest, bucket and lantern |
-| Willow Inlet | 3 catches | Estuary banks, reeds, stones and lily pads |
-| Little Skipper | 10 catches | Rocking painted fishing boat |
-| Sunseeker Yacht | 30 catches | Cream hull, teak-coloured deck and cabin |
+- **Sea Pass** — 30 days of Moonlit Cove and identity treatment. No automatic renewal.
+- **Golden Tide Rod** — transferable ERC-1155 cosmetic, token ID 101. Appearance only.
 
-Berths are earned through catches, cost no coins, and persist with the active profile. Server-authenticated selection checks the same unlock rules; guest saves remain separate. Use the physical **Bait box** button on the deck to select worms, shrimp or squid, or restock through the tackle shop.
+Core fishing stays free. Onchain ownership never changes catch odds, XP or server validation. Checkout is disabled unless the configured contract, chain and payment token verify successfully.
 
-The 3D world uses original stylized geometry, animated water, curious fish, distant sailboats, gulls, clouds, islands and a lighthouse. Lighting follows the device's local clock, without GPS or an astronomical sunrise calculation. The existing Sea Pass Moonlit Cove setting remains an optional visual override.
+## Production stack
 
-Sound is opt-in: procedural Web Audio supplies surf, cast/splash/reel effects, sparse birds and catch cues. Settings separately control ambience, effects, haptics and low-power mode. No external sound download is required. Reduced motion suppresses decorative animation; hidden pages suspend audio and rendering. Low-power mode keeps the illustrated scene and touch gameplay.
+SeaCaster ships as a deliberately small managed stack:
 
-See [the immersion specification](docs/IMMERSION.md) for the scope and verification boundaries. This iteration does not change contracts, payment prices or fishing reward probabilities.
+| Layer | Production |
+| --- | --- |
+| Web/game | Vite + React + R3F on Vercel |
+| Static art | Vercel CDN (`public/assets`, `public/models`) |
+| Trusted API | Existing tested Express game API mounted as one Vercel Node Function |
+| Database | Fresh Supabase Postgres in US East, using its transaction pooler from the Vercel Function |
+| Identity | SIWE verified server-side with viem, compatible with the Base wallet path |
+| Ownership | Base + wagmi + viem + `SeaCasterAssetsV2` |
+| CI | GitHub Actions: rules, contracts, real PostgreSQL API tests and Playwright renders |
+
+There is no production Docker service, VPS, FastAPI service, Railway service or Render service. Add infrastructure only when the game has a measured workload that needs it.
+
+Supabase's browser Data API is not used for authoritative game state. `players`, `auth_nonces` and `sessions` have RLS enabled and client roles revoked; only the trusted Vercel API receives the server-only database connection.
 
 ## Run locally
 
-Node 22.16 or newer is required. Both dependency graphs have committed lockfiles.
+Node 22.16 or newer is required.
 
 ```bash
 npm ci
@@ -41,44 +56,38 @@ cp .env.example .env
 npm run dev
 ```
 
-Guest fishing works without the API or database. The development URL must match APP_ORIGIN for authenticated POST requests; use http://localhost:5173 with the default configuration.
+Guest fishing works immediately at `http://localhost:5173` with no database.
 
-For online saving, start a local PostgreSQL database and the API in a second terminal:
+For the complete deployed-style API, use a PostgreSQL database and run through Vercel's local runtime (`vercel dev`) with `APP_ORIGIN`, `CHAIN_ID`, `RPC_URL` and `DATABASE_URL` set. Production `DATABASE_URL` must be the SeaCaster Supabase **transaction-pooler** URI, never a browser variable.
 
-```bash
-docker compose up -d postgres
-npm run dev:api
-```
-
-Use the development DATABASE_URL from .env.example. This database is disposable and has no connection to the former backend. Do not copy production credentials into local test commands.
-
-## Checks
+## Verification
 
 ```bash
 npm test
 npm run build
-# Create a separate disposable test database:
-docker compose exec postgres createdb -U seacaster seacaster_test
-DATABASE_URL=postgresql://seacaster:local-development-only@localhost:5432/seacaster_test npm run test:api
+DATABASE_URL=postgresql://.../seacaster_test npm run test:api
 npx playwright install chromium
 npm run test:e2e
 cd contracts && npm ci && npm test
 ```
 
-The API test creates/truncates its test tables and refuses a database name without the _test suffix. The browser tests exercise real touch swipes and reeling, collection persistence, missed-bite recovery, all four berths, local timezone lighting, settings persistence, live audio generation/muting and the unconfigured wallet state. The mobile animation test records the actual browser flow; Playwright video itself has no audio track. A passing build is not equivalent to real-device or visual approval.
+The API suite refuses a database whose name does not end in `_test`. Browser tests drive real touch gestures, cast/hook/reel recovery, all four berths, day/night, settings, audio opt-in and wallet-unconfigured states. Full authored-WebGL rendering is captured separately from gameplay mechanics so a slow CI software renderer cannot alter the simulation clock.
+
+A green CI build is not a substitute for physical iPhone/Android performance testing or a live Base Sepolia checkout test.
 
 ## Code boundaries
 
 | Path | Responsibility |
 | --- | --- |
-| game/ | Pure catalogue, progression, fishing and deterministic reel validation |
-| app/ | Presentation, transient input, guest state, wallet and UI panels |
-| backend/src/ | Same-origin Express API, SIWE sessions and PostgreSQL mutations |
-| backend/sql/ | Fresh V2 schema |
-| contracts/ | Sea Pass expiry, USDC payments and ERC-1155 cosmetic ownership |
-| public/assets/ | Existing production artwork |
-| tests/ | Domain, real-PostgreSQL API and browser tests |
+| `game/` | Pure catalogue, progression, cast and deterministic reel validation |
+| `app/` | Presentation, R3F world, input, guest state, wallet and UI |
+| `api/handler.ts` | Vercel Function entry point |
+| `backend/src/` | Same-origin game API, SIWE sessions and authoritative PostgreSQL mutations |
+| `backend/sql/` | Fresh game schema used by Supabase and disposable API tests |
+| `contracts/` | Sea Pass expiry, USDC payments and ERC-1155 cosmetic ownership |
+| `public/models/` | Authored production GLB assets |
+| `tests/` | Domain, deployment, PostgreSQL API and browser verification |
 
-Authenticated catches are chosen by the server and awarded atomically after replaying the input transcript. This prevents client-submitted fish/XP fabrication and duplicate awards; it is not proof that a human, rather than a bot, played. There are no cash-prize competitions in this release.
+Authenticated catches are selected by the server and awarded atomically after replaying the reel transcript. Client-submitted species, weight, XP, prices and unlock claims are not trusted. This prevents simple client fabrication; it is not human-attestation, which is why this release has no cash-prize competition or tradeable catch rewards.
 
-The previous implementation remains in Git history. There is no Unity or React Native client, no Farcaster/FID requirement, no fungible game token, and no marketplace in V2.
+The abandoned Farcaster/FID prototype remains only in Git history. SeaCaster V2 has no Farcaster runtime dependency, no fungible game token, no marketplace, and no React Native or Unity fork.

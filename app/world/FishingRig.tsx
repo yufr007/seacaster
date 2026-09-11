@@ -1,20 +1,21 @@
-import { Suspense, useEffect, useMemo, useRef } from 'react';
-import { useFrame, useThree, useLoader } from '@react-three/fiber';
-import { Billboard } from '@react-three/drei';
-import { BufferGeometry, Float32BufferAttribute, Group, Line as ThreeLine, LineBasicMaterial, Vector3, TextureLoader, SRGBColorSpace, Mesh } from 'three';
+import { useEffect, useMemo, useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import { BufferGeometry, Float32BufferAttribute, Group, Line as ThreeLine, LineBasicMaterial, Vector3, Mesh } from 'three';
 import type { WorldProps } from './types';
 import { BaitModel } from './Props';
-import { ArtObject, ArtFish, ArtRod } from './ArtModels';
+import { ArtObject, ArtFish, ArtRod, ArtSpeciesFish } from './ArtModels';
 import { waveHeight } from '../../game/art-motion';
-import { FISH } from '../../game/engine';
 import { castArc, castTarget } from '../../game/world';
 import { usePlayer } from '../player';
 
-function FishPortrait({ species }: { species: string }) {
-  const fish = FISH.find(f => f.id === species)!;
-  const texture = useLoader(TextureLoader, fish.image); texture.colorSpace = SRGBColorSpace;
-  return <Billboard><mesh><planeGeometry args={[2.6, 2]} /><meshBasicMaterial map={texture} transparent depthWrite={false} alphaTest={.02} /></mesh></Billboard>;
+function landedScale(species: string) {
+  const index = Number(species.slice(1));
+  if (!Number.isFinite(index)) return 1;
+  if (index === 14) return .95;
+  if (index === 15) return .82;
+  return Math.max(.92, 1.28 - (index - 1) * .025);
 }
+
 export function FishingRig({ phase, motion, reduced, home, platform, species }: Pick<WorldProps, 'phase' | 'motion' | 'reduced' | 'home' | 'platform' | 'species'>) {
   const rod = useRef<Group>(null), float = useRef<Group>(null), splash = useRef<Group>(null), fish = useRef<Group>(null), prize = useRef<Group>(null), preview = useRef<Group>(null), landing = useRef<Group>(null);
   const bendRef = useRef(0), holdingRef = useRef(false);
@@ -97,7 +98,7 @@ export function FishingRig({ phase, motion, reduced, home, platform, species }: 
       prize.current.visible = phase === 'caught' && !home;
       prize.current.position.copy(vectors.to).lerp(vectors.a.set(-.2, 1.15, portrait ? 1.4 : 3.4), t);
       prize.current.position.y += Math.sin(Math.PI * t) * 3.3;
-      prize.current.rotation.z = reduced ? 0 : Math.sin(t * Math.PI * 2) * .25;
+      prize.current.rotation.set(0, -.12 + Math.sin(t * Math.PI) * .18, reduced ? 0 : Math.sin(t * Math.PI * 2) * .25);
     }
   }, -1);
   return <>
@@ -108,6 +109,6 @@ export function FishingRig({ phase, motion, reduced, home, platform, species }: 
     <group ref={float}><ArtObject name="Bobber" /><group position={[0, -.18, 0]}><BaitModel bait={motion.current.bait} scale={.58} /></group></group>
     <group ref={splash}>{Array.from({ length: 3 }, (_, i) => <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, .01 * i, 0]}><torusGeometry args={[.4, .025, 4, 32]} /><meshBasicMaterial color="#dcffed" transparent opacity={.7} depthWrite={false} /></mesh>)}{Array.from({ length: 9 }, (_, i) => <mesh key={`d${i}`}><sphereGeometry args={[.065, 6, 5]} /><meshStandardMaterial color="#b2f1e8" transparent /></mesh>)}</group>
     <group ref={fish}><ArtFish reduced={reduced} size={.9} /></group>
-    <group ref={prize}><Suspense fallback={<ArtFish reduced={reduced} size={1.5} />}>{species ? <FishPortrait species={species} /> : <ArtFish reduced={reduced} size={1.5} />}</Suspense></group>
+    <group ref={prize}>{species ? <ArtSpeciesFish speciesId={species} reduced={reduced} size={landedScale(species)} /> : <ArtFish reduced={reduced} size={1.25} />}</group>
   </>;
 }

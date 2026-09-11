@@ -48,7 +48,7 @@ function Water({ sky, reduced, platform }: Pick<WorldProps, 'sky' | 'reduced' | 
     uniforms.shallow.value.set('#348e96').lerp(new Color(platform === 'river' ? '#98d3a1' : '#58d0b2'), sky.daylight);
   }, [sky.daylight, platform, uniforms]);
   useFrame(({ clock }) => { if (material.current) material.current.uniforms.time.value = reduced ? 0 : clock.elapsedTime; });
-  return <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -.05, -26]} renderOrder={2}><planeGeometry args={[180, 180, 96, 96]} /><shaderMaterial ref={material} uniforms={uniforms} vertexShader={waterVertexShader} fragmentShader={waterFragmentShader} transparent depthWrite={false} /></mesh>;
+  return <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -.05, -26]} renderOrder={2}><planeGeometry args={[180, 180, 88, 88]} /><shaderMaterial ref={material} uniforms={uniforms} vertexShader={waterVertexShader} fragmentShader={waterFragmentShader} transparent depthWrite={false} /></mesh>;
 }
 function Scene(props: WorldProps) {
   const lowPower = usePlayer(s => s.lowPower);
@@ -60,7 +60,7 @@ function Scene(props: WorldProps) {
   const fallback = lowPower || failed;
   return <div className={`scene-layer sky-${props.sky.period} platform-${props.platform} ${fallback ? 'is-illustrated' : ''}`} data-art="sculpted-v3" data-art-ready={ready && !fallback} data-testid="living-world" data-platform={props.platform} data-period={props.sky.period}>
     <div className="illustrated-water" />
-    {!fallback && <SceneBoundary onFailure={onFailure}><Suspense fallback={null}><Canvas shadows="soft" camera={{ fov: 48, near: .1, far: 190 }} dpr={[1, 1.5]} frameloop={!visible ? 'never' : props.reduced && ['idle', 'lost'].includes(props.phase) ? 'demand' : 'always'} gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }} fallback={<div className="illustrated-water" />}>
+    {!fallback && <SceneBoundary onFailure={onFailure}><Suspense fallback={null}><Canvas shadows="soft" camera={{ fov: 48, near: .1, far: 190 }} dpr={[1, 1.5]} frameloop={!visible ? 'never' : props.reduced && ['idle', 'lost'].includes(props.phase) ? 'demand' : 'always'} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }} fallback={<div className="illustrated-water" />}>
       <ArtReady onReady={onReady} /><ArtLighting sky={props.sky} /><View onFailure={onFailure} platform={props.platform} home={props.home} reduced={props.reduced} /><Environment sky={props.sky} reduced={props.reduced} platform={props.platform} phase={props.phase} motion={props.motion} /><Water sky={props.sky} reduced={props.reduced} platform={props.platform} /><Platform {...props} /><FishingRig {...props} />
     </Canvas></Suspense></SceneBoundary>}
     {fallback && !props.home && <><div className={`illustrated-float float-${props.phase}`} aria-hidden="true"><i /></div><button className="fallback-bait world-bait-button" aria-label="Open bait box" onClick={props.onBait}>Bait box</button></>}

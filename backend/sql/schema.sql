@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);
+CREATE INDEX IF NOT EXISTS sessions_player_id_idx ON sessions(player_id);
 CREATE INDEX IF NOT EXISTS nonce_expiry ON auth_nonces(expires_at);
 CREATE INDEX IF NOT EXISTS players_leaderboard ON players (((profile->>'xp')::integer) DESC)
   WHERE (profile->>'totalCatches')::integer > 0;

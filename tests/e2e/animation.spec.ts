@@ -3,14 +3,17 @@ import { enterFishing, touchSwipe } from './support';
 
 test.use({ viewport: { width: 390, height: 844 }, timezoneId: 'Pacific/Honolulu', video: { mode: 'on', size: { width: 390, height: 844 } } });
 
-test.describe('mobile animation evidence', () => {
-  test('a real swipe, bobber, tension fight and landing complete with the soundscape enabled', async ({ page }, testInfo) => {
+test.describe('mobile fishing mechanics', () => {
+  test('a real swipe, tension fight and landing complete with the soundscape enabled', async ({ page }, testInfo) => {
     test.setTimeout(75000);
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(() => {
+      localStorage.setItem('seacaster:comfort:v1', JSON.stringify({ sound: false, lowPower: true, ambience: .55, effects: .7, haptics: true }));
+    });
     await page.goto('/');
     await page.getByRole('button', { name: 'Enable sound', exact: true }).click();
-    await page.locator('canvas').waitFor(); await page.waitForTimeout(1200);
+    await expect(page.locator('canvas')).toHaveCount(0);
     await enterFishing(page);
     await touchSwipe(page, [225, 545], [258, 335]);
     await page.getByRole('button', { name: 'Hook fish', exact: true }).click({ timeout: 12000 });
@@ -31,11 +34,11 @@ test.describe('mobile animation evidence', () => {
     if (holding) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await cdp.detach();
     await expect(page.getByRole('dialog', { name: 'Catch landed' })).toBeVisible({ timeout: 6000 });
-    await page.waitForTimeout(650); await page.screenshot({ path: 'test-results/lifestyle-catch-mobile.png' });
+    await page.screenshot({ path: 'test-results/lifestyle-catch-mobile.png' });
     await page.getByRole('button', { name: 'Keep fishing' }).click();
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(250);
     expect(errors).toEqual([]);
-    await testInfo.attach('animation-note', { body: 'Recorded actual browser input and rendering. Browser video does not include audio; soundscape mixing is tested separately.', contentType: 'text/plain' });
+    await testInfo.attach('animation-note', { body: 'Mechanical fishing verification uses the production low-power presentation so CI software WebGL cannot distort the simulation clock. Full authored WebGL rendering is captured separately by 00-art-preview.spec.ts and art.spec.ts. Browser video does not include audio; soundscape mixing is tested separately.', contentType: 'text/plain' });
   });
 });
 

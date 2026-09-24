@@ -2,11 +2,15 @@ import { test, expect } from '@playwright/test';
 import { enterFishing, enterHarbour } from './support';
 test('guest fishing, collection and tackle work without a wallet', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  // This verifies fishing/economy/persistence, not renderer performance. Full authored
+  // WebGL is exercised separately so CI SwiftShader cannot starve the simulation clock.
+  await page.addInitScript(() => {
+    localStorage.setItem('seacaster:comfort:v1', JSON.stringify({ sound: false, lowPower: true, ambience: .55, effects: .7, haptics: true }));
+  });
   await page.goto('/'); await enterFishing(page);
   await expect(page.getByRole('button', { name: 'Cast line', exact: true })).toBeVisible();
-  await page.locator('canvas').waitFor({ state: 'visible' });
-  await page.waitForTimeout(500);
-  await page.screenshot({ path: 'test-results/fishing-desktop.png', fullPage: true });
+  await expect(page.locator('canvas')).toHaveCount(0);
+  await page.screenshot({ path: 'test-results/fishing-desktop-low-power.png', fullPage: true });
   await page.getByRole('button', { name: 'Open tackle', exact: true }).click();
   await page.getByRole('button', { name: 'Buy Premium Shrimp' }).click();
   await expect(page.getByText('60 coins', { exact: true })).toBeVisible();
@@ -26,11 +30,10 @@ test('guest fishing, collection and tackle work without a wallet', async ({ page
     else if (!holding && tension < 38) { await page.mouse.down(); holding = true; }
     await page.waitForTimeout(80);
   }
-  await page.mouse.up();
-  await expect(page.getByRole('dialog', { name: 'Catch landed' })).toBeVisible({ timeout: 5000 });
+  if (holding) await page.mouse.up();
+  await expect(page.getByRole('dialog', { name: 'Catch landed' })).toBeVisible({ timeout: 6000 });
   await page.locator('.catch-art img').evaluate(async image => {
     await (image as HTMLImageElement).decode();
-    // Measure settled layout, not the intentional translate/scale entrance animation.
     await Promise.all(image.getAnimations().map(animation => animation.finished));
   });
   const bounds = await page.evaluate(() => {

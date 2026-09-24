@@ -18,3 +18,21 @@ export async function touchSwipe(page: Page, from: [number, number], to: [number
   }
   await cdp.send('Input.dispatchTouchEvent', { type: cancel ? 'touchCancel' : 'touchEnd', touchPoints: [] }); await cdp.detach();
 }
+
+/** Shift wall-clock time only. Playwright's Clock also replaces RAF and queues fake frames. */
+export async function setTestTime(page: Page, iso: string) {
+  await page.addInitScript(value => {
+    const NativeDate = Date;
+    const offset = NativeDate.parse(value) - NativeDate.now();
+    globalThis.Date = new Proxy(NativeDate, {
+      construct(target, args, newTarget) {
+        return Reflect.construct(target, args.length ? args : [NativeDate.now() + offset], newTarget);
+      },
+      apply() { return new NativeDate(NativeDate.now() + offset).toString(); },
+      get(target, key, receiver) {
+        if (key === 'now') return () => NativeDate.now() + offset;
+        return Reflect.get(target, key, receiver);
+      },
+    });
+  }, iso);
+}
